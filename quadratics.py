@@ -90,9 +90,9 @@ def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, 
 
 if __name__ == "__main__":
     params = {
-        "num_nodes": [26],
-        "sigma_cdp": 5,
-        "sigma_cor": np.logspace(-1, 2, 10),
+        "num_nodes": [30],
+        "sigma_cdp": [2, 5, 7, 10, 100],
+        "sigma_cor": np.logspace(-1, 2, 20),
         "num_dim": 10,
         "gamma": 0.01,
         "c_clip":1,
