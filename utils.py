@@ -1,14 +1,12 @@
 import numpy as np
-import pickle
-import os
 import matplotlib.pyplot as plt
 import matplotlib
 import networkx
 
 
 def generate_functions(num_nodes, num_dim, zeta):
-    A = [1 / np.sqrt(num_nodes) * np.eye(num_dim) * (i + 1) for i in range(0, num_nodes)]
-    B = [np.random.normal(0, np.sqrt(zeta) / (i + 1), size=num_dim) for i in range(0, num_nodes)]
+    A = [1 / np.sqrt(num_nodes) * np.eye(num_dim) * (i + 1) for i in range(num_nodes)]
+    B = [np.random.normal(0, np.sqrt(zeta) / (i + 1), size=num_dim) for i in range(num_nodes)]
     # B = [np.ones(num_dim) * np.sqrt(zeta) / (i + 1) for i in range(0, num_nodes)]
     # A.shape = (num_nodes, num_dim, num_dim)
     # B.shape = (num_nodes, num_dim)
@@ -16,8 +14,8 @@ def generate_functions(num_nodes, num_dim, zeta):
 
 def generate_functions_for_DGD(num_nodes, num_dim):
 
-    A = [np.random.normal(size=(num_dim, num_dim)) for i in range(0, num_nodes)]
-    B = [np.zeros(num_dim) for i in range(0, num_nodes)]
+    A = [np.random.normal(size=(num_dim, num_dim)) for i in range(num_nodes)]
+    B = [np.zeros(num_dim) for i in range(num_nodes)]
     # B = [np.ones(num_dim) * np.sqrt(zeta) / (i + 1) for i in range(0, num_nodes)]
     # A.shape = (num_nodes, num_dim, num_dim)
     # B.shape = (num_nodes, num_dim)
