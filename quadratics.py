@@ -48,21 +48,62 @@ def plot_sigmacor_loss(A, B, sigma_cdp= 0.1, c_clip=1, lr=0.1, num_gossip=1, num
     # plt.plot()
     # plt.show()
 
+
+def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, c_clip, num_gossip=1, num_iter = 750):
+    """
+    This function plots the comparison between CDP, CD-SGD and LPD
+    Args:
+        A (array): parameter A
+        B (array): parameter B
+        sigma
+    """
+    X = np.ones(shape=(num_dim, num_nodes))
+    W_ring = FixedMixingMatrix("ring", num_nodes)
+    W_centr = FixedMixingMatrix("centralized", num_nodes)
+
+    # Privacy 
+    adjacency_matrix = np.array(W_ring(0) != 0, dtype=float)
+    adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
+    degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
+
+    # eps_rdp_iteration = rdp_account(sigma, sigma_cor, c_clip, degree_matrix, adjacency_matrix, sparse=False, precision=0.1)
+    eps_rdp_iteration = rdp_account(sigma_cdp, sigma_cor, c_clip, degree_matrix, adjacency_matrix)
+
+    # Learning
+    sigma_ldp = c_clip * np.sqrt(2/eps_rdp_iteration)
+    errors_centr, _ = optimize_decentralized_correlated(X, W_centr, A, B, gamma, sigma_cdp, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)
+    errors_cor, _ = optimize_decentralized_correlated(X, W_ring, A, B, gamma, sigma_cdp, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)
+    errors_ldp, _ = optimize_decentralized_correlated(X, W_ring, A, B, gamma, sigma_ldp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)
+
+    fig, ax = plt.subplots()
+    ax.semilogy(errors_centr, label="CDP")
+    ax.semilogy(errors_cor, label="correlated DSGD")
+    ax.semilogy(errors_ldp, label="LDP")
+    ax.set_xlabel('iteration')
+    ax.set_ylabel('loss')
+    ax.set_title(f"loss with privacy eps per iteration {eps_rdp_iteration}")
+    ax.legend()
+    folder_path = './comparison_losses'
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    plt.savefig('comparison_losses/loss-n_{}-d_{}-sigmacdp_{}-sigmacor_{}.png'.format(num_nodes, num_dim, round(sigma_cdp, 2) , round(sigma_cor, 2)))
+
 if __name__ == "__main__":
     params = {
-        "num_nodes": [4, 16, 256],
-        "sigma_cdp": np.sqrt([1, 10, 100]),
-        "sigma_cor": np.sqrt([10, 100, 1000]),
-        "topology": ['ring', 'grid'],
-        "num_dim": 25,
+        "num_nodes": [26],
+        "sigma_cdp": 5,
+        "sigma_cor": np.logspace(-1, 2, 10),
+        "num_dim": 10,
+        "gamma": 0.01,
+        "c_clip":1,
         "non_iid": 0
     }
 
     for n in params["num_nodes"]:
         A, B = generate_functions(n, params["num_dim"], params["non_iid"])
         for sigma_cdp in params["sigma_cdp"]:
-            for topo_name in params["topology"]:
-                plot_sigmacor_loss(A, B, sigma_cdp=sigma_cdp, num_nodes=n, topo_name=topo_name)
+            for sigma_cor in params["sigma_cor"]:
+                plot_comparison_loss(A, B, params["gamma"], n, params["num_dim"], sigma_cdp, sigma_cor, params["c_clip"])
 
 # if __name__ == "__main__":
 #     base_params = {

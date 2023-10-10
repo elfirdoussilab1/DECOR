@@ -7,7 +7,10 @@ import networkx
 import time
 from utils import consensus_distance
 
+# This function is the same as standard_algo in avg_consensus_algorithms
+
 def optimize_averaging(X, topology, num_iter):
+    
     # X.shape = (num_dim, num_nodes)
     
     def error(X, X_iter):
@@ -18,10 +21,10 @@ def optimize_averaging(X, topology, num_iter):
 
     X_iter = np.copy(X)
     errors = [error(X, X_iter)]
-    for i in range(0, num_iter):
+    for i in range(num_iter):
         W = topology(i)
         X_iter = X_iter.dot(W)
-        errors += [error(X, X_iter)]
+        errors.append(error(X, X_iter))
     return errors, X_iter
 
 
@@ -40,7 +43,7 @@ def optimize_decentralized(X, topology, A, B, gamma, sigma, num_iter=100):
         noise = np.random.normal(0, np.sqrt(sigma / num_dim), size=X.shape)
         X_iter = X_iter - gamma * (grad.T + noise)
         X_iter = X_iter.dot(W)
-        errors += [consensus_distance(X_iter, A, B)]
+        errors.append(consensus_distance(X_iter, A, B))
     return errors, X_iter
 
 
@@ -109,7 +112,7 @@ def optimize_decentralized_correlated(X, topology, A, B, gamma, sigma, sigma_cor
         # ratio = mixing_heterogeneity / naive_bound
         # print("Check: {}".format(ratio))
         X_iter = X_iter.dot(W)
-        errors += [consensus_distance(X_iter, A, B)]
+        errors.append(consensus_distance(X_iter, A, B))
     return errors, X_iter
 
 
@@ -177,6 +180,6 @@ def optimize_D2(X, topology, A, B, gamma, sigma, num_iter=100):
         prev_grad = np.copy(grad.T + noise)
         prev_X = np.copy(X_iter)
         X_iter = X_plus.dot(W)
-        errors += [consensus_distance(X_iter, A, B)]
+        errors.append(consensus_distance(X_iter, A, B))
     return errors, X_iter
 
