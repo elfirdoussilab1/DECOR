@@ -106,19 +106,19 @@ def find_sigma_cor(sigma_cdp, sigma_cor_grid, c_clip, degree_matrix, adjacency_m
     n = len(sigma_cor_grid)
     if n == 0:
         return []
+    if n == 1: # single element
+        return sigma_cor_grid
     sigma_cor = sigma_cor_grid[ n // 2]
     eps_end = rdp_account(sigma_cdp, sigma_cor_grid[-1], c_clip, degree_matrix, adjacency_matrix)
     eps = rdp_account(sigma_cdp, sigma_cor, c_clip, degree_matrix, adjacency_matrix)
     if eps_end > eps_target: # No hope, since the function is monotonous
         return []
-    elif eps_end < eps_target: # All values are valid
-        return list(sigma_cor_grid)
     elif abs(eps - eps_target) < 1e-4: # found
         return [sigma_cor]
     elif eps > eps_target: # augment sigma
         return find_sigma_cor(sigma_cdp, sigma_cor_grid[n // 2 :], c_clip, degree_matrix, adjacency_matrix, eps_target)
     else: #eps < eps_target
-        return sigma_cor_grid[:n // 2]
+        return find_sigma_cor(sigma_cdp, sigma_cor_grid[:n // 2], c_clip, degree_matrix, adjacency_matrix, eps_target)
 
 
         
