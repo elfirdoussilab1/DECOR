@@ -193,7 +193,7 @@ def find_best_params(A, B, gamma, num_nodes, num_dim, max_loss, target_eps, c_cl
 
 if __name__ == "__main__":
     params = {
-        "num_nodes": 64,
+        "num_nodes": 128,
         #"sigma_cdp": [10],
         #"sigma_cor": [12],
         "num_dim": 10,
