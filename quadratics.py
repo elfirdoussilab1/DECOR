@@ -50,7 +50,7 @@ def plot_sigmacor_loss(A, B, sigma_cdp= 0.1, c_clip=1, lr=0.1, num_gossip=1, num
     # plt.show()
 
 
-def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, c_clip, num_gossip=1, num_iter = 750):
+def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, c_clip, num_gossip=1, num_iter = 1000):
     """
     This function plots the comparison between CDP, CD-SGD and LDP
     Args:
@@ -177,13 +177,14 @@ def find_best_params(A, B, gamma, num_nodes, num_dim, max_loss, target_eps, c_cl
                 errors_centr, _ = optimize_decentralized_correlated(X, W_centr, A, B, gamma, sigma_cdp, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)
                 errors_cor, _ = optimize_decentralized_correlated(X, W_ring, A, B, gamma, sigma_cdp, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)
 
-                if errors_centr[-1] <= max_loss and abs(errors_cor[-1] - result["loss_cor"].iloc[-1]) <= 5e-2:
+                if errors_centr[-1] <= max_loss and result["loss_cor"].iloc[-1] - np.mean(errors_cor[800:]) > 0:
                     new_row = {"sigma_cdp":sigma_cdp, 
                                "sigma_cor": sigma_cor, "eps": rdp_account(sigma_cdp, sigma_cor, c_clip, degree_matrix, adjacency_matrix),
                                 "loss_cdp": errors_centr[-1],
                                  "loss_cor": errors_cor[-1] }
-                    result = result.append(new_row, ignore_index = True)
-                    print("added")
+                    result = pd.concat([result, pd.DataFrame([new_row])], ignore_index=True)
+                    #result = result.append(new_row, ignore_index = True)
+                    print(f"added with privacy {rdp_account(sigma_cdp, sigma_cor, c_clip, degree_matrix, adjacency_matrix)}")
 
         else:
             continue
@@ -205,6 +206,11 @@ if __name__ == "__main__":
     result = find_best_params(A, B, params["gamma"], params["num_nodes"], params["num_dim"], max_loss= 1e-2, target_eps=1e-2, c_clip=params["c_clip"],num_gossip=1, num_iter= 1000)
     filename= "result.csv"
     result.to_csv(filename, index=False)
+    # Plotting results
+    for index, row in result.iterrows():
+        sigma_cdp = row['sigma_cdp']
+        sigma_cor = row['sigma_cor']
+        plot_comparison_loss(A, B, params["gamma"], params["num_nodes"], params["num_dim"], sigma_cdp, sigma_cor, params["c_clip"])
 
 
     #for n in params["num_nodes"]:
