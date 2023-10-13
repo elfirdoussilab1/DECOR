@@ -107,15 +107,15 @@ def find_sigma_cor(sigma_cdp, sigma_cor_grid, c_clip, degree_matrix, adjacency_m
     if n == 0:
         return []
     if n == 1: # single element
-        return sigma_cor_grid
+        return list(sigma_cor_grid)
     sigma_cor = sigma_cor_grid[ n // 2]
     eps_end = rdp_account(sigma_cdp, sigma_cor_grid[-1], c_clip, degree_matrix, adjacency_matrix)
     eps = rdp_account(sigma_cdp, sigma_cor, c_clip, degree_matrix, adjacency_matrix)
-    if eps_end > eps_target: # No hope, since the function is monotonous
+    if eps_end > eps_target: # No hope, since the function is monotonous (epsilon non-increasing with sigma_cor)
         return []
     elif abs(eps - eps_target) < 1e-4: # found
         return [sigma_cor]
-    elif eps > eps_target: # augment sigma
+    elif eps > eps_target: # increase sigma
         return find_sigma_cor(sigma_cdp, sigma_cor_grid[n // 2 :], c_clip, degree_matrix, adjacency_matrix, eps_target)
     else: #eps < eps_target
         return find_sigma_cor(sigma_cdp, sigma_cor_grid[:n // 2], c_clip, degree_matrix, adjacency_matrix, eps_target)
@@ -166,10 +166,11 @@ def find_best_params(A, B, gamma, num_nodes, num_dim, max_loss, target_eps, c_cl
 
     # Searching
     for sigma_cdp in sigma_cdp_grid:
+        print(f"loop for sigma_cdp {sigma_cdp}")
         # Looking for sigma_cor for which dp_account < target_eps
         sigma_cor_grid = np.linspace(1, 100, 1000)
         all_sigma_cor = find_sigma_cor(sigma_cdp, sigma_cor_grid, c_clip, degree_matrix, adjacency_matrix, target_eps)
-        
+        print(f"sigma_cor {all_sigma_cor}")
         # Now test on the loss condition
         if len(all_sigma_cor) != 0: # Not empty
             for sigma_cor in all_sigma_cor:
@@ -182,6 +183,7 @@ def find_best_params(A, B, gamma, num_nodes, num_dim, max_loss, target_eps, c_cl
                                 "loss_cdp": errors_centr[-1],
                                  "loss_cor": errors_cor[-1] }
                     result = result.append(new_row, ignore_index = True)
+                    print("added")
 
         else:
             continue
@@ -190,9 +192,9 @@ def find_best_params(A, B, gamma, num_nodes, num_dim, max_loss, target_eps, c_cl
 
 if __name__ == "__main__":
     params = {
-        "num_nodes": 128,
-        "sigma_cdp": [10],
-        "sigma_cor": [12],
+        "num_nodes": 64,
+        #"sigma_cdp": [10],
+        #"sigma_cor": [12],
         "num_dim": 10,
         "gamma": 0.01,
         "c_clip":1,
