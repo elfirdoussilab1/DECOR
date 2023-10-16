@@ -1,13 +1,17 @@
 import numpy as np
-import pickle
 import os
-import matplotlib.pyplot as plt
-import matplotlib
-import networkx
 import time
-from utils import consensus_distance
 
 # This function is the same as standard_algo in avg_consensus_algorithms
+
+def consensus_distance(X, A, B): # ||x-x*||^2
+    # X.shape = (num_dim, num_nodes)
+
+    x_star = np.linalg.inv(np.einsum("ikj,ikl->jl", A, A)).dot(np.einsum("ijk,ij->k", A, B))
+    num_nodes = X.shape[1]
+    dist = [np.linalg.norm(X[:,i] - x_star) ** 2 for i in range(num_nodes)]
+    return np.mean(dist)
+
 
 def optimize_averaging(X, topology, num_iter):
     

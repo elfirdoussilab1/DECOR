@@ -1,7 +1,6 @@
-# In this file, we implement some Mixing Matrices that we can use in our simulations
+# In this file, we implement some Mixing Matrices
 
 import numpy as np
-import matplotlib.pyplot as plt
 import networkx
 
 

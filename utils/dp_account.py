@@ -2,7 +2,7 @@ import numpy as np
 import scipy.linalg as spl
 import scipy.sparse as sps
 import scipy.sparse.linalg as spsl
-from topology import *
+from utils.topology import *
 import time
 import matplotlib.pyplot as plt
 from matplotlib import ticker
