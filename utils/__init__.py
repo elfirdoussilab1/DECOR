@@ -65,7 +65,8 @@ def grid_search(gamma_grid, optimize, target_accuracy):
     return all_errors[best_index], gamma_grid[best_index], np.min(positions)
 
 
-def grid_search_two_params(gamma_grid, alpha_grid, optimize, target_accuracy):
+def grid_search_two_params(gamma_grid, alpha_grid, optimize, target_accuracy= None): 
+    # alpha_grid is clip grid
     positions = []
     all_errors = {}
     best_error = np.inf
@@ -73,30 +74,45 @@ def grid_search_two_params(gamma_grid, alpha_grid, optimize, target_accuracy):
     indexes = []
     for i, gamma in enumerate(gamma_grid):
         for j, alpha in enumerate(alpha_grid):
+            print(f"lr {gamma_grid[i]}")
+            print(f"clip {alpha_grid[j]}")
             errors, _ = optimize(gamma, alpha)
             all_errors[(i, j)] = errors
             errors = np.array(errors)
             errors[np.isnan(errors)] = np.inf
-            indexes += [(i, j)]
+            indexes.append((i, j))
             if np.min(errors) < best_error: # for the backup
                 best_error = np.min(errors)
+                print(f"best error {best_error}")
                 backup_index = (i, j)
-            try:
-                first_pos = np.nonzero(np.array(errors) < target_accuracy)[0][0]
-                positions.append(first_pos)
-            except:
-                positions.append(np.inf)
+            #try:
+            #    first_pos = np.nonzero(np.array(errors) < target_accuracy)[0][0]
+            #    positions.append(first_pos)
+            #except:
+            #    positions.append(np.inf)
 
-    if np.isinf(np.min(positions)): # target accuracy never reached
-        print('\033[93m' + "target accuracy not reached" + '\033[0m')
-        print("overall best error achieved:", best_error, "for gamma:", gamma_grid[backup_index[0]],
-                                                        ", alpha:", alpha_grid[backup_index[1]])
-        return all_errors[backup_index], (gamma_grid[backup_index[0]], alpha_grid[backup_index[1]])
-    best_index = indexes[np.argmin(positions)]
-    print("best num of iterations:", np.min(positions), "for gamma:", gamma_grid[best_index[0]],
-                                                        ", alpha:", alpha_grid[best_index[1]])
-    print("overall best error achieved:", best_error)
-    return all_errors[best_index], (gamma_grid[best_index[0]], alpha_grid[best_index[1]])
+    #if np.isinf(np.min(positions)): # target accuracy never reached
+    #    print('\033[93m' + "target accuracy not reached" + '\033[0m')
+    #    print("overall best error achieved:", best_error, "for gamma:", gamma_grid[backup_index[0]],
+    #                                                    ", alpha:", alpha_grid[backup_index[1]])
+    #    return all_errors[backup_index], (gamma_grid[backup_index[0]], alpha_grid[backup_index[1]])
+    #best_index = indexes[np.argmin(positions)]
+    best_index = backup_index
+    #print("best num of iterations:", np.min(positions), "for gamma:", gamma_grid[best_index[0]],
+    #                                                   ", alpha:", alpha_grid[best_index[1]])
+    #print("overall best error achieved:", best_error)
+    # Plot results
+    fig, ax = plt.subplots()
+    ax.semilogy(all_errors[best_index], label="CDP")
+    ax.set_xlabel('iteration')
+    ax.set_ylabel('loss')
+    ax.set_title(f"loss with lr {gamma_grid[best_index[0]]} and clip {alpha_grid[best_index[1]]}")
+    ax.legend()
+    folder_path = './grid_search'
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    plt.savefig('grid_search/loss-n_{}-d_{}-lr_{}-clip_{}.png'.format(64, 10, gamma_grid[best_index[0]], alpha_grid[best_index[1]]))
+    return all_errors[best_index], (gamma_grid[best_index[0]], alpha_grid[best_index[1]]), best_index
 
 
 def experiment_DGD(W_new, gamma_grid):
@@ -151,9 +167,9 @@ def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, 
     ax.set_title(f"loss with privacy eps per iteration {eps_rdp_iteration}")
     ax.legend()
     if target_eps:
-        folder_path = f'CD-SGD/comparison_losses/epsilon = {target_eps}'
+        folder_path = f'./comparison_losses/epsilon = {target_eps}'
     else:
-        folder_path = 'CD-SGD/comparison_losses'
+        folder_path = './comparison_losses'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
     plt.savefig('comparison_losses/loss-n_{}-d_{}-lr_{}-clip_{}-sigmacdp_{}-sigmacor_{}-sigmaldp_{}.png'.format(num_nodes, num_dim, gamma, c_clip, round(sigma_cdp, 2) , round(sigma_cor, 2), round(sigma_ldp, 2)))

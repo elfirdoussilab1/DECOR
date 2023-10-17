@@ -1,3 +1,4 @@
+from typing import Any
 import numpy as np
 import os
 import time
@@ -187,3 +188,19 @@ def optimize_D2(X, topology, A, B, gamma, sigma, num_iter=100):
         errors.append(consensus_distance(X_iter, A, B))
     return errors, X_iter
 
+class Optimizer:
+    def __init__(self, X, topology, A, B, gamma, sigma, sigma_cor, c_clip, num_gossip=1, num_iter=100, uncorrelate=False):
+        self.X = X
+        self.topology = topology
+        self.A = A
+        self.B = B
+        self.gamma = gamma
+        self.sigma_cdp = sigma
+        self.sigma_cor = sigma_cor
+        self.c_clip = c_clip
+        self.num_gossip = num_gossip
+        self.num_iter = num_iter
+        self.uncorrelate = uncorrelate
+    
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        pass
