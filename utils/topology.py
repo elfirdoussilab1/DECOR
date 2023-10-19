@@ -1,4 +1,4 @@
-# In this file, we implement some Mixing Matrices
+# In this file, we implement the Mixing Matrices that we will use later like: Ring, Centralized, ...
 
 import numpy as np
 import networkx
