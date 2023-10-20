@@ -30,7 +30,7 @@ def fix_seed(seed):
     np.random.seed(seed)
 
 # ---------------------------------------------------------------------------- #
-#JS: Criterions to evaluate accuracy of models. Used in worker.py and p2pWorker.py
+# Criterions to evaluate accuracy of models. Used in worker.py and p2pWorker.py
 
 def topk(output, target, k=1):
       """ Compute the top-k criterion from the output and the target.
