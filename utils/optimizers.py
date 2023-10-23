@@ -79,7 +79,8 @@ def optimize_decentralized_correlated(X, topology, A, B, gamma, sigma, sigma_cor
         # print(clip_grad)
         # print(grad)
         # print((grad == clip_grad).all())
-        noise = np.random.normal(0, sigma, size=X.shape)
+        
+        noise = np.random.normal(0, scale=sigma, size=X.shape)
         # adding correlated noise
         # start_time = time.time()
         # print("vectorize time: {}".format(time.time()-start_time))

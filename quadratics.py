@@ -7,54 +7,35 @@ from csv import writer
 
 
 if __name__ == "__main__":
-    params = {
-        "gamma": np.logspace(np.log10(1e-6), np.log10(1e-2), 100),
-        "num_nodes": 64,
-        "num_dim": 10,
-        "c_clip":np.linspace(1, 10, 20),
-        "target_eps": 1e-2,
-        "max_loss": 1e-2,
-        "num_iter": 1000,
-        "num_gossip": 1
-    }
-    X = np.ones(shape=(params["num_dim"], params["num_nodes"]))
-    W_centr = topology.FixedMixingMatrix("centralized", params["num_nodes"])
 
-    A, B = generate_functions(params["num_nodes"], params["num_dim"], zeta = 0)
-    optimize = lambda lr, clip: optimizers.optimize_decentralized_correlated(X, W_centr, A, B, gamma = lr, sigma=6.39, sigma_cor= 15.27, c_clip = clip, num_gossip=1, num_iter=1000)
-    min_error, (gamma, c_clip), (gamma_idx, clip_idx) = grid_search_two_params(params["gamma"], params["c_clip"], optimize)
-    print(f"min error {min_error}")
-    print(f"best lr {gamma} at index {gamma_idx}")
-    print(f"best c_clip {c_clip} at index {clip_idx}")
-    
-    """
     params = {
-        "gamma": 0.01,
+        "gamma": 3.944e-3,
         "num_nodes": 64,
         "num_dim": 10,
+        "sigma_cdp":6.02,
+        "sigma_cor": 16.0,
         "c_clip":1,
-        "target_eps": 1e-2,
-        "max_loss": 1e-2,
         "num_iter": 1000,
-        "num_gossip": 1
+        "num_gossip": 1,
+        "delta": 1e-3
     }
-    result = find_best_params(A, B, params["gamma"], params["num_nodes"], params["num_dim"], max_loss= 1e-2, target_eps=1e-2, c_clip=params["c_clip"],num_gossip=1, num_iter= 1000)
-    result = find_best_params(A, B, **params)
-    filename= "result.csv"
-    result.to_csv(filename, index=False)
-     Plotting results
-    for index, row in result.iterrows():
+
+    
+    A, B = generate_functions(64, 10, zeta = 0)
+    plot_comparison_loss(A = A, B = B, **params)
+   
+    """
+    # Plotting results
+    for index, row in df.iterrows():
+        if index == 0:
+            continue
+        gamma = row["gamma"]
+        c_clip = row["c_clip"]
         sigma_cdp = row['sigma_cdp']
         sigma_cor = row['sigma_cor']
-        plot_comparison_loss(A, B, params["gamma"], params["num_nodes"], params["num_dim"], sigma_cdp, sigma_cor, params["c_clip"], target_eps = int(params["target_eps"]*params["num_iter"]))
+        plot_comparison_loss(A, B, gamma, 64, 10, sigma_cdp, sigma_cor, c_clip)
     """
-
-    #for n in params["num_nodes"]:
-    #    A, B = generate_functions(n, params["num_dim"], params["non_iid"])
-    #    for sigma_cdp in params["sigma_cdp"]:
-    #        for sigma_cor in params["sigma_cor"]:
-    #            plot_comparison_loss(A, B, params["gamma"], n, params["num_dim"], sigma_cdp, sigma_cor, params["c_clip"], num_iter=1000)
-
+    
 # if __name__ == "__main__":
 #     base_params = {
 #         "num_nodes": 100,
