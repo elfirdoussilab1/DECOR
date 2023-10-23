@@ -17,7 +17,6 @@ def consensus_distance(X, A, B): # ||x-x*||^2
 def optimize_averaging(X, topology, num_iter):
     
     # X.shape = (num_dim, num_nodes)
-    
     def error(X, X_iter):
         x_star = np.mean(X, axis=1)
         num_nodes = X.shape[1]
@@ -61,40 +60,19 @@ def optimize_decentralized_correlated(X, topology, A, B, gamma, sigma, sigma_cor
     X_iter = np.copy(X)
     errors = [consensus_distance(X_iter, A, B)]
     for i in range(0, num_iter):
-        # if (i+1) % 25 == 0:
-        #     print("iter {}/{}".format(i+1, num_iter))
         W = topology(i)
 
         W = W ** num_gossip
         AXmB = (np.einsum("ijk,ik->ij", A, X_iter.T) - B)  # shape (num_nodes, num_dim)
         grad = np.einsum("ijk,ij->ik", A, AXmB)  # shape (num_nodes, num_dim)
         clip_matrix = np.diag(np.minimum(1, c_clip / np.linalg.norm(grad, axis=1)))
-        # print(grad)
-        # print(clip_matrix)
         grad = clip_matrix @ grad
 
-        # for j in range(num_nodes):
-        #     grad[j, :] = grad[j, :] * min(1, c_clip / np.linalg.norm(grad[j, :]))
-        # print("loop time: {}".format(time.time() - end_time_1))
-        # print(clip_grad)
-        # print(grad)
-        # print((grad == clip_grad).all())
-        
-        noise = np.random.normal(0, scale=sigma, size=X.shape)
-        # adding correlated noise
-        # start_time = time.time()
-        # print("vectorize time: {}".format(time.time()-start_time))
-        # end_time_1 = time.time()
-        if sigma_cor == 0 or (W != 0).all():
-            cor_noise = np.zeros_like(X_iter)
-        else:
-            # N = np.random.normal(0, sigma_cor, size=(int(num_nodes * (num_nodes - 1) / 2), num_dim))
-            # if i == 0 or (topology(0) != W).any():
-            #     K = np.array([[float(k == i) - float(k == j) for k in range(num_nodes)] if W[i, j] else [0.]*num_nodes
-            #               for i in range(num_nodes) for j in range(i+1, num_nodes)]).T
-            # cor_noise = (K @ N).T
+        noise = np.random.normal(0, sigma, size=X.shape)
+        # initializing and adding correlated noise
+        cor_noise = np.zeros_like(X_iter)
 
-            cor_noise = np.zeros_like(X_iter)
+        if sigma_cor != 0 and not (W != 0).all():
             for j in range(num_nodes):
                 for k in range(j+1, num_nodes):
                     if W[j ,k] == 0:
@@ -106,17 +84,8 @@ def optimize_decentralized_correlated(X, topology, A, B, gamma, sigma, sigma_cor
                     else:
                         noise_vector_2 = np.random.normal(0, sigma_cor, size=num_dim)
                         cor_noise[:, k] += noise_vector_2
-            # print("loop time: {}".format(time.time() - start_time))
 
         X_iter = X_iter - gamma * (grad.T + noise + cor_noise)
-        # print("Frobenius norm: {}".format(np.linalg.norm(cor_noise.dot(W), 'fro')**2))
-        # print("Check: {}".format(np.linalg.norm(cor_noise.dot(W), 'fro')**2 / num_nodes))
-        # mixing_heterogeneity = sum([0.5 * np.linalg.norm(W[:, i] - W[:, j], 2)**2 for i in range(num_nodes)
-        #                             for j in range(num_nodes) if W[i, j] != 0])
-        # naive_bound = sum([1 for i in range(num_nodes)
-        #                             for j in range(num_nodes) if W[i, j] != 0])
-        # ratio = mixing_heterogeneity / naive_bound
-        # print("Check: {}".format(ratio))
         X_iter = X_iter.dot(W)
         errors.append(consensus_distance(X_iter, A, B))
     return errors, X_iter
@@ -190,18 +159,11 @@ def optimize_D2(X, topology, A, B, gamma, sigma, num_iter=100):
     return errors, X_iter
 
 class Optimizer:
-    def __init__(self, X, topology, A, B, gamma, sigma, sigma_cor, c_clip, num_gossip=1, num_iter=100, uncorrelate=False):
+    def __init__(self, X, topology, num_iter):
         self.X = X
         self.topology = topology
-        self.A = A
-        self.B = B
-        self.gamma = gamma
-        self.sigma_cdp = sigma
-        self.sigma_cor = sigma_cor
-        self.c_clip = c_clip
-        self.num_gossip = num_gossip
         self.num_iter = num_iter
-        self.uncorrelate = uncorrelate
     
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
+    def optimize(self, method, params):
         pass
+
