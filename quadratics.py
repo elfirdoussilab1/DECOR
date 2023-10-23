@@ -3,12 +3,13 @@ import numpy as np
 import pandas as pd
 import json, os, itertools
 from csv import writer
-from utils import plotting
+from utils import plotting, dp_account
 
 
 
 if __name__ == "__main__":
-
+    print(dp_account.rdp_compose_convert(1000, 0.0018, 1e-4))
+    """
     params = {
         "gamma": 3.944e-3,
         "num_nodes": 64,
@@ -16,16 +17,16 @@ if __name__ == "__main__":
         "sigma_cdp":6.02,
         "sigma_cor": 16.0,
         "c_clip":1,
-        "num_iter": 1000,
+        "num_iter": 800,
         "num_gossip": 1,
         "delta": 1e-3
     }
 
     
     A, B = generate_functions(64, 10, zeta = 0)
-    plotting.plot_comparison_loss(A = A, B = B, **params)
+    result = plotting.find_best_params(A, B, )
    
-    """
+    
     # Plotting results
     for index, row in df.iterrows():
         if index == 0:
