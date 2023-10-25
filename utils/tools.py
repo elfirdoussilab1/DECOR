@@ -162,3 +162,21 @@ def print_conf(subtree, level=0):
     for label, node in iterator:
         res += f"{os.linesep}{level_spc}· {label}{' ' * (label_len - len(label))}{print_conf(node, level + 1)}"
     return res
+
+#------------------------------------------------------------------------------------------
+# Transform a tensor to be antisymmetric by keeping its upper triangular part
+def to_antisymmetric(tensor):
+    # tensor is of shape (n, n, d)
+    # Extract the lower triangular part
+    lower_indices= [(i, j) for i in range(1, tensor.shape[0]) for j in range(i)]
+
+    # Upper part indices
+    upper_indices= [(i, j) for i in range( t.shape[0]) for j in range(i + 1, tensor.shape[0])]
+
+    # Convert the lists of indices to LongTensors
+    indices_1 = torch.LongTensor(lower_indices)
+    indices_2 = torch.LongTensor(upper_indices)
+
+    # Use indexing and assignment to perform t[l_1] = t[l_2]
+    tensor[indices_1[:, 0], indices_1[:, 1]] = - tensor[indices_2[:, 0], indices_2[:, 1]]
+    

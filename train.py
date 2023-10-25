@@ -298,9 +298,15 @@ with utils.Context("training", "info"):
         # Weights matrix
         W = topology.FixedMixingMatrix(topology_name= args.topology, n_nodes= args.num_nodes)
 
+        # Convert it to tensor
+        W = torch.tensor(W)
+        
         # Noise tensor: shape (num_nodes, num_nodes, model_size)
         V = torch.randn(args.num_nodes, args.num_nodes, model_size) # distribution N(0, 1)
         V.mul_(args.sigma_cor) # rescaling ==> distribution N (0, sigma_cor^2)
+
+        # Antisymmetry property
+        tools.to_antisymmetric(V)
 
         # Perform updates
         all_parameters = []

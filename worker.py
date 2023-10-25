@@ -112,7 +112,7 @@ class Worker(object):
         """
         # Shape verification
         assert len(weights) == len(workers_parameters)
-        self.flat_parameters = torch.sum(weights.view(-1, 1).mul(workers_parameters), dim = 0)
+        self.flat_parameters = torch.sum(weights.view(-1, 1).mul(workers_parameters), dim = 0) # checked !
         self.update_model_parameters()
 
     # Test phase
