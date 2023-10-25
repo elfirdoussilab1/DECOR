@@ -1,11 +1,12 @@
 import numpy as np
-from utils import topology, dp_account, optimizers
+from utils import topology, dp_account, optimizers, tools
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
 
+
 # Function to plot threee losses: LDP, CD-SGD and CDP
-def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, c_clip, num_gossip=1, num_iter = 1000, target_eps = None):
+def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, c_clip, num_gossip=1, num_iter = 1000, delta = 1e-4, seed = 1):
     """
     This function plots the comparison between CDP, CD-SGD and LDP
     Args:
@@ -32,6 +33,10 @@ def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, 
 
     # eps_rdp_iteration = rdp_account(sigma, sigma_cor, c_clip, degree_matrix, adjacency_matrix, sparse=False, precision=0.1)
     eps_rdp_iteration = dp_account.rdp_account(sigma_cdp, sigma_cor, c_clip, degree_matrix, adjacency_matrix)
+    eps = dp_account.rdp_compose_convert(num_iter, eps_rdp_iteration, delta)
+    
+    # fixing the seed
+    tools.fix_seed(seed)
 
     # Learning
     sigma_ldp = c_clip * np.sqrt(2/eps_rdp_iteration)
@@ -45,15 +50,13 @@ def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, 
     ax.semilogy(errors_ldp, label="LDP")
     ax.set_xlabel('iteration')
     ax.set_ylabel('loss')
-    ax.set_title(f"loss with privacy eps per iteration {eps_rdp_iteration}")
+    ax.set_title(f"loss with user-privacy  {eps}")
     ax.legend()
-    if target_eps:
-        folder_path = f'./comparison_losses/epsilon = {target_eps}'
-    else:
-        folder_path = './comparison_losses'
+    
+    folder_path = './comparison_losses'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    plt.savefig('comparison_losses/loss-n_{}-d_{}-lr_{}-clip_{}-sigmacdp_{}-sigmacor_{}-sigmaldp_{}.png'.format(num_nodes, num_dim, gamma, c_clip, round(sigma_cdp, 2) , round(sigma_cor, 2), round(sigma_ldp, 2)))
+    plt.savefig('comparison_losses/loss-n_{}-d_{}-lr_{}-clip_{}-sigmacdp_{}-sigmacor_{}-sigmaldp_{}-seed_{}.png'.format(num_nodes, num_dim, gamma, c_clip, round(sigma_cdp, 2) , round(sigma_cor, 2), round(sigma_ldp, 2), seed))
 
 
 # Binary search for 'sigma_cor' in a grid 'sigma_cor_grid' such that the privacy is close close to the target 'eps_taget'
@@ -240,4 +243,47 @@ def plot_sigmacor_loss(A, B, sigma_cdp= 0.1, c_clip=1, lr=0.1, num_gossip=1, num
     # plt.plot()
     # plt.show()
 
+# Plotting comparison of losses with confidence interval
+def plot_comparison_loss_CI(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, c_clip, num_gossip=1, num_iter = 1000, delta = 1e-4, seeds= [1, 2, 3, 4, 5]):
 
+
+    X = np.ones(shape=(num_dim, num_nodes))
+    W_ring = topology.FixedMixingMatrix("ring", num_nodes)
+    W_centr = topology.FixedMixingMatrix("centralized", num_nodes)
+
+    # Privacy 
+    adjacency_matrix = np.array(W_ring(0) != 0, dtype=float)
+    adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
+    degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
+
+    eps_rdp_iteration = dp_account.rdp_account(sigma_cdp, sigma_cor, c_clip, degree_matrix, adjacency_matrix)
+    eps = dp_account.rdp_compose_convert(num_iter, eps_rdp_iteration, delta)
+
+    # Storing results
+    errors_centr = []
+    errors_cor = []
+    errors_ldp = []
+    for seed in seeds:
+        tools.fix_seed(seed)
+        sigma_ldp = c_clip * np.sqrt(2/eps_rdp_iteration)
+        errors_centr.append(optimizers.optimize_decentralized_correlated(X, W_centr, A, B, gamma, sigma_cdp, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
+        errors_cor.append(optimizers.optimize_decentralized_correlated(X, W_ring, A, B, gamma, sigma_cdp, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
+        errors_ldp.append(optimizers.optimize_decentralized_correlated(X, W_ring, A, B, gamma, sigma_ldp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
+    
+    fig, ax = plt.subplots()
+    t = np.arange(0, num_iter + 1)
+    ax.semilogy(t, np.mean(errors_centr, axis = 0), label="CDP")
+    ax.fill_between(t, np.mean(errors_centr, axis = 0) - np.std(errors_centr, axis = 0), np.mean(errors_centr, axis = 0) + np.std(errors_centr, axis = 0), alpha = 0.3)
+    ax.semilogy(t, np.mean(errors_cor, axis = 0), label="correlated DSGD")
+    ax.fill_between(t, np.mean(errors_cor, axis = 0) - np.std(errors_cor, axis = 0), np.mean(errors_cor, axis = 0) + np.std(errors_cor, axis = 0), alpha = 0.3)
+    ax.semilogy(t, np.mean(errors_ldp, axis = 0), label="LDP")
+    ax.fill_between(t, np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0), np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0), alpha = 0.3)
+    ax.set_xlabel('iteration')
+    ax.set_ylabel('loss')
+    ax.set_title(f"loss with user-privacy  {eps}")
+    ax.legend()
+    
+    folder_path = './comparison_losses_CI'
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    plt.savefig('comparison_losses_CI/loss-n_{}-d_{}-lr_{}-clip_{}-sigmacdp_{}-sigmacor_{}-sigmaldp_{}.png'.format(num_nodes, num_dim, gamma, c_clip, round(sigma_cdp, 2) , round(sigma_cor, 2), round(sigma_ldp, 2)))

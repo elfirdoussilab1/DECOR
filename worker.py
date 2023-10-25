@@ -4,8 +4,8 @@ from utils import tools
 
 class Worker(object):
     """ A worker for Decentralized learning (node) """
-    def __init__(self, train_data_loader, test_data_loader, batch_size, model, loss, momentum, c_clip, sigma_cdp,
-                 num_labels, criterion, num_evaluations, device, seed):
+    def __init__(self, train_data_loader, test_data_loader, batch_size, model, loss, momentum, gradient_clip, sigma_cdp,
+                 num_labels, criterion, num_evaluations, device):
         
         # Data loaders
         self.train_data_loader = train_data_loader
@@ -33,7 +33,7 @@ class Worker(object):
         self.momentum = momentum
         self.momentum_gradient = torch.zeros(self.model_size, device=self.device)
         # clip to avoid vanishing and exploiding gradients (or momentums)
-        self.c_clip = c_clip
+        self.gradient_clip = gradient_clip
         
         # sigma_cdp
         self.sigma_cdp = sigma_cdp
@@ -45,7 +45,6 @@ class Worker(object):
 
         # How many evaluations on test batch size to perform during test phase
         self.num_evaluations = num_evaluations
-        self.seed = seed
 
     # Training phase
     def sample_train_batch(self):
@@ -73,8 +72,8 @@ class Worker(object):
             self.momentum_gradient.add_(gradient, alpha=1 - self.momentum)
         else:
             self.momentum_gradient = gradient
-        if self.c_clip is not None:
-            self.momentum_gradient = tools.clip_vector(self.momentum_gradient, self.c_clip)
+        if self.gradient_clip is not None:
+            self.momentum_gradient = tools.clip_vector(self.momentum_gradient, self.gradient_clip)
         
     def update_model_parameters(self):
         """
@@ -85,7 +84,7 @@ class Worker(object):
             param.data = unflatened_params[j].data.clone().detach()
 
     # Remark: we can also give him the sum of noises only instead of all noises
-    def grad_descent(self, noises, lr):
+    def grad_descent(self, noises, lr, weight_decay):
         """
         noises (Torch.Tensor): A tensor containing the noise term in each row (dim = 0 in sum) !
         lr (float): the learning rate multiplied by the decay 
@@ -100,7 +99,8 @@ class Worker(object):
         self.momentum_gradient.add_(torch.sum(noises, dim = 0))
         
         # Update parameters
-        self.flat_parameters.add_(-lr * self.momentum_gradient) 
+        self.flat_parameters.mul_(1 - lr * weight_decay) 
+        self.flat_parameters.add_(-lr * self.momentum_gradient)
         self.update_model_parameters()
         return self.flat_parameters
     
