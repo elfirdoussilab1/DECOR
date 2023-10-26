@@ -10,19 +10,19 @@ from utils import plotting, dp_account
 if __name__ == "__main__":
     
     params = {
-        "gamma": 3.981e-3,
+        "gamma": 3.9e-3,
         "num_nodes": 64,
         "num_dim": 10,
-        "sigma_cdp":12.44,
-        "sigma_cor": 44.31,
-        "c_clip":1,
-        "num_iter": 1000,
+        "sigma_cdp":0.8,
+        "sigma_cor": 100,
+        "c_clip":1.0,
+        "num_iter": 1500,
         "num_gossip": 1,
-        "delta": 1e-4
+        "delta": 1e-5
     }
 
     
-    A, B = generate_functions(64, 10, zeta = 0)
+    A, B = generate_functions(params["num_nodes"], params["num_dim"], zeta = 0)
     plotting.plot_comparison_loss_CI(A, B, **params)
 
     

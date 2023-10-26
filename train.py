@@ -288,7 +288,7 @@ with utils.Context("training", "info"):
         # Evaluate the model if milestone is reached
         milestone_evaluation = args.evaluation_delta > 0 and current_step % args.evaluation_delta == 0        
         if milestone_evaluation:
-            mean_accuracy = np.mean(workers[i].compute_accuracy() for i in range(args.num_nodes))
+            mean_accuracy = np.mean([workers[i].compute_accuracy() for i in range(args.num_nodes)])
             print(f"Mean Accuracy (step {current_step})... {mean_accuracy * 100.:.2f}%.")
             # Store the evaluation result
             if fd_eval is not None:
