@@ -253,11 +253,11 @@ with utils.Context("setup", "info"):
 # Training
 utils.success("Training...")
 
-def update_learning_rate(step, args):
+def update_learning_rate(step, lr, args):
     if args.learning_rate_decay > 0 and step % args.learning_rate_decay_delta == 0:
-        return args.learning_rate / (step / args.learning_rate_decay + 1)
+        return lr / (step / args.learning_rate_decay + 1)
     else:
-        return args.learning_rate
+        return lr
 
 with utils.Context("training", "info"):
     was_training = False
@@ -278,12 +278,27 @@ with utils.Context("training", "info"):
                     num_labels= args.num_labels, criterion= args.criterion, num_evaluations= args.num_evaluations, device= args.device)
         workers.append(worker_i)
     
+    # Weights matrix
+    W = topology.FixedMixingMatrix(topology_name= args.topology, n_nodes= args.num_nodes)
+
+    # Convert it to tensor
+    W = torch.tensor(W)
+    
+    # Noise tensor: shape (num_nodes, num_nodes, model_size)
+    V = torch.randn(args.num_nodes, args.num_nodes, model_size) # distribution N(0, 1)
+    V.mul_(args.sigma_cor) # rescaling ==> distribution N (0, sigma_cor^2)
+
+    # Antisymmetry property
+    tools.to_antisymmetric(V)
+    
+    # Initializing learning rate
+    lr = args.learning_rate
 
     # ------------------------------------------------------------------------ #
-    current_step = 1
+    current_step = 0
     while not exit_is_requested() and current_step <= args.num_iter:
         # Update the learning rate
-        lr = update_learning_rate(current_step, args)
+        lr = update_learning_rate(current_step, lr, args)
         
         # Evaluate the model if milestone is reached
         milestone_evaluation = args.evaluation_delta > 0 and current_step % args.evaluation_delta == 0        
@@ -295,20 +310,6 @@ with utils.Context("training", "info"):
                 result_store(fd_eval, [current_step, mean_accuracy])
         
         # Apply the algorithm
-        # Weights matrix
-        W = topology.FixedMixingMatrix(topology_name= args.topology, n_nodes= args.num_nodes)
-
-        # Convert it to tensor
-        W = torch.tensor(W)
-        
-        # Noise tensor: shape (num_nodes, num_nodes, model_size)
-        V = torch.randn(args.num_nodes, args.num_nodes, model_size) # distribution N(0, 1)
-        V.mul_(args.sigma_cor) # rescaling ==> distribution N (0, sigma_cor^2)
-
-        # Antisymmetry property
-        tools.to_antisymmetric(V)
-
-        # Perform updates
         all_parameters = []
 
         # Step t + 1/2

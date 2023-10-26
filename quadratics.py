@@ -18,7 +18,7 @@ if __name__ == "__main__":
         "c_clip":1,
         "num_iter": 1000,
         "num_gossip": 1,
-        "delta": 1e-4
+        "delta": 1e-5
     }
 
     
