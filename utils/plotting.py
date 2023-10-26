@@ -77,41 +77,13 @@ def find_sigma_cor(sigma_cdp, sigma_cor_grid, c_clip, degree_matrix, adjacency_m
     if eps_end > eps_target: # No hope, since the function is monotonous (epsilon non-increasing with sigma_cor)
         return []
     
-    if abs(eps - eps_target) < 1e-4: # found
+    if eps - eps_target < 1e-4 and eps > eps_target: # found
         return [sigma_cor]
     elif eps > eps_target: # increase sigma
         return find_sigma_cor(sigma_cdp, sigma_cor_grid[n // 2 :], c_clip, degree_matrix, adjacency_matrix, eps_target)
     else: #eps < eps_target
         return find_sigma_cor(sigma_cdp, sigma_cor_grid[:n // 2], c_clip, degree_matrix, adjacency_matrix, eps_target)
 
-def eps_iter_search(eps_grid, target_eps, num_iter, delta):
-   # eps_target is increasing with eps per iteration
-    
-    n = len(eps_grid)
-    if n == 0:
-        return []
-    if n == 1: # single element
-        return list(eps_grid)
-    
-    # median
-    eps = eps_grid[n//2]
-    eps_global = dp_account.rdp_compose_convert(num_iter, eps, delta)
-    eps_end = dp_account.rdp_compose_convert(num_iter, eps_grid[-1], delta)
-    eps_start = dp_account.rdp_compose_convert(num_iter, eps_grid[0], delta)
-
-    # No hope test
-    if eps_end < target_eps or eps_start > target_eps:
-        return []
-    
-    # binary search
-    if abs(eps_global - target_eps) < 1e-1:
-       return [eps]
-
-    elif eps_global > target_eps:
-        return eps_iter_search(eps_grid[:n//2], target_eps, num_iter, delta)
-    else:
-        return eps_iter_search(eps_grid[n//2:], target_eps, num_iter, delta)
-    
         
 # Function to find the best hyperparameters (gamma, clip, sigma_cdp, sigma_cor) in terms of loss for a fixed privacy 'target_eps'
 def find_best_params(A, B, num_nodes, num_dim, gamma_grid, c_clip_grid, max_loss, target_eps, delta, num_gossip=1, num_iter= 1000):
@@ -145,14 +117,8 @@ def find_best_params(A, B, num_nodes, num_dim, gamma_grid, c_clip_grid, max_loss
     adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
     degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
 
-    # Epsilon_iter grid
-    eps_grid = np.linspace(target_eps /(10 * num_iter), target_eps / num_iter, 100)
-    target_eps_iter = eps_iter_search(eps_grid, target_eps, num_iter, delta)
-    if len(target_eps_iter) == 0:
-        print(f"Cannot reach target user-privacy with the grid given")
-        return -1
-    else:
-        target_eps_iter = target_eps_iter[0]
+    # Epsilon_iter 
+    target_eps_iter = dp_account.reverse_eps(target_eps, num_iter, delta)
 
     # Initialization
     data = [{"gamma": gamma_grid[0], "c_clip": c_clip_grid[0], "eps_iter": target_eps_iter, "eps": target_eps, "sigma_cdp": -1, "sigma_cor": -1, "loss_cdp":10, "loss_cor": 10}]
@@ -172,7 +138,7 @@ def find_best_params(A, B, num_nodes, num_dim, gamma_grid, c_clip_grid, max_loss
             for sigma_cdp in sigma_cdp_grid:
                 print(f"loop for sigma_cdp {sigma_cdp}")
                 # Looking for sigma_cor for which dp_account < target_eps
-                sigma_cor_grid = np.linspace(1, 100, 1000)
+                sigma_cor_grid = np.linspace(1, 1000, 1000)
                 all_sigma_cor = find_sigma_cor(sigma_cdp, sigma_cor_grid, c_clip, degree_matrix, adjacency_matrix, target_eps_iter)
                 print(f"sigma_cor {all_sigma_cor}")
                 # Now test on the loss condition
@@ -181,7 +147,7 @@ def find_best_params(A, B, num_nodes, num_dim, gamma_grid, c_clip_grid, max_loss
                         errors_centr, _ = optimizers.optimize_decentralized_correlated(X, W_centr, A, B, gamma, sigma_cdp, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)
                         errors_cor, _ = optimizers.optimize_decentralized_correlated(X, W_ring, A, B, gamma, sigma_cdp, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)
 
-                        if errors_centr[-1] <= max_loss and result["loss_cor"].iloc[-1] - np.mean(errors_cor[800:]) > 0:
+                        if np.mean(errors_centr[-200:-1])  <= max_loss and result["loss_cor"].iloc[-1] - np.mean(errors_cor[-200:-1]) > 0:
                             eps_iter = dp_account.rdp_account(sigma_cdp, sigma_cor, c_clip, degree_matrix, adjacency_matrix)
                             new_row = {"gamma": gamma, 
                                        "c_clip": c_clip,

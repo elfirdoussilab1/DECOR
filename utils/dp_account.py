@@ -85,6 +85,11 @@ def rdp_compose_convert(num_iter, rdp_eps, delta):
     """The single-iteration RDP guaranteed is assumed to be of the form (alpha, alpha*rdp_eps)"""
     return num_iter * rdp_eps + 2 * np.sqrt(num_iter * rdp_eps * np.log(1 / delta))
 
+def reverse_eps(eps, num_iter, delta):
+    """ Find eps_iter from eps
+    """
+    return (np.sqrt(np.log(1/delta) + eps) - np.sqrt(np.log(1/delta)))**2 / num_iter
+
 def test_time():
     n, d = 10, 2
     sigmacdp, sigmacor = np.sqrt(1 / n), np.sqrt(100)
