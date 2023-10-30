@@ -6,7 +6,7 @@ import pandas as pd
 
 
 # Function to plot threee losses: LDP, CD-SGD and CDP
-def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, c_clip, num_gossip=1, num_iter = 1500, delta = 1e-5):
+def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, c_clip, num_gossip=1, num_iter = 1500, delta = 1e-5, target_eps= None):
     """
     This function plots the comparison between CDP, CD-SGD and LDP
     Args:
@@ -26,6 +26,9 @@ def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, 
     W_ring = topology.FixedMixingMatrix("ring", num_nodes)
     W_centr = topology.FixedMixingMatrix("centralized", num_nodes)
 
+    # fixing the seed
+    tools.fix_seed(1)
+
     # Privacy 
     adjacency_matrix = np.array(W_ring(0) != 0, dtype=float)
     adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
@@ -34,9 +37,6 @@ def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, 
     # eps_rdp_iteration = rdp_account(sigma, sigma_cor, c_clip, degree_matrix, adjacency_matrix, sparse=False, precision=0.1)
     eps_rdp_iteration = dp_account.rdp_account(sigma_cdp, sigma_cor, c_clip, degree_matrix, adjacency_matrix)
     eps = dp_account.rdp_compose_convert(num_iter, eps_rdp_iteration, delta)
-    
-    # fixing the seed
-    tools.fix_seed(1)
 
     # Learning
     sigma_ldp = c_clip * np.sqrt(2/eps_rdp_iteration)
@@ -50,13 +50,16 @@ def plot_comparison_loss(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, 
     ax.semilogy(errors_ldp, label="LDP")
     ax.set_xlabel('iteration')
     ax.set_ylabel('loss')
-    ax.set_title(f"loss with user-privacy  {eps}")
+    ax.set_title(f"loss with user-privacy  {round(eps)}")
     ax.legend()
     
-    folder_path = './grid_search'
+    if target_eps is not None:
+        folder_path = f'./grid_search_eps_{target_eps}'
+    else:
+        folder_path = './grid_search'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    plt.savefig('grid_search/loss-n_{}-d_{}-lr_{}-clip_{}-sigmacdp_{}-sigmacor_{}-sigmaldp_{}-delta_{}.png'.format(num_nodes, num_dim, gamma, c_clip, round(sigma_cdp, 2) , round(sigma_cor, 2), round(sigma_ldp, 2), delta))
+    plt.savefig(folder_path + '/loss-n_{}-d_{}-lr_{}-clip_{}-sigmacdp_{}-sigmacor_{}-sigmaldp_{}-delta_{}.png'.format(num_nodes, num_dim, gamma, c_clip, round(sigma_cdp, 2) , round(sigma_cor, 2), round(sigma_ldp, 2), delta))
 
 
 # Binary search for 'sigma_cor' in a grid 'sigma_cor_grid' such that the privacy is close close to the target 'eps_taget'
@@ -254,3 +257,7 @@ def plot_comparison_loss_CI(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_co
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
     plt.savefig('comparison_losses_CI/loss-n_{}-d_{}-lr_{}-clip_{}-sigmacdp_{}-sigmacor_{}-sigmaldp_{}-delta_{}.png'.format(num_nodes, num_dim, gamma, c_clip, round(sigma_cdp, 2) , round(sigma_cor, 2), round(sigma_ldp, 2), delta))
+
+# Plotting loss in function of epsilon
+def loss_epsilon(epsilon_grid, loss_1):
+    pass

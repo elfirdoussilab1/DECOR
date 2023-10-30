@@ -108,7 +108,7 @@ if __name__ == "__main__":
 #                                          num_gossip=num_gossip, A=A, B=B, topology=topo_name, **base_params)
 #             errors_ldp = run_quadratics(sigma_cdp=sigma_ldp, sigma_cor=0, lr=lr, clip=c_clip,
 #                                         num_gossip=num_gossip, A=A, B=B, topology=topo_name, **base_params)
-#             errors_central = run_quadratics(sigma_cdp=sigma, sigma_cor=0, lr=lr, clip=c_clip,
+#             errors_central = run_quadratics(sigma_cdp= , sigma_cor=0, lr=lr, clip=c_clip,
 #                                             num_gossip=num_gossip, A=A, B=B, topology='centralized', **base_params)
 #
 #             delta = 1 / (base_params["num_nodes"] ** 1.1)
