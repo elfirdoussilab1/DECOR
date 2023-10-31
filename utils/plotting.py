@@ -4,12 +4,135 @@ import matplotlib.pyplot as plt
 import os, math
 import pandas as pd
 
+# Plot single loss
+def plot_loss(topology_name, method, A, B, gamma, num_nodes, num_dim, sigma, sigma_cor, c_clip, target_eps, num_gossip=1, num_iter = 1000, delta = 1e-4, seeds= [1, 2, 3, 4, 5]):
+    X = np.ones(shape=(num_dim, num_nodes))
+    W = topology.FixedMixingMatrix(topology_name, num_nodes)
+
+    # Storing results
+    errors = []
+    for seed in seeds:
+        tools.fix_seed(seed)
+        errors.append(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
+    eps = target_eps
+    if not math.isclose(sigma_cor, 0): #Corr
+        # Privacy 
+        adjacency_matrix = np.array(W(0) != 0, dtype=float)
+        adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
+        degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
+        eps_iter = dp_account.rdp_account(sigma, sigma_cor, c_clip, degree_matrix, adjacency_matrix)
+        eps = dp_account.rdp_compose_convert(num_iter, eps_iter, delta)
+    
+    fig, ax = plt.subplots()
+    t = np.arange(0, num_iter + 1)
+    ax.semilogy(t, np.mean(errors, axis = 0), label=method)
+    ax.fill_between(t, np.mean(errors, axis = 0) - np.std(errors, axis = 0), np.mean(errors, axis = 0) + np.std(errors, axis = 0), alpha = 0.3)
+    ax.set_xlabel('iteration')
+    ax.set_ylabel('loss')
+    ax.set_title(f"loss with user-privacy  {round(eps)}")
+    ax.legend()
+    
+    folder_path = f"./plot-{topology_name}-{method}"
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    plt.savefig(folder_path + '/loss-topo_{}-method_{}-n_{}-d_{}-lr_{}-clip_{}-sigma_{}-sigmacor_{}-delta_{}.png'.format(topology_name, method, num_nodes, num_dim, gamma, c_clip, round(sigma, 2) , round(sigma_cor, 2), delta))
+
 
 # Function to plot threee losses: LDP, CD-SGD and CDP
-def plot_comparison_loss(topology_name, A, B, num_nodes, num_dim, gammas, c_clips, sigma, sigma_cor, num_gossip=1, num_iter = 1500, delta = 1e-5, target_eps= None):
+def plot_comparison_loss(topology_name, A, B, num_nodes, num_dim, gamma, c_clip, sigma, sigma_cor, num_gossip=1, num_iter = 3000, delta = 1e-5, target_eps= None):
     """
     This function plots the comparison between CDP, CD-SGD and LDP
     Args:
+        topology_name (str): topo name for LDP and Corr
+        A (array): parameter A
+        B (array): parameter B
+        num_nodes (int): number of nodes
+        num_dim (int): number of parameters for each worker
+        gamma (float): learning rate
+        c_clip (float): Gradient clip 
+        sigma (float): standard deviations for Correlated noise
+        sigma_cor (float): standard deviation of correlated noise
+        num_gossip (int): gossip
+        num_iter (int): total number of iterations
+
+    """
+    X = np.ones(shape=(num_dim, num_nodes))
+    W = topology.FixedMixingMatrix(topology_name, num_nodes)
+    W_centr = topology.FixedMixingMatrix("centralized", num_nodes)
+
+    # fixing the seed
+    tools.fix_seed(1)
+
+    # sigma_cdp and sigma_ldp
+    eps_iter = dp_account.reverse_eps(target_eps, num_iter, delta)
+    sigma_ldp = c_clip * np.sqrt(2 / eps_iter)
+    sigma_cdp = sigma_ldp / np.sqrt(num_nodes)
+
+    # Learning
+    errors_centr, _ = optimizers.optimize_decentralized_correlated(X, W_centr, A, B, gamma, sigma_cdp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)
+    errors_cor, _ = optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)
+    errors_ldp, _ = optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma_ldp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)
+
+    fig, ax = plt.subplots()
+    ax.semilogy(errors_centr, label="CDP")
+    ax.semilogy(errors_cor, label="CD-SGD")
+    ax.semilogy(errors_ldp, label="LDP")
+    ax.set_xlabel('iteration')
+    ax.set_ylabel('loss')
+    ax.set_title(f"loss with user-privacy  {target_eps}")
+    ax.legend()
+    
+    folder_path = f'./comparison_losses'
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    plt.savefig(folder_path + '/loss-n_{}-d_{}-sigmacdp_{}-sigmaldp_{}-sigma_{}-sigma_cor_{}-delta_{}-T_{}.png'.format(num_nodes, num_dim, round(sigma_cdp, 2) , round(sigma_ldp, 2), round(sigma, 2), round(sigma_cor, 2), delta, num_iter))
+
+# Plotting comparison of losses with confidence interval
+def plot_comparison_loss_CI(topology_name, A, B, num_nodes, num_dim, gamma, c_clip, sigma, sigma_cor, target_eps, num_gossip=1, num_iter = 3500, delta = 1e-5, seeds= np.arange(1, 6)):
+
+    X = np.ones(shape=(num_dim, num_nodes))
+    W = topology.FixedMixingMatrix(topology_name, num_nodes)
+    W_centr = topology.FixedMixingMatrix("centralized", num_nodes)
+
+    # sigma_cdp and sigma_ldp
+    eps_iter = dp_account.reverse_eps(target_eps, num_iter, delta)
+    sigma_ldp = c_clip * np.sqrt(2 / eps_iter)
+    sigma_cdp = sigma_ldp / np.sqrt(num_nodes)
+
+    # Storing results
+    errors_centr = []
+    errors_cor = []
+    errors_ldp = []
+    for seed in seeds:
+        tools.fix_seed(seed)
+        errors_centr.append(optimizers.optimize_decentralized_correlated(X, W_centr, A, B, gamma, sigma_cdp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
+        errors_cor.append(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
+        errors_ldp.append(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma_ldp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
+    
+    fig, ax = plt.subplots()
+    t = np.arange(0, num_iter + 1)
+    ax.semilogy(t, np.mean(errors_centr, axis = 0), label="CDP")
+    ax.fill_between(t, np.mean(errors_centr, axis = 0) - np.std(errors_centr, axis = 0), np.mean(errors_centr, axis = 0) + np.std(errors_centr, axis = 0), alpha = 0.3)
+    ax.semilogy(t, np.mean(errors_cor, axis = 0), label="CD-SGD")
+    ax.fill_between(t, np.mean(errors_cor, axis = 0) - np.std(errors_cor, axis = 0), np.mean(errors_cor, axis = 0) + np.std(errors_cor, axis = 0), alpha = 0.3)
+    ax.semilogy(t, np.mean(errors_ldp, axis = 0), label="LDP")
+    ax.fill_between(t, np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0), np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0), alpha = 0.3)
+    ax.set_xlabel('iteration')
+    ax.set_ylabel('loss')
+    ax.set_title(f"loss with user-privacy  {round(target_eps)}")
+    ax.legend()
+    
+    folder_path = './comparison_losses_CI'
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    plt.savefig('comparison_losses_CI/loss-n_{}-d_{}-lr_{}-clip_{}-sigmacdp_{}-sigmacor_{}-sigmaldp_{}-delta_{}.png'.format(num_nodes, num_dim, gamma, c_clip, round(sigma_cdp, 2) , round(sigma_cor, 2), round(sigma_ldp, 2), delta))
+
+# Plotting loss in function of epsilon
+def loss_epsilon(topology_name, epsilon_grid, A, B, num_nodes, num_dim, gamma, c_clip, sigmas, sigmas_cor, num_gossip=1, num_iter = 3500, delta = 1e-5, seeds= np.arange(1, 6)):
+    """
+    Plotting Losses in function of epsilons
+    args:  
+        epsilon_grid (list): list of epsilons that we consider
         A (array): parameter A
         B (array): parameter B
         num_nodes (int): number of nodes
@@ -20,47 +143,58 @@ def plot_comparison_loss(topology_name, A, B, num_nodes, num_dim, gammas, c_clip
         sigma_cor (float): standard deviation of correlated noise
         num_gossip (int): gossip
         num_iter (int): total number of iterations
-
     """
     X = np.ones(shape=(num_dim, num_nodes))
-    W_ring = topology.FixedMixingMatrix(topology_name, num_nodes)
+    W = topology.FixedMixingMatrix(topology_name, num_nodes)
     W_centr = topology.FixedMixingMatrix("centralized", num_nodes)
 
-    # fixing the seed
-    tools.fix_seed(1)
+    # List that will contain loss for each epsilon
+    errors_centr = [] # shape (len(seeds), len(epsilon_grid))
+    errors_cor = []
+    errors_ldp = []
+    for seed in seeds:
+        tools.fix_seed(seed)
+        losses_centr = []
+        losses_cor = []
+        losses_ldp = []
+        for i, target_eps in enumerate(epsilon_grid):
+            # sigma_cdp and sigma_ldp
+            eps_iter = dp_account.reverse_eps(target_eps, num_iter, delta)
+            sigma_ldp = c_clip * np.sqrt(2 / eps_iter)
+            sigma_cdp = sigma_ldp / np.sqrt(num_nodes)
 
-    # Privacy 
-    adjacency_matrix = np.array(W_ring(0) != 0, dtype=float)
-    adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
-    degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
-    # sigma_cdp and sigma_ldp
-    eps_iter = dp_account.reverse_eps(target_eps, num_iter, delta)
-    sigma_ldp = c_clips[2] * np.sqrt(2 / eps_iter)
-    sigma_cdp = sigma_ldp / np.sqrt(num_nodes)
+            losses_centr.append(np.mean(optimizers.optimize_decentralized_correlated(X, W_centr, A, B, gamma, sigma_cdp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0][-200:-1]))
+            losses_cor.append(np.mean(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigmas[i], sigmas_cor[i], c_clip, num_gossip=num_gossip, num_iter=num_iter)[0][-200:-1]))
+            losses_ldp.append(np.mean(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma_ldp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0][-200:-1]))
 
-    # Learning
-    errors_centr, _ = optimizers.optimize_decentralized_correlated(X, W_centr, A, B, gammas[0], sigma_cdp, 0, c_clips[0], num_gossip=num_gossip, num_iter=num_iter)
-    errors_cor, _ = optimizers.optimize_decentralized_correlated(X, W_ring, A, B, gammas[1], sigma, sigma_cor, c_clips[1], num_gossip=num_gossip, num_iter=num_iter)
-    errors_ldp, _ = optimizers.optimize_decentralized_correlated(X, W_ring, A, B, gammas[2], sigma_ldp, 0, c_clips[2], num_gossip=num_gossip, num_iter=num_iter)
-
+        # Adding result
+        errors_centr.append(losses_centr)
+        errors_cor.append(losses_cor)
+        errors_ldp.append(losses_ldp)
+    
     fig, ax = plt.subplots()
-    ax.semilogy(errors_centr, label="CDP")
-    ax.semilogy(errors_cor, label="correlated DSGD")
-    ax.semilogy(errors_ldp, label="LDP")
-    ax.set_xlabel('iteration')
+    ax.semilogy(epsilon_grid, np.mean(errors_centr, axis = 0), label="CDP")
+    ax.fill_between(epsilon_grid, np.mean(errors_centr, axis = 0) - np.std(errors_centr, axis = 0), np.mean(errors_centr, axis = 0) + np.std(errors_centr, axis = 0), alpha = 0.3)
+    ax.semilogy(epsilon_grid, np.mean(errors_cor, axis = 0), label=f"CD-SGD with {topology_name}")
+    ax.fill_between(epsilon_grid, np.mean(errors_cor, axis = 0) - np.std(errors_cor, axis = 0), np.mean(errors_cor, axis = 0) + np.std(errors_cor, axis = 0), alpha = 0.3)
+    ax.semilogy(epsilon_grid, np.mean(errors_ldp, axis = 0), label=f"LDP with {topology_name}")
+    ax.fill_between(epsilon_grid, np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0), np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0), alpha = 0.3)
+    ax.set_xlabel('User-Privacy $\epsilon$')
     ax.set_ylabel('loss')
-    ax.set_title(f"loss with user-privacy  {target_eps}")
+    ax.set_title(f"Evolution of L2 Loss with User-privacy ")
     ax.legend()
     
-    if target_eps is not None:
-        folder_path = f'./grid_search_eps_{target_eps}'
-    else:
-        folder_path = './grid_search'
+    folder_path = './loss_epsilon'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    plt.savefig(folder_path + '/loss-n_{}-d_{}-lr_{}-clip_{}-sigmacdp_{}-sigmacor_{}-sigmaldp_{}-delta_{}.png'.format(num_nodes, num_dim, gammas[1], c_clips[1], round(sigma, 2) , round(sigma_cor, 2), round(sigma_ldp, 2), delta))
+    plt.savefig(folder_path + '/loss-n_{}-d_{}-topology_{}-lr_{}-clip_{}-delta_{}-T_{}.png'.format(num_nodes, num_dim, topology_name, gamma, c_clip, delta, num_iter))
 
+# Plotting loss in function of Number of Nodes
+def loss_num_nodes(topology_name, A, B, num_nodes_grid, num_dim, gamma, c_clip, sigma, sigma_cor, target_eps, num_gossip=1, num_iter = 3500, delta = 1e-5, seeds = np.arange(1, 6)):
+    pass
 
+#------------------------------------------------------------------------------------------------------------------------------#
+# Parameter tuning
 # Binary search for 'sigma_cor' in a grid 'sigma_cor_grid' such that the privacy is close close to the target 'eps_taget'
 def find_sigma_cor(sigma_cdp, sigma_cor_grid, c_clip, degree_matrix, adjacency_matrix, eps_target):
     """
@@ -195,7 +329,8 @@ def find_best_params(topology_name, method, A, B, num_nodes, num_dim, gamma_grid
 
     return result
 
-
+#------------------------------------------------------------------------------------------------------------------------------#
+# Old but Gold
 # Function to plot loss in function of sigma_cor
 def plot_sigmacor_loss(A, B, sigma_cdp= 0.1, c_clip=1, lr=0.1, num_gossip=1, num_nodes=256, topo_name="ring"):
     topo = topology.FixedMixingMatrix(topo_name, num_nodes)
@@ -225,104 +360,4 @@ def plot_sigmacor_loss(A, B, sigma_cdp= 0.1, c_clip=1, lr=0.1, num_gossip=1, num
     plt.savefig('plots/loss-sigmacor-n{}-sigmacdp{}-{}.png'.format(num_nodes,sigma_cdp,topo_name))
     # plt.plot()
     # plt.show()
-
-# Plotting comparison of losses with confidence interval
-def plot_comparison_loss_CI(A, B, gamma, num_nodes, num_dim, sigma_cdp, sigma_cor, c_clip, num_gossip=1, num_iter = 1000, delta = 1e-4, seeds= [1, 2, 3, 5]):
-
-    X = np.ones(shape=(num_dim, num_nodes))
-    W_ring = topology.FixedMixingMatrix("ring", num_nodes)
-    W_centr = topology.FixedMixingMatrix("centralized", num_nodes)
-
-    # Privacy 
-    adjacency_matrix = np.array(W_ring(0) != 0, dtype=float)
-    adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
-    degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
-
-    eps_rdp_iteration = dp_account.rdp_account(sigma_cdp, sigma_cor, c_clip, degree_matrix, adjacency_matrix)
-    eps = dp_account.rdp_compose_convert(num_iter, eps_rdp_iteration, delta)
-
-    # Storing results
-    errors_centr = []
-    errors_cor = []
-    errors_ldp = []
-    for seed in seeds:
-        tools.fix_seed(seed)
-        sigma_ldp = c_clip * np.sqrt(2/eps_rdp_iteration)
-        errors_centr.append(optimizers.optimize_decentralized_correlated(X, W_centr, A, B, gamma, sigma_cdp, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
-        errors_cor.append(optimizers.optimize_decentralized_correlated(X, W_ring, A, B, gamma, sigma_cdp, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
-        errors_ldp.append(optimizers.optimize_decentralized_correlated(X, W_ring, A, B, gamma, sigma_ldp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
-    
-    fig, ax = plt.subplots()
-    t = np.arange(0, num_iter + 1)
-    ax.semilogy(t, np.mean(errors_centr, axis = 0), label="CDP")
-    ax.fill_between(t, np.mean(errors_centr, axis = 0) - np.std(errors_centr, axis = 0), np.mean(errors_centr, axis = 0) + np.std(errors_centr, axis = 0), alpha = 0.3)
-    ax.semilogy(t, np.mean(errors_cor, axis = 0), label="correlated DSGD")
-    ax.fill_between(t, np.mean(errors_cor, axis = 0) - np.std(errors_cor, axis = 0), np.mean(errors_cor, axis = 0) + np.std(errors_cor, axis = 0), alpha = 0.3)
-    ax.semilogy(t, np.mean(errors_ldp, axis = 0), label="LDP")
-    ax.fill_between(t, np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0), np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0), alpha = 0.3)
-    ax.set_xlabel('iteration')
-    ax.set_ylabel('loss')
-    ax.set_title(f"loss with user-privacy  {round(eps)}")
-    ax.legend()
-    
-    folder_path = './comparison_losses_CI'
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-    plt.savefig('comparison_losses_CI/loss-n_{}-d_{}-lr_{}-clip_{}-sigmacdp_{}-sigmacor_{}-sigmaldp_{}-delta_{}.png'.format(num_nodes, num_dim, gamma, c_clip, round(sigma_cdp, 2) , round(sigma_cor, 2), round(sigma_ldp, 2), delta))
-
-# Plot single loss
-def plot_loss(topology_name, method, A, B, gamma, num_nodes, num_dim, sigma, sigma_cor, c_clip, target_eps, num_gossip=1, num_iter = 1000, delta = 1e-4, seeds= [1, 2, 3, 4, 5]):
-    X = np.ones(shape=(num_dim, num_nodes))
-    W = topology.FixedMixingMatrix(topology_name, num_nodes)
-
-    # Storing results
-    errors = []
-    for seed in seeds:
-        tools.fix_seed(seed)
-        errors.append(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
-    eps = target_eps
-    if not math.isclose(sigma_cor, 0): #Corr
-        # Privacy 
-        adjacency_matrix = np.array(W(0) != 0, dtype=float)
-        adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
-        degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
-        eps_iter = dp_account.rdp_account(sigma, sigma_cor, c_clip, degree_matrix, adjacency_matrix)
-        eps = dp_account.rdp_compose_convert(num_iter, eps_iter, delta)
-    
-    fig, ax = plt.subplots()
-    t = np.arange(0, num_iter + 1)
-    ax.semilogy(t, np.mean(errors, axis = 0), label=method)
-    ax.fill_between(t, np.mean(errors, axis = 0) - np.std(errors, axis = 0), np.mean(errors, axis = 0) + np.std(errors, axis = 0), alpha = 0.3)
-    ax.set_xlabel('iteration')
-    ax.set_ylabel('loss')
-    ax.set_title(f"loss with user-privacy  {round(eps)}")
-    ax.legend()
-    
-    folder_path = f"./plot-{topology_name}-{method}"
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-    plt.savefig(folder_path + '/loss-topo_{}-method_{}-n_{}-d_{}-lr_{}-clip_{}-sigma_{}-sigmacor_{}-delta_{}.png'.format(topology_name, method, num_nodes, num_dim, gamma, c_clip, round(sigma, 2) , round(sigma_cor, 2), delta))
-
-# Plotting loss in function of epsilon
-def loss_epsilon(topology_name, epsilon_grid, A, B, num_nodes, num_dim, gammas, c_clips, sigma, sigma_cor, num_gossip=1, num_iter = 1500, delta = 1e-5, seeds= np.arange(1, 6)):
-    """
-    Plotting Losses in function of epsilons
-    args:  
-        epsilon_grid (list): list of epsilons that we consider
-        A (array): parameter A
-        B (array): parameter B
-        num_nodes (int): number of nodes
-        num_dim (int): number of parameters for each worker
-        gammas (list of float): learning rates : at index 0 for CDP, 1 for Corr and 2 for LDP
-        c_clips (list float): Gradient clip (same as gammas)
-        sigma (lfloat): standard deviations for Correlated noise
-        sigma_cor (float): standard deviation of correlated noise
-        num_gossip (int): gossip
-        num_iter (int): total number of iterations
-    """
-    X = np.ones(shape=(num_dim, num_nodes))
-    W = topology.FixedMixingMatrix(topology_name, num_nodes)
-    W_centr = topology.FixedMixingMatrix("centralized", num_nodes)
-    
-
     

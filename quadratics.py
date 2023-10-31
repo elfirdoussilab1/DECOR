@@ -11,24 +11,30 @@ if __name__ == "__main__":
     
     params = {
         "topology_name": "ring",
-        "method": "LDP",
         "gamma": 1.7e-3,
         "num_nodes": 64,
         "num_dim": 10,
-        "sigma_cor": 0,
         "c_clip":1.5,
-        "num_iter": 3000,
+        "num_iter": 3500,
         "num_gossip": 1,
-        "delta": 1e-5,
-        "target_eps": 30
+        "delta": 1e-5
     }
 
     
     A, B = generate_functions(params["num_nodes"], params["num_dim"], zeta = 0)
-    eps_iter = dp_account.reverse_eps(params["target_eps"], params["num_iter"], params["delta"])
-    sigma_ldp = params["c_clip"]* np.sqrt(2 / eps_iter)
-    plotting.plot_loss(A = A, B = B, sigma = sigma_ldp, **params)
-
+    epsilon_grid = [10, 15, 20, 25, 30, 40, 50]
+    # Storing sigmas and sigmas_cor for loss in function of epsilon
+    sigmas = []
+    sigmas_cor = []
+    for target_eps in epsilon_grid:
+        filename= f"result_grid_corr_epsilon_{target_eps}.csv"
+        df = pd.read_csv(filename)
+        sigmas.append(df.iloc[-1]["sigma"])
+        sigmas_cor.append(df.iloc[-1]["sigma_cor"])
+        plotting.plot_comparison_loss_CI(A = A, B = B, target_eps = target_eps, sigma = sigmas[-1], sigma_cor = sigmas_cor[-1],**params)
+    
+    plotting.loss_epsilon(epsilon_grid= epsilon_grid, A = A, B = B, sigmas = sigmas, sigmas_cor = sigmas_cor, **params)
+    
     
 # if __name__ == "__main__":
 #     base_params = {
