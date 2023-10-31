@@ -22,8 +22,8 @@ class Worker(object):
             # Model is on GPU and not explicitly restricted to one particular card => enable data parallelism
             self.model = torch.nn.DataParallel(self.model, device_ids = [0, 1])
         self.loss = getattr(torch.nn, loss)()
-        self.model = getattr(models, model)()
-        self.model.to(device)
+        self.model = getattr(models, model)().to(device)
+        
 
         # List of shapes of the model in question, used when unflattening gradients and model parameters
         self.model_shapes = list(param.shape for param in self.model.parameters())
@@ -69,7 +69,7 @@ class Worker(object):
         if self.momentum > 0: 
             self.momentum_gradient.mul_(self.momentum)
             # mom_gr = (1 - beta)*gr + beta*mom_gr
-            self.momentum_gradient.add_(gradient, alpha=1 - self.momentum)
+            self.momentum_gradient.add_((1 - self.momentum) * gradient)
         else:
             self.momentum_gradient = gradient
         if self.gradient_clip is not None:

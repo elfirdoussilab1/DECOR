@@ -10,20 +10,24 @@ from utils import plotting, dp_account
 if __name__ == "__main__":
     
     params = {
-        "gamma": 3.9e-3,
+        "topology_name": "ring",
+        "method": "LDP",
+        "gamma": 1.7e-3,
         "num_nodes": 64,
         "num_dim": 10,
-        "sigma_cdp":0.8,
-        "sigma_cor": 100,
-        "c_clip":1.0,
-        "num_iter": 1500,
+        "sigma_cor": 0,
+        "c_clip":1.5,
+        "num_iter": 3000,
         "num_gossip": 1,
-        "delta": 1e-5
+        "delta": 1e-5,
+        "target_eps": 30
     }
 
     
     A, B = generate_functions(params["num_nodes"], params["num_dim"], zeta = 0)
-    plotting.plot_comparison_loss_CI(A, B, **params)
+    eps_iter = dp_account.reverse_eps(params["target_eps"], params["num_iter"], params["delta"])
+    sigma_ldp = params["c_clip"]* np.sqrt(2 / eps_iter)
+    plotting.plot_loss(A = A, B = B, sigma = sigma_ldp, **params)
 
     
 # if __name__ == "__main__":
