@@ -4,7 +4,7 @@ import random, pathlib
 import torch, torchvision
 import torchvision.transforms as T
 import numpy as np
-from utils import tools
+import misc
 
 # ---------------------------------------------------------------------------- #
 # Collection of default transforms
@@ -94,7 +94,7 @@ class Dataset:
                 samples_distribution = np.random.dirichlet(np.repeat(alpha_dirichlet, num_nodes), size=num_labels)
                 print(f"Proportions for label 1 {samples_distribution[0]}")
                 # get the indices of the samples belonging to each worker (stored in dict worker_samples)
-                worker_samples = tools.draw_indices(samples_distribution, indices_per_label, num_nodes)
+                worker_samples = misc.draw_indices(samples_distribution, indices_per_label, num_nodes)
                 
                 self.dataset_dict = {}
                 for worker_id in range(num_nodes):

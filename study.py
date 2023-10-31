@@ -1,7 +1,7 @@
 # coding: utf-8
-import utils
+import tools
 if __name__ == "__main__":
-	raise utils.UserException(f"Module {__file__!r} is not to be used as the main module")
+	raise tools.UserException(f"Module {__file__!r} is not to be used as the main module")
 
 import atexit
 import matplotlib.pyplot as plt
@@ -108,14 +108,14 @@ except Exception as err:
 		Args:
 			closure Ignored parameter
 		"""
-		utils.warning(f"GTK 3.0 is unavailable (in gtk_run): {err}")
+		tools.warning(f"GTK 3.0 is unavailable (in gtk_run): {err}")
 	def display(data, **kwargs):
 		""" Sink in case GTK cannot be used.
 		Args:
 			data Ignored
 			...	Ignored keyword-arguments
 		"""
-		utils.warning(f"GTK 3.0 is unavailable (in display): {err}")
+		tools.warning(f"GTK 3.0 is unavailable (in display): {err}")
 
 # ---------------------------------------------------------------------------- #
 # Data frame columns selection helper
@@ -161,7 +161,7 @@ class Session:
 			path_results = pathlib.Path(path_results)
 		# Ensure directory exist
 		if not path_results.exists():
-			raise utils.UserException(f"Result directory {str(path_results)} cannot be accessed or does not exist")
+			raise tools.UserException(f"Result directory {str(path_results)} cannot be accessed or does not exist")
 		
 		data_config = data_json = data_study = None
 		# Load evaluation data
@@ -171,7 +171,7 @@ class Session:
 			data_eval = pandas.read_csv(path_eval, sep="\t", index_col=0)
 			data_eval.index.name="Step number"
 		except Exception as err:
-			utils.warning(f"Result directory {str(path_results)}: unable to read evaluation data ({err})")
+			tools.warning(f"Result directory {str(path_results)}: unable to read evaluation data ({err})")
 			data_eval = None
 		# Merge data frames (if both are here)
 		if data_study is not None and data_eval is not None:
@@ -236,12 +236,12 @@ class Session:
 			return
 		# Compute epoch number
 		if self.json is None or "dataset" not in self.json:
-			utils.warning("No valid JSON-formatted configuration, cannot compute the epoch number")
+			tools.warning("No valid JSON-formatted configuration, cannot compute the epoch number")
 			return
 		dataset_name	= self.json["dataset"]
 		training_size = {"mnist": 60000, "fashionmnist": 60000, "cifar10": 50000, "cifar100": 50000}.get(dataset_name, None)
 		if training_size is None:
-			utils.warning(f"Unknown dataset {dataset_name!r}, cannot compute the epoch number")
+			tools.warning(f"Unknown dataset {dataset_name!r}, cannot compute the epoch number")
 			return
 		self.data[column_name] = self.data["Training point count"] / training_size
 		# Return self to enable chaining
@@ -258,7 +258,7 @@ class Session:
 			return
 		# Compute epoch number
 		if self.json is None or "learning_rate" not in self.json:
-			utils.warning("No valid JSON-formatted configuration, cannot compute the learning rate")
+			tools.warning("No valid JSON-formatted configuration, cannot compute the learning rate")
 			return
 		lr_schedule = self.json.get("learning_rate_schedule")
 		if lr_schedule is None:
@@ -270,7 +270,7 @@ class Session:
 			else:
 				self.data[column_name] = lr
 		else:
-			utils.warning("Learning rate schedule not yet supported for schedule generation")
+			tools.warning("Learning rate schedule not yet supported for schedule generation")
 		# Return self to enable chaining
 		return self
 
@@ -407,7 +407,7 @@ class LinePlot:
 		if isinstance(data, Session):
 			data = data.data
 		elif not isinstance(data, pandas.DataFrame):
-			raise RuntimeError(f"Expected a Session or DataFrame for 'data', got a {utils.fullqual(type(data))!r}")
+			raise RuntimeError(f"Expected a Session or DataFrame for 'data', got a {tools.fullqual(type(data))!r}")
 		# Get the x-axis values
 		if self._idx is None:
 			x = data.index.to_numpy()
@@ -493,11 +493,11 @@ class LinePlot:
 		self._ax.tick_params(axis='both', which='major', labelsize=20)
 		if zlabel is not None:
 			if self._tax is None:
-				utils.warning(f"No secondary y-axis found, but its label {zlabel!r} was provided")
+				tools.warning(f"No secondary y-axis found, but its label {zlabel!r} was provided")
 			else:
 				self._tax.set_ylabel(zlabel)
 		elif self._tax is not None:
-			utils.warning(f"No label provided for the secondary y-axis; using label {ylabel!r} from the primary")
+			tools.warning(f"No label provided for the secondary y-axis; using label {ylabel!r} from the primary")
 			self._tax.set_ylabel(ylabel)
 		self._ax.set_xlim(left=xmin, right=xmax)
 		self._ax.set_ylim(bottom=ymin, top=ymax)
@@ -587,7 +587,7 @@ class BoxPlot:
 		if isinstance(data, pandas.Series):
 			data = data.to_numpy()
 		elif not any(isinstance(data, dtype) for dtype in (numpy.ndarray, list, tuple)):
-			raise RuntimeError(f"Expected a Series or an (numpy) array for 'data', got a {utils.fullqual(type(data))!r}")
+			raise RuntimeError(f"Expected a Series or an (numpy) array for 'data', got a {tools.fullqual(type(data))!r}")
 		# Append the data
 		self._data.append(data)
 		self._lbls.append(label)

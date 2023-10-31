@@ -1,7 +1,7 @@
-import torch, random, argparse, sys, os
+import torch, random, argparse, sys, os, pathlib
 import numpy as np
 import pandas as pd
-from utils import study
+import study, tools
 
 
 # Flatten list of tensors. Used for model parameters and gradients
@@ -68,6 +68,15 @@ def draw_indices(samples_distribution, indices_per_label, nb_workers):
             last_sample = samples_for_worker
 
     return worker_samples
+
+def check_make_dir(path):
+    path = pathlib.Path(path)
+    if path.exists():
+        if not path.is_dir():
+            tools.fatal(f"Given path {str(path)!r} must point to a directory")
+    else:
+        path.mkdir(mode=0o755, parents=True)
+    return path
 
 # Function used to parse the command-line and perform checks in the reproduce scripts
 def process_commandline():
@@ -168,15 +177,17 @@ def print_conf(subtree, level=0):
 def to_antisymmetric(tensor):
     # tensor is of shape (n, n, d)
     # Extract the lower triangular part
-    lower_indices= [(i, j) for i in range(1, tensor.shape[0]) for j in range(i)]
+    new_tensor = tensor.clone()
+    lower_indices= [(i, j) for i in range(1, new_tensor.shape[0]) for j in range(i)]
 
     # Upper part indices
-    upper_indices= [(i, j) for i in range( t.shape[0]) for j in range(i + 1, tensor.shape[0])]
+    upper_indices= [(i, j) for i in range(new_tensor.shape[0]) for j in range(i + 1, new_tensor.shape[0])]
 
     # Convert the lists of indices to LongTensors
     indices_1 = torch.LongTensor(lower_indices)
     indices_2 = torch.LongTensor(upper_indices)
 
     # Use indexing and assignment to perform t[l_1] = t[l_2]
-    tensor[indices_1[:, 0], indices_1[:, 1]] = - tensor[indices_2[:, 0], indices_2[:, 1]]
+    new_tensor[indices_1[:, 0], indices_1[:, 1]] = - new_tensor[indices_2[:, 0], indices_2[:, 1]]
+    return new_tensor
     

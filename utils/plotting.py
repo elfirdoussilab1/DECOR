@@ -1,5 +1,6 @@
 import numpy as np
-from utils import topology, dp_account, optimizers, tools
+from . import tools
+from utils import topology, dp_account, optimizers
 import matplotlib.pyplot as plt
 import os, math
 import pandas as pd
@@ -190,7 +191,7 @@ def loss_epsilon(topology_name, epsilon_grid, A, B, num_nodes, num_dim, gamma, c
     plt.savefig(folder_path + '/loss-n_{}-d_{}-topology_{}-lr_{}-clip_{}-delta_{}-T_{}.png'.format(num_nodes, num_dim, topology_name, gamma, c_clip, delta, num_iter))
 
 # Plotting loss in function of Number of Nodes
-def loss_num_nodes(topology_name, A, B, num_nodes_grid, num_dim, gamma, c_clip, sigma, sigma_cor, target_eps, num_gossip=1, num_iter = 3500, delta = 1e-5, seeds = np.arange(1, 6)):
+def loss_num_nodes(topology_name, A, B, num_nodes_grid, num_dim, gamma, c_clip, sigma, sigma_cor, target_eps, num_gossip=1, num_iter = 300, delta = 1e-5, seeds = np.arange(1, 6)):
     pass
 
 #------------------------------------------------------------------------------------------------------------------------------#
