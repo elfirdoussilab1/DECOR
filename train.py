@@ -92,7 +92,7 @@ def process_commandeline():
         help = "Training batch size")
     parser.add_argument("--batch-size-test",
         type = int,
-        default= 100,
+        default= 30,
         help ="Test batch size")
     parser.add_argument("--learning-rate",
         type = float,
@@ -151,7 +151,7 @@ def process_commandeline():
 
 with tools.Context("cmdline", "info"):
     args = process_commandeline()
-    cmdline_config = "Configuration" + tools.print_conf((
+    cmdline_config = "Configuration" + misc.print_conf((
 
         ("Reproducibility", "not enforeced" if args.seed < 0 else (f"enforced (seed {args.seed})")),
         ("Number of nodes", args.num_nodes),
@@ -171,7 +171,7 @@ with tools.Context("cmdline", "info"):
         ("Optimizer", (
             ("Name", "sgd"),
             ("Learning rate", args.learning_rate),
-            ("Momentum", f"{args.momentum_worker}"))),
+            ("Momentum", f"{args.momentum}"))),
         ("Gradient clip", "no" if args.gradient_clip is None else f"{args.gradient_clip}"),
         ("Extreme Heterogeneity", "yes" if args.hetero else "no"),
         ("Dirichlet distribution", "alpha = " + str(args.dirichlet_alpha) if args.dirichlet_alpha is not None else "no"),
@@ -285,17 +285,17 @@ with tools.Context("training", "info"):
         workers.append(worker_i)
     
     # Weights matrix
-    W = topology.FixedMixingMatrix(topology_name= args.topology_name, n_nodes= args.num_nodes)
+    W = topology.FixedMixingMatrix(topology_name= args.topology_name, n_nodes= args.num_nodes)(0)
 
     # Convert it to tensor
-    W = torch.tensor(W)
+    W = torch.tensor(W, dtype= torch.float).to(args.device)
     
     # Noise tensor: shape (num_nodes, num_nodes, model_size)
     V = torch.randn(args.num_nodes, args.num_nodes, model_size) # distribution N(0, 1)
     V.mul_(args.sigma_cor) # rescaling ==> distribution N (0, sigma_cor^2)
 
     # Antisymmetry property
-    V = tools.to_antisymmetric(V)
+    V = misc.to_antisymmetric(V).to(args.device)
     
     # Initializing learning rate
     lr = args.learning_rate
@@ -326,7 +326,7 @@ with tools.Context("training", "info"):
             workers[i].compute_momentum()
             all_parameters.append(workers[i].grad_descent(V[i], lr = lr, weight_decay = args.weight_decay))
         
-        all_parameters = torch.tensor(all_parameters)
+        all_parameters = torch.stack(all_parameters).to(args.device)
         
         # Step t + 1
         for i in range(args.num_nodes):

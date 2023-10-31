@@ -32,7 +32,7 @@ result_directory = "results-data-" + dataset
 plot_directory = "results-plot-" + dataset
 
 with tools.Context("cmdline", "info"):
-    args = tools.process_commandline()
+    args = misc.process_commandline()
     # Make the result directories
     args.result_directory = misc.check_make_dir(result_directory)
     args.plot_directory = misc.check_make_dir(plot_directory)
@@ -69,7 +69,7 @@ params = {
 # Hyperparameters to test
 models = [("cnn_mnist", 0.75)]
 topologies = [("centralized", "cdp") ,("ring", "corr"), ("ring", "ldp")]
-alphas = [0.1]
+alphas = [10]
 epsilons = [50]
 
 
@@ -167,7 +167,7 @@ with tools.Context("mnist", "info"):
                     legend = []
                     for topology_name, method in topologies:
                         name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}-eps_{target_eps}"
-                        values[topology_name, method] = tools.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
+                        values[topology_name, method] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
                         plot.include(values[topology_name, method][0], "Accuracy", errs="-err", lalp=0.8)
                         legend.append(f"{topology_name} + {method}")
 

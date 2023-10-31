@@ -27,7 +27,7 @@ import threading
 import time
 import traceback
 
-import utils
+import tools
 
 # ---------------------------------------------------------------------------- #
 # Unavailable user exception class
@@ -53,9 +53,9 @@ def fatal_unavailable(*args, **kwargs):
   Args:
     ... Forward (keyword-)arguments to 'make_unavailable_exception_text'
   """
-  utils.fatal(make_unavailable_exception_text(*args, **kwargs))
+  tools.fatal(make_unavailable_exception_text(*args, **kwargs))
 
-class UnavailableException(utils.UserException):
+class UnavailableException(tools.UserException):
   """ Exception due to missing entry in a dictionary, where the entry is controlled by the user.
   """
 
@@ -165,7 +165,7 @@ class ClassRegister:
         cause += "no registered " + self.__denoms[0]
       else:
         cause += "available " + self.__denoms[1] + ": '" + ("', '").join(self.__register.keys()) + "'"
-      raise utils.UserException(cause)
+      raise tools.UserException(cause)
     # Instantiation
     return self.__register[name](*args, **kwargs)
 
@@ -208,10 +208,10 @@ def parse_keyval(list_keyval, defaults={}):
   for entry in list_keyval:
     pos = entry.find(sep)
     if pos < 0:
-      raise utils.UserException("Expected list of " + repr("<key>:<value>") + ", got " + repr(entry) + " as one entry")
+      raise tools.UserException("Expected list of " + repr("<key>:<value>") + ", got " + repr(entry) + " as one entry")
     key = entry[:pos]
     if key in parsed:
-      raise utils.UserException("Key " + repr(key) + " had already been specified with value " + repr(parsed[key]))
+      raise tools.UserException("Key " + repr(key) + " had already been specified with value " + repr(parsed[key]))
     val = entry[pos + len(sep):]
     # Guess/assert type constructibility
     if key in defaults:
@@ -222,7 +222,7 @@ def parse_keyval(list_keyval, defaults={}):
         else:
           val = cls(val)
       except Exception:
-        raise utils.UserException("Required key " + repr(key) + " expected a value of type " + repr(getattr(type(defaults[key]), "__name__", "<unknown>")))
+        raise tools.UserException("Required key " + repr(key) + " expected a value of type " + repr(getattr(type(defaults[key]), "__name__", "<unknown>")))
     else:
       val = parse_keyval_auto_convert(val)
     # Bind (converted) value to associated key
@@ -242,7 +242,7 @@ def fullqual(obj):
   Args:
     obj Object to "qualify"
   Returns:
-    "Qualification", e.g.: 'utils.misc.fullqual' or 'instance of pathlib.Path'
+    "Qualification", e.g.: 'tools.misc.fullqual' or 'instance of pathlib.Path'
   """
   # Prelude
   if isinstance(obj, type):
@@ -304,7 +304,7 @@ onetime_register = dict()
 # ---------------------------------------------------------------------------- #
 # Plain context augmented with simple execution time measurement
 
-class TimedContext(utils.Context):
+class TimedContext(tools.Context):
   """ Timed context class, that print the measure runtime.
   """
 
@@ -338,7 +338,7 @@ class TimedContext(utils.Context):
     else:
       unit = "s"
     # Format and print string
-    utils.trace(f"Execution time: {runtime:.3g} {unit}")
+    tools.trace(f"Execution time: {runtime:.3g} {unit}")
     # Forward call
     super().__exit__(*args, **kwargs)
 
@@ -359,7 +359,7 @@ def interactive(glbs=None, lcls=None, prompt=">>> ", cprmpt="... "):
   except Exception:
     caller = None
     if glbs is None:
-      utils.warning("Unable to recover caller's frame, locals and globals", context="interactive")
+      tools.warning("Unable to recover caller's frame, locals and globals", context="interactive")
   if glbs is None:
     if caller is not None and hasattr(caller, "f_globals"):
       glbs = caller.f_globals
@@ -406,7 +406,7 @@ def interactive(glbs=None, lcls=None, prompt=">>> ", cprmpt="... "):
         else: # Multi-line statement is complete
           exec(command, glbs, lcls)
     except Exception:
-      with utils.Context("uncaught", "error"):
+      with tools.Context("uncaught", "error"):
         traceback.print_exc()
     command = ""
     statement = False

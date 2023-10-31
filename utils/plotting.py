@@ -1,5 +1,5 @@
 import numpy as np
-from . import tools
+import misc
 from utils import topology, dp_account, optimizers
 import matplotlib.pyplot as plt
 import os, math
@@ -13,7 +13,7 @@ def plot_loss(topology_name, method, A, B, gamma, num_nodes, num_dim, sigma, sig
     # Storing results
     errors = []
     for seed in seeds:
-        tools.fix_seed(seed)
+        misc.fix_seed(seed)
         errors.append(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
     eps = target_eps
     if not math.isclose(sigma_cor, 0): #Corr
@@ -62,7 +62,7 @@ def plot_comparison_loss(topology_name, A, B, num_nodes, num_dim, gamma, c_clip,
     W_centr = topology.FixedMixingMatrix("centralized", num_nodes)
 
     # fixing the seed
-    tools.fix_seed(1)
+    misc.fix_seed(1)
 
     # sigma_cdp and sigma_ldp
     eps_iter = dp_account.reverse_eps(target_eps, num_iter, delta)
@@ -105,7 +105,7 @@ def plot_comparison_loss_CI(topology_name, A, B, num_nodes, num_dim, gamma, c_cl
     errors_cor = []
     errors_ldp = []
     for seed in seeds:
-        tools.fix_seed(seed)
+        misc.fix_seed(seed)
         errors_centr.append(optimizers.optimize_decentralized_correlated(X, W_centr, A, B, gamma, sigma_cdp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
         errors_cor.append(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
         errors_ldp.append(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma_ldp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
@@ -154,7 +154,7 @@ def loss_epsilon(topology_name, epsilon_grid, A, B, num_nodes, num_dim, gamma, c
     errors_cor = []
     errors_ldp = []
     for seed in seeds:
-        tools.fix_seed(seed)
+        misc.fix_seed(seed)
         losses_centr = []
         losses_cor = []
         losses_ldp = []
@@ -247,7 +247,7 @@ def find_best_params(topology_name, method, A, B, num_nodes, num_dim, gamma_grid
             result (Pandas.DataFrame)
 
     """
-    tools.fix_seed(1) # for reproducibility
+    misc.fix_seed(1) # for reproducibility
     X = np.ones(shape=(num_dim, num_nodes))
     W = topology.FixedMixingMatrix(topology_name, num_nodes)
 

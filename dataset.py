@@ -37,7 +37,7 @@ dataset_names = {
 # Dataset wrapper class
 class Dataset:
 
-    def __init__(self, dataset_name, num_nodes, train=False, gradient_descent= False, num_labels= None, heterogeneity = False,
+    def __init__(self, dataset_name, num_nodes = None, train=False, gradient_descent= False, num_labels= None, heterogeneity = False,
                  alpha_dirichlet=None, batch_size=None):
         
         """ Dataset builder constructor.

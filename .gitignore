@@ -1,4 +1,21 @@
 *.DS_Store
 __pycache__
 .ipynb_checkpoints
+datasets
+
+# Ignore every file
+*
+!*/
+
+# Excepted
+!*.sh
+!*.py
+!*.hpp
+!*.cu
+!*.cpp
+!*.md
+!*.tex
+!*.deps
+!*.pdf
+!.placeholder
 

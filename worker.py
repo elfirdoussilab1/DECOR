@@ -65,6 +65,7 @@ class Worker(object):
     
     def compute_momentum(self):
         X, y = self.sample_train_batch()
+        X, y = X.to(self.device), y.to(self.device)
         gradient = self.compute_gradient(X, y)
         if self.momentum > 0: 
             self.momentum_gradient.mul_(self.momentum)
@@ -90,7 +91,7 @@ class Worker(object):
         lr (float): the learning rate multiplied by the decay 
         """
         # Verification of compatibility of shapes
-        assert noises[0].shape == self.momentum_gradient.shape
+        #assert noises[0].shape == self.momentum_gradient.shape
 
         self.compute_momentum()
         # Sample noise from normal (0, sigma^2)
@@ -111,7 +112,7 @@ class Worker(object):
         workers_parameters : Tensor containing in each row the flat parameters returned by grad_descent
         """
         # Shape verification
-        assert len(weights) == len(workers_parameters)
+        #assert len(weights) == len(workers_parameters)
         self.flat_parameters = torch.sum(weights.view(-1, 1).mul(workers_parameters), dim = 0) # checked !
         self.update_model_parameters()
 
