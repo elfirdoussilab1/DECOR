@@ -61,15 +61,15 @@ params = {
     "gradient-clip": 2,
     "num-iter": 1000,
     "num-nodes": 16,
-    "momentum": 0.9,
+    "momentum": 0.,
     "num-labels": 10,
     "delta": 1e-5
     }
 
 # Hyperparameters to test
 models = [("cnn_mnist", 0.75)]
-topologies = [("centralized", "cdp") ,("ring", "corr"), ("ring", "ldp")]
-alphas = [10]
+topologies = [("centralized", "cdp")]# ,("ring", "corr"), ("ring", "ldp")]
+alphas = [0.1]
 epsilons = [50]
 
 
@@ -104,7 +104,8 @@ for alpha in alphas:
 
                     # sigma_cdp and sigma_ldp
                     sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
-                    sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
+                    #sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
+                    sigma_cdp = 0
 
                     if "corr" in method: # CD-SGD
                         # Determining the couples (sigma, sigma_cor) that can be considered
@@ -127,9 +128,9 @@ for alpha in alphas:
                         filename = f'result_grid_corr_epsilon_{target_eps}.csv'
                         sigmas_df.to_csv(filename)
 
-                        # Taking the values on the last row (correspond to the least sigma_corr)
-                        params["sigma"] = sigmas_df.iloc[-1]["sigma"]
-                        params["sigma-cor"]= sigmas_df.iloc[-1]["sigma-cor"]
+                        # Taking the values on the first row (correspond to the least sigma)
+                        params["sigma"] = sigmas_df.iloc[0]["sigma"]
+                        params["sigma-cor"]= sigmas_df.iloc[0]["sigma-cor"]
                         jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}-eps_{target_eps}", make_command(params))
                     elif "ldp" in method: # LDP
                         params["sigma-cor"] = 0
@@ -172,6 +173,6 @@ with tools.Context("mnist", "info"):
                         legend.append(f"{topology_name} + {method}")
 
                     #JS: plot every time graph in terms of the maximum number of steps
-                    plot_name = f"{dataset} _model= {model} _lr= {lr}_alpha={alpha}_eps={target_eps}"
+                    plot_name = f"{dataset} _model= {model} _lr= {lr}_momentum={params['momentum']}_alpha={alpha}_eps={target_eps}"
                     plot.finalize(None, "Step number", "Test accuracy", xmin=0, xmax=params['num-iter'], ymin=0, ymax=1, legend=legend)
                     plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)

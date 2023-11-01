@@ -183,6 +183,7 @@ def loss_epsilon(topology_name, epsilon_grid, A, B, num_nodes, num_dim, gamma, c
     ax.set_xlabel('User-Privacy $\epsilon$')
     ax.set_ylabel('loss')
     ax.set_title(f"Evolution of L2 Loss with User-privacy ")
+    ax.grid()
     ax.legend()
     
     folder_path = './loss_epsilon'

@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     
     A, B = generate_functions(params["num_nodes"], params["num_dim"], zeta = 0)
-    epsilon_grid = [10, 15, 20, 25, 30, 40, 50]
+    epsilon_grid = [1, 3, 5, 7, 10, 15, 20, 25, 30, 40]
     # Storing sigmas and sigmas_cor for loss in function of epsilon
     sigmas = []
     sigmas_cor = []

@@ -112,7 +112,7 @@ class Worker(object):
         workers_parameters : Tensor containing in each row the flat parameters returned by grad_descent
         """
         # Shape verification
-        #assert len(weights) == len(workers_parameters)
+        assert len(weights) == len(workers_parameters)
         self.flat_parameters = torch.sum(weights.view(-1, 1).mul(workers_parameters), dim = 0) # checked !
         self.update_model_parameters()
 

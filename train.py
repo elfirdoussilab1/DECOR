@@ -92,7 +92,7 @@ def process_commandeline():
         help = "Training batch size")
     parser.add_argument("--batch-size-test",
         type = int,
-        default= 30,
+        default= 100,
         help ="Test batch size")
     parser.add_argument("--learning-rate",
         type = float,
@@ -108,7 +108,7 @@ def process_commandeline():
         help = "How many steps between two learning rate updates")
     parser.add_argument("--momentum",
         type = float,
-        default= 0.9,
+        default= 0.,
         help ="Momentum")
     parser.add_argument("--weight-decay",
         type = float,
@@ -252,7 +252,7 @@ with tools.Context("setup", "info"):
         # Make evaluation file
         if args.evaluation_delta > 0:
             result_make("eval", ["Step number", "Mean-accuracy"])
-        result_make("track", ["Step number", "topology", "method", "sigma", "sigma_cor"])
+        result_make("track", ["Step number", "lr", "topology", "method", "sigma", "sigma_cor"])
 
 # ---------------------------------------------------------------------------- #
 # Training
@@ -260,20 +260,15 @@ tools.success("Training...")
 
 def update_learning_rate(step, lr, args):
     if args.learning_rate_decay > 0 and step % args.learning_rate_decay_delta == 0:
-        return lr / (step / args.learning_rate_decay + 1)
+        return args.learning_rate / (step / args.learning_rate_decay + 1)
     else:
         return lr
 
 with tools.Context("training", "info"):
-    was_training = False
+
     fd_eval = result_get("eval")
     fd_track = result_get("track")
 
-    # Agree on the initial parameters
-    model = getattr(models, args.model)()
-    model = model.to(args.device)
-    initial_parameters = misc.flatten(model.parameters()).to(args.device)
-    model_size = len(initial_parameters)
 
     # Initialize Workers
     workers = []
@@ -289,35 +284,38 @@ with tools.Context("training", "info"):
 
     # Convert it to tensor
     W = torch.tensor(W, dtype= torch.float).to(args.device)
+    print(W[0])
     
     # Noise tensor: shape (num_nodes, num_nodes, model_size)
-    V = torch.randn(args.num_nodes, args.num_nodes, model_size) # distribution N(0, 1)
+    V = torch.randn(args.num_nodes, args.num_nodes, workers[0].model_size) # distribution N(0, 1)
     V.mul_(args.sigma_cor) # rescaling ==> distribution N (0, sigma_cor^2)
 
     # Antisymmetry property
     V = misc.to_antisymmetric(V).to(args.device)
-    
+    print(V)
     # Initializing learning rate
     lr = args.learning_rate
 
     # ------------------------------------------------------------------------ #
     current_step = 0
     while not exit_is_requested() and current_step <= args.num_iter:
-        # Update the learning rate
-        lr = update_learning_rate(current_step, lr, args)
         
         # Evaluate the model if milestone is reached
         milestone_evaluation = args.evaluation_delta > 0 and current_step % args.evaluation_delta == 0        
         if milestone_evaluation:
             mean_accuracy = np.mean([workers[i].compute_accuracy() for i in range(args.num_nodes)])
+            #mean_accuracy = workers[0].compute_accuracy()
             print(f"Mean Accuracy (step {current_step})... {mean_accuracy * 100.:.2f}%.")
             # Store the evaluation result
             if fd_eval is not None:
                 result_store(fd_eval, [current_step, mean_accuracy])
             
             if fd_track is not None:
-                result_store(fd_track, [current_step, args.topology_name, args.method, args.sigma, args.sigma_cor])
+                result_store(fd_track, [current_step, lr, args.topology_name, args.method, args.sigma, args.sigma_cor])
         
+        # Update the learning rate
+        lr = update_learning_rate(current_step, lr, args)
+
         # Apply the algorithm
         all_parameters = []
 
@@ -334,6 +332,6 @@ with tools.Context("training", "info"):
 
         current_step += 1
 
-tools.sucess("Finished...")
+tools.success("Finished...")
 
 

@@ -43,7 +43,7 @@ if __name__ == "__main__":
         }
     
     A, B = generate_functions(params_cdp["num_nodes"], params_cdp["num_dim"], zeta = 0)
-    eps_targets = [10, 15, 20, 25, 30, 40, 50]
+    eps_targets = [1, 3, 5, 7, 10, 15, 20, 25, 30, 40]
     # LDP
     for eps_target in eps_targets:
         result = plotting.find_best_params(A = A, B = B, target_eps= eps_target, **params_ldp)
