@@ -6,13 +6,13 @@ from utils import plotting
 
 if __name__ == "__main__":
     params = {
-            "topology_name": "grid",
+            "topology_name": "centralized",
             "method": "Corr",
             "gamma_grid": [1.7e-3],
             "num_nodes": 64,
             "num_dim": 10,
             "c_clip_grid":[1.5],
-            "max_loss": 1e-2,
+            "max_loss": 100,
             "num_iter": 2500,
             "num_gossip": 1,
             "delta": 1e-5

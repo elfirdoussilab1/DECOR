@@ -9,12 +9,12 @@ from utils import plotting, dp_account
 if __name__ == "__main__":
     
     params = {
-        "topology_name": "ring",
+        "topology_names": ["centralized", "ring", "grid"],
         "gamma": 1.7e-3,
         "num_nodes": 64,
         "num_dim": 10,
         "c_clip":1.5,
-        "num_iter": 3500,
+        "num_iter": 2500,
         "num_gossip": 1,
         "delta": 1e-5
     }
@@ -23,14 +23,15 @@ if __name__ == "__main__":
     A, B = generate_functions(params["num_nodes"], params["num_dim"], zeta = 0)
     epsilon_grid = [1, 3, 5, 7, 10, 15, 20, 25, 30, 40]
     # Storing sigmas and sigmas_cor for loss in function of epsilon
-    sigmas = []
-    sigmas_cor = []
-    for target_eps in epsilon_grid:
-        filename= f"result_grid_corr_epsilon_{target_eps}.csv"
-        df = pd.read_csv(filename)
-        sigmas.append(df.iloc[-1]["sigma"])
-        sigmas_cor.append(df.iloc[-1]["sigma_cor"])
-        plotting.plot_comparison_loss_CI(A = A, B = B, target_eps = target_eps, sigma = sigmas[-1], sigma_cor = sigmas_cor[-1],**params)
+    sigmas = np.zeros((len(params['topology_names']), len(epsilon_grid))) 
+    sigmas_cor = np.zeros((len(params['topology_names']), len(epsilon_grid))) 
+    for j, target_eps in enumerate(epsilon_grid):
+        for i, topology_name in enumerate(params['topology_names']):
+            filename= f"result_gridsearch_{params['topology_names'][i]}_Corr_epsilon_{target_eps}.csv"
+            df = pd.read_csv(filename)
+            sigmas[i, j] = df.iloc[-1]["sigma"]
+            sigmas_cor[i, j] = df.iloc[-1]["sigma_cor"]
+        #plotting.plot_comparison_loss_CI(A = A, B = B, target_eps = target_eps, sigmas = sigmas[:,j], sigmas_cor = sigmas_cor[:,j],**params)
     
     plotting.loss_epsilon(epsilon_grid= epsilon_grid, A = A, B = B, sigmas = sigmas, sigmas_cor = sigmas_cor, **params)
     
