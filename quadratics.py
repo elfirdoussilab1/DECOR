@@ -11,10 +11,10 @@ if __name__ == "__main__":
     params = {
         "topology_names": ["centralized", "ring", "grid"],
         "gamma": 1.7e-3,
-        "num_nodes": 64,
+        "num_nodes": 16,
         "num_dim": 10,
         "c_clip":1.5,
-        "num_iter": 2500,
+        "num_iter": 3500,
         "num_gossip": 1,
         "delta": 1e-5
     }
@@ -31,7 +31,8 @@ if __name__ == "__main__":
             df = pd.read_csv(filename)
             sigmas[i, j] = df.iloc[-1]["sigma"]
             sigmas_cor[i, j] = df.iloc[-1]["sigma_cor"]
-        #plotting.plot_comparison_loss_CI(A = A, B = B, target_eps = target_eps, sigmas = sigmas[:,j], sigmas_cor = sigmas_cor[:,j],**params)
+            print("done")
+        plotting.plot_comparison_loss_CI(A = A, B = B, target_eps = target_eps, sigmas = sigmas[:,j], sigmas_cor = sigmas_cor[:,j],**params)
     
     plotting.loss_epsilon(epsilon_grid= epsilon_grid, A = A, B = B, sigmas = sigmas, sigmas_cor = sigmas_cor, **params)
     
