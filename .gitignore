@@ -18,4 +18,5 @@ datasets
 !*.deps
 !*.pdf
 !.placeholder
+!*.png
 
