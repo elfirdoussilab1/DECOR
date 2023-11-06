@@ -19,4 +19,4 @@ datasets
 !*.pdf
 !.placeholder
 !*.png
-
+!*.csv
