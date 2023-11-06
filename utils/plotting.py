@@ -139,7 +139,7 @@ def plot_comparison_loss_CI(topology_names, A, B, num_nodes, num_dim, gamma, c_c
     ax.set_ylabel('loss')
     ax.set_title(f"loss with user-privacy  {round(target_eps)}")
     ax.grid(True)
-    ax.legend(loc='upper left')
+    ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
     
     folder_path = './comparison_losses_CI'
     if not os.path.exists(folder_path):
@@ -224,7 +224,7 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
     ax.set_ylabel('error')
     ax.set_title(f"Evolution of L2 Loss with User-privacy ")
     ax.grid(True)
-    ax.legend(loc='upper left')
+    ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
     
     folder_path = './loss_epsilon'
     if not os.path.exists(folder_path):
