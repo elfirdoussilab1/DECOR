@@ -62,7 +62,7 @@ def optimize_decentralized_correlated(X, topology, A, B, gamma, sigma, sigma_cor
     for i in range(0, num_iter):
         W = topology(i)
 
-        W = W ** num_gossip
+        W = np.linalg.matrix_power(W, num_gossip)
         AXmB = (np.einsum("ijk,ik->ij", A, X_iter.T) - B)  # shape (num_nodes, num_dim)
         grad = np.einsum("ijk,ij->ik", A, AXmB)  # shape (num_nodes, num_dim)
         clip_matrix = np.diag(np.minimum(1, c_clip / np.linalg.norm(grad, axis=1)))
