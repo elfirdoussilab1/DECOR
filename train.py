@@ -321,7 +321,6 @@ with tools.Context("training", "info"):
 
         # Step t + 1/2
         for i in range(args.num_nodes):
-            workers[i].compute_momentum()
             all_parameters.append(workers[i].grad_descent(V[i], lr = lr, weight_decay = args.weight_decay))
         
         all_parameters = torch.stack(all_parameters).to(args.device)

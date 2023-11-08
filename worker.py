@@ -31,7 +31,7 @@ class Worker(object):
         self.model_size = len(self.flat_parameters)
 
         self.momentum = momentum
-        self.momentum_gradient = torch.zeros(self.model_size, device=self.device)
+        self.gradient = torch.zeros(self.model_size, device=self.device)
         # clip to avoid vanishing and exploiding gradients (or momentums)
         self.gradient_clip = gradient_clip
         
@@ -62,19 +62,6 @@ class Worker(object):
         loss.backward()
         flattened_grad = [param.grad for param in self.model.parameters()]
         return misc.flatten(flattened_grad)
-    
-    def compute_momentum(self):
-        X, y = self.sample_train_batch()
-        X, y = X.to(self.device), y.to(self.device)
-        gradient = self.compute_gradient(X, y)
-        if self.momentum > 0: 
-            self.momentum_gradient.mul_(self.momentum)
-            # mom_gr = (1 - beta)*gr + beta*mom_gr
-            self.momentum_gradient.add_((1 - self.momentum) * gradient)
-        else:
-            self.momentum_gradient = gradient
-        if self.gradient_clip is not None:
-            self.momentum_gradient = misc.clip_vector(self.momentum_gradient, self.gradient_clip)
         
     def update_model_parameters(self):
         """
@@ -91,17 +78,31 @@ class Worker(object):
         lr (float): the learning rate multiplied by the decay 
         """
         # Verification of compatibility of shapes
-        #assert noises[0].shape == self.momentum_gradient.shape
-
-        self.compute_momentum()
+        assert noises[0].shape == self.gradient.shape
+        X, y = self.sample_train_batch()
+        X, y = X.to(self.device), y.to(self.device)
+        gradient = self.compute_gradient(X, y)
+        
+        # Clipping
+        if self.gradient_clip is not None:
+            gradient = misc.clip_vector(gradient, self.gradient_clip)
+        
         # Sample noise from normal (0, sigma^2)
-        cdp_noise = torch.normal(mean = torch.zeros_like(self.momentum_gradient), std = self.sigma**2 )
-        self.momentum_gradient.add_(cdp_noise)
-        self.momentum_gradient.add_(torch.sum(noises, dim = 0))
+        cdp_noise = torch.normal(mean = torch.zeros_like(self.gradient), std = self.sigma)
+        gradient.add_(cdp_noise)
+        gradient.add_(torch.sum(noises, dim = 0))
+        
+        # Momentum
+        if self.momentum > 0: 
+            self.gradient.mul_(self.momentum)
+            # mom_gr = (1 - beta)*gr + beta*mom_gr
+            self.gradient.add_((1 - self.momentum) * gradient)
+        else:
+            self.gradient = gradient
         
         # Update parameters
         self.flat_parameters.mul_(1 - lr * weight_decay) 
-        self.flat_parameters.add_(-lr * self.momentum_gradient)
+        self.flat_parameters.add_(-lr * self.gradient)
         self.update_model_parameters()
         return self.flat_parameters
     
