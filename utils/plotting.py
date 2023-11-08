@@ -73,7 +73,7 @@ def plot_comparison_loss(topology_name, A, B, num_nodes, num_dim, gamma, c_clip,
     sigma_ldp = c_clip * np.sqrt(2 / eps_iter)
     sigma_cdp = sigma_ldp / np.sqrt(num_nodes)
 
-    # Learning
+    # Learning: change it after this n = 16 !
     errors_centr, _ = optimizers.optimize_decentralized_correlated(X, W_centr, A, B, gamma, sigma_cdp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)
     errors_cor, _ = optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma, sigma_cor, c_clip, num_gossip=num_gossip, num_iter=num_iter)
     errors_ldp, _ = optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma_ldp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)
@@ -81,7 +81,7 @@ def plot_comparison_loss(topology_name, A, B, num_nodes, num_dim, gamma, c_clip,
     plt.style.use('ggplot')
     fig, ax = plt.subplots()
     ax.semilogy(errors_centr, label="CDP", color='tab:purple', linestyle = 'solid')
-    ax.semilogy(errors_cor, label=f"CD-SGD with {topology_name}", color = 'tab:green', linestyle = topo_to_style[topology_name], marker = topo_to_marker[topology_name])
+    ax.semilogy(errors_cor, label=f"CD-SGD with {topology_name}", color = 'tab:green', linestyle = topo_to_style[topology_name])
     ax.semilogy(errors_ldp, label="LDP", color = 'tab:orange', linestyle = topo_to_style[topology_name])
     ax.set_xlabel('iteration')
     ax.set_ylabel('loss')

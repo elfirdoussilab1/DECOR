@@ -10,10 +10,10 @@ if __name__ == "__main__":
     
     params = {
         "topology_names": ["centralized", "ring", "grid"],
-        "gamma": 1.7e-3,
+        "gamma": 5.18e-4,
         "num_nodes": 16,
         "num_dim": 10,
-        "c_clip":1.5,
+        "c_clip":3.5,
         "num_iter": 3500,
         "num_gossip": 1,
         "delta": 1e-5
