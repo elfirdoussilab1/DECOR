@@ -7,10 +7,11 @@ from utils import plotting
 if __name__ == "__main__":
     params = {
             #"topology_name": ["centralized", "grid", "ring"],
-            "gamma_grid": np.logspace(-5, -1, 10),
+            "method": "Corr",
+            "gamma_grid": 1.7e-3,
             "num_nodes": 16,
             "num_dim": 10,
-            "c_clip_grid":np.linspace(1, 4, 7),
+            "c_clip_grid":1.,
             "max_loss": 10,
             "num_iter": 2500,
             "num_gossip": 1,
@@ -43,30 +44,28 @@ if __name__ == "__main__":
         }
     """  
     A, B = generate_functions(params["num_nodes"], params["num_dim"], zeta = 0)
-    eps_targets = [30]
+    eps_targets = [1, 3, 5, 7, 10, 15, 20, 25, 40]
     
-    topologies = ["centralized"]
-    methods = ["CDP", "LDP", "Corr"]
+    topologies = ["centralized", "grid", "ring"]
     for topology_name in topologies:
-        for method in methods:
-            for eps_target in eps_targets:
-                result = plotting.find_best_params(A = A, B = B, target_eps= eps_target, topology_name= topology_name, method= method, **params)
-                filename= f"result_gridsearch_{topology_name}_{method}_epsilon_{eps_target}.csv"
-                result.to_csv(filename)
-                df = pd.read_csv(filename)
-                # Plotting results
-                """
-                for index, row in df.iterrows():
-                    if index == 0:
-                        continue
-                    gamma = row["gamma"]
-                    c_clip = row["c_clip"]
-                    sigma = row['sigma']
-                    sigma_cor = row['sigma_cor']
-                    plotting.plot_loss(params_ldp["topology_name"], params_ldp["method"], A, B, gamma, params_ldp["num_nodes"], params_ldp["num_dim"], sigma, sigma_cor, c_clip, target_eps = eps_target,
-                                        num_iter = params_ldp["num_iter"], delta = params_ldp["delta"])
-                """
-                # Plotting best result
-                row = df.iloc[-1] 
-                plotting.plot_loss(row["topology"], row["method"], A, B, row["gamma"], params["num_nodes"], params["num_dim"], row['sigma'], row['sigma_cor'], row["c_clip"], 
-                                target_eps = eps_target, num_iter = params["num_iter"], delta = params["delta"])
+        for eps_target in eps_targets:
+            result = plotting.find_best_params(A = A, B = B, target_eps= eps_target, topology_name= topology_name, **params)
+            filename= f"result_gridsearch_{topology_name}_{params['method']}_epsilon_{eps_target}.csv"
+            result.to_csv(filename)
+            df = pd.read_csv(filename)
+            # Plotting results
+            """
+            for index, row in df.iterrows():
+                if index == 0:
+                    continue
+                gamma = row["gamma"]
+                c_clip = row["c_clip"]
+                sigma = row['sigma']
+                sigma_cor = row['sigma_cor']
+                plotting.plot_loss(params_ldp["topology_name"], params_ldp["method"], A, B, gamma, params_ldp["num_nodes"], params_ldp["num_dim"], sigma, sigma_cor, c_clip, target_eps = eps_target,
+                                    num_iter = params_ldp["num_iter"], delta = params_ldp["delta"])
+            """
+            # Plotting best result
+            row = df.iloc[-1] 
+            plotting.plot_loss(row["topology"], row["method"], A, B, row["gamma"], params["num_nodes"], params["num_dim"], row['sigma'], row['sigma_cor'], row["c_clip"], 
+                            target_eps = eps_target, num_iter = params["num_iter"], delta = params["delta"])
