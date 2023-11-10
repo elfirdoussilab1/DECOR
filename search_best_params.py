@@ -7,11 +7,11 @@ from utils import plotting
 if __name__ == "__main__":
     params = {
             #"topology_name": ["centralized", "grid", "ring"],
-            "method": "Corr",
-            "gamma_grid": [1.7e-3],
+            "method": "CDP",
+            "gamma_grid": np.logspace(-5, -1, 10),
             "num_nodes": 16,
             "num_dim": 10,
-            "c_clip_grid":[1.],
+            "c_clip_grid":np.linspace(1, 4, 7),
             "max_loss": np.inf,
             "num_iter": 2500,
             "num_gossip": 1,
@@ -44,9 +44,9 @@ if __name__ == "__main__":
         }
     """  
     A, B = generate_functions(params["num_nodes"], params["num_dim"], zeta = 0)
-    eps_targets = [1, 3, 5, 7, 10, 15, 20, 25, 40]
+    eps_targets = [30]
     
-    topologies = ["centralized", "grid", "ring"]
+    topologies = ["centralized"]
     for topology_name in topologies:
         for eps_target in eps_targets:
             result = plotting.find_best_params(A = A, B = B, target_eps= eps_target, topology_name= topology_name, **params)
