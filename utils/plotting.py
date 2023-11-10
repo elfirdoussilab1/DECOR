@@ -40,7 +40,7 @@ def plot_loss(topology_name, method, A, B, gamma, num_nodes, num_dim, sigma, sig
 
 
 # dictionary for plot colors ans style
-topo_to_style = {"ring": (0, (1, 10)), "grid": (5, (10, 3)), "centralized": 'solid'}
+topo_to_style = {"ring": (0, (1, 1)), "grid": (0, (5, 5)), "centralized": 'solid'}
 method_to_marker = {"LDP": "^", "CDP": "s", "Corr": "o"}
 
 # Function to plot threee losses: LDP, CD-SGD and CDP
@@ -115,8 +115,9 @@ def plot_comparison_loss_CI(topology_names, A, B, num_nodes, num_dim, gamma, c_c
     fig, ax = plt.subplots()
     fig.set_size_inches(3 * 2.54, 2 * 2.54)
     t = np.arange(0, num_iter + 1)[::20]
-    ax.semilogy(t, np.mean(errors_centr, axis = 0)[::20], label="CDP", color='tab:purple', linestyle = 'solid')
-    ax.fill_between(t, (np.mean(errors_centr, axis = 0) - np.std(errors_centr, axis = 0))[::20], (np.mean(errors_centr, axis = 0) + np.std(errors_centr, axis = 0))[::20], alpha = 0.3)
+    ax.semilogy(t, np.mean(errors_centr, axis = 0)[::20], label="CDP", color='tab:purple', linestyle = 'solid', alpha = 0.8)
+    ax.fill_between(t, (np.mean(errors_centr, axis = 0) - np.std(errors_centr, axis = 0))[::20], (np.mean(errors_centr, axis = 0) + np.std(errors_centr, axis = 0))[::20], 
+                    facecolor = 'tab:purple', alpha = 0.2)
 
     for i, topology_name in enumerate(topology_names):
         W = topology.FixedMixingMatrix(topology_name, num_nodes)
@@ -129,10 +130,13 @@ def plot_comparison_loss_CI(topology_names, A, B, num_nodes, num_dim, gamma, c_c
             errors_ldp.append(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma_ldp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
 
         ax.semilogy(t, np.mean(errors_cor, axis = 0)[::20], label=f"CD-SGD with {topology_name}", color = 'tab:green', 
-                    linestyle = topo_to_style[topology_name])
-        ax.fill_between(t, (np.mean(errors_cor, axis = 0) - np.std(errors_cor, axis = 0))[::20], (np.mean(errors_cor, axis = 0) + np.std(errors_cor, axis = 0))[::20], alpha = 0.3)
-        ax.semilogy(t, np.mean(errors_ldp, axis = 0)[::20], label=f"LDP with {topology_name}", color = 'tab:orange', linestyle = topo_to_style[topology_name])
-        ax.fill_between(t, (np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0))[::20], (np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0))[::20], alpha = 0.3)
+                    linestyle = topo_to_style[topology_name], alpha = 0.8)
+        ax.fill_between(t, (np.mean(errors_cor, axis = 0) - np.std(errors_cor, axis = 0))[::20], (np.mean(errors_cor, axis = 0) + np.std(errors_cor, axis = 0))[::20], 
+                        facecolor = 'tab:green', alpha = 0.2)
+        ax.semilogy(t, np.mean(errors_ldp, axis = 0)[::20], label=f"LDP with {topology_name}", color = 'tab:orange', 
+                    linestyle = topo_to_style[topology_name], alpha = 0.8)
+        ax.fill_between(t, (np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0))[::20], (np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0))[::20], 
+                        facecolor = 'tab:orange', alpha = 0.2)
     
     
     ax.set_xlabel('iteration')
