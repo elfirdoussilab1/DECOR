@@ -8,11 +8,11 @@ if __name__ == "__main__":
     params = {
             #"topology_name": ["centralized", "grid", "ring"],
             "method": "Corr",
-            "gamma_grid": 1.7e-3,
+            "gamma_grid": [1.7e-3],
             "num_nodes": 16,
             "num_dim": 10,
-            "c_clip_grid":1.,
-            "max_loss": 10,
+            "c_clip_grid":[1.],
+            "max_loss": np.inf,
             "num_iter": 2500,
             "num_gossip": 1,
             "delta": 1e-5

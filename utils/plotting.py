@@ -95,7 +95,7 @@ def plot_comparison_loss(topology_name, A, B, num_nodes, num_dim, gamma, c_clip,
     plt.savefig(folder_path + '/loss-n_{}-d_{}-sigmacdp_{}-sigmaldp_{}-sigma_{}-sigma_cor_{}-delta_{}-T_{}.png'.format(num_nodes, num_dim, round(sigma_cdp, 2) , round(sigma_ldp, 2), round(sigma, 2), round(sigma_cor, 2), delta, num_iter))
 
 # Plotting comparison of losses with confidence interval
-def plot_comparison_loss_CI(topology_names, A, B, num_nodes, num_dim, gamma, c_clip, sigmas, sigmas_cor, target_eps, num_gossip=1, num_iter = 2500, delta = 1e-5, seeds= np.arange(1, 4)):
+def plot_comparison_loss_CI(topology_names, A, B, num_nodes, num_dim, gamma, c_clip, sigmas, sigmas_cor, target_eps, num_gossip=1, num_iter = 2500, delta = 1e-5, seeds= np.arange(1, 6)):
 
     X = np.ones(shape=(num_dim, num_nodes))
     W_centr = topology.FixedMixingMatrix("centralized", num_nodes)
@@ -114,9 +114,9 @@ def plot_comparison_loss_CI(topology_names, A, B, num_nodes, num_dim, gamma, c_c
     plt.style.use('ggplot')
     fig, ax = plt.subplots()
     fig.set_size_inches(3 * 2.54, 2 * 2.54)
-    t = np.arange(0, num_iter + 1)
-    ax.semilogy(t, np.mean(errors_centr, axis = 0), label="CDP", color='tab:purple', linestyle = 'solid')
-    ax.fill_between(t, np.mean(errors_centr, axis = 0) - np.std(errors_centr, axis = 0), np.mean(errors_centr, axis = 0) + np.std(errors_centr, axis = 0), alpha = 0.3)
+    t = np.arange(0, num_iter + 1)[::20]
+    ax.semilogy(t, np.mean(errors_centr, axis = 0)[::20], label="CDP", color='tab:purple', linestyle = 'solid')
+    ax.fill_between(t, (np.mean(errors_centr, axis = 0) - np.std(errors_centr, axis = 0))[::20], (np.mean(errors_centr, axis = 0) + np.std(errors_centr, axis = 0))[::20], alpha = 0.3)
 
     for i, topology_name in enumerate(topology_names):
         W = topology.FixedMixingMatrix(topology_name, num_nodes)
@@ -128,11 +128,11 @@ def plot_comparison_loss_CI(topology_names, A, B, num_nodes, num_dim, gamma, c_c
             errors_cor.append(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigmas[i], sigmas_cor[i], c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
             errors_ldp.append(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma_ldp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
 
-        ax.semilogy(t, np.mean(errors_cor, axis = 0), label=f"CD-SGD with {topology_name}", color = 'tab:green', 
+        ax.semilogy(t, np.mean(errors_cor, axis = 0)[::20], label=f"CD-SGD with {topology_name}", color = 'tab:green', 
                     linestyle = topo_to_style[topology_name])
-        ax.fill_between(t, np.mean(errors_cor, axis = 0) - np.std(errors_cor, axis = 0), np.mean(errors_cor, axis = 0) + np.std(errors_cor, axis = 0), alpha = 0.3)
-        ax.semilogy(t, np.mean(errors_ldp, axis = 0), label=f"LDP with {topology_name}", color = 'tab:orange', linestyle = topo_to_style[topology_name])
-        ax.fill_between(t, np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0), np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0), alpha = 0.3)
+        ax.fill_between(t, (np.mean(errors_cor, axis = 0) - np.std(errors_cor, axis = 0))[::20], (np.mean(errors_cor, axis = 0) + np.std(errors_cor, axis = 0))[::20], alpha = 0.3)
+        ax.semilogy(t, np.mean(errors_ldp, axis = 0)[::20], label=f"LDP with {topology_name}", color = 'tab:orange', linestyle = topo_to_style[topology_name])
+        ax.fill_between(t, (np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0))[::20], (np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0))[::20], alpha = 0.3)
     
     
     ax.set_xlabel('iteration')
@@ -147,7 +147,7 @@ def plot_comparison_loss_CI(topology_names, A, B, num_nodes, num_dim, gamma, c_c
     plt.savefig('comparison_losses_CI/loss-n_{}-d_{}-lr_{}-clip_{}-sigma-cdp_{}-sigmas_ldp{}-delta_{}.png'.format(num_nodes, num_dim, gamma, c_clip, round(sigma_cdp, 2), round(sigma_ldp, 2), delta))
 
 # Plotting loss in function of epsilon
-def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, c_clip, sigmas, sigmas_cor, num_gossip=1, num_iter = 2500, delta = 1e-5, seeds= np.arange(1, 4)):
+def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, c_clip, sigmas, sigmas_cor, num_gossip=1, num_iter = 2500, delta = 1e-5, seeds= np.arange(1, 6)):
     """
     Plotting Losses in function of epsilons
     args:  
