@@ -190,7 +190,7 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
         errors_centr.append(losses_centr)
 
     # Plotting CDP
-    ax.semilogy(epsilon_grid, np.mean(errors_centr, axis = 0), label="CDP", color='tab:purple', 
+    ax.semilogy(epsilon_grid, np.mean(errors_centr, axis = 0), color='tab:purple', 
                 linestyle = 'solid', marker = "D")
     ax.fill_between(epsilon_grid, np.mean(errors_centr, axis = 0) - np.std(errors_centr, axis = 0), np.mean(errors_centr, axis = 0) + np.std(errors_centr, axis = 0), alpha = 0.3)
 
@@ -215,11 +215,11 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
             errors_cor.append(losses_cor)
             errors_ldp.append(losses_ldp)
         # Plotting the corresponding result
-        ax.semilogy(epsilon_grid, np.mean(errors_cor, axis = 0), label=f"CD-SGD with {topology_name}", color = 'tab:green', 
+        ax.semilogy(epsilon_grid, np.mean(errors_cor, axis = 0), color = 'tab:green', 
                     linestyle = topo_to_style[topology_name], marker = "o")
         ax.fill_between(epsilon_grid, np.mean(errors_cor, axis = 0) - np.std(errors_cor, axis = 0), np.mean(errors_cor, axis = 0) + np.std(errors_cor, axis = 0), alpha = 0.3)
 
-        ax.semilogy(epsilon_grid, np.mean(errors_ldp, axis = 0), label=f"LDP with {topology_name}", color = 'tab:orange', 
+        ax.semilogy(epsilon_grid, np.mean(errors_ldp, axis = 0), color = 'tab:orange', 
                     linestyle = topo_to_style[topology_name], marker = "^")
         ax.fill_between(epsilon_grid, np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0), np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0), alpha = 0.3)
     
@@ -228,7 +228,18 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
     ax.set_ylabel('error')
     ax.set_title(f"Evolution of L2 Loss with User-privacy ")
     ax.grid(True)
-    ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+
+    # Legend
+    legend_hanles = []
+    legend_hanles.append(plt.Line2D([], [], label='Algorithm'))
+    legend_hanles.append(plt.Line2D([], [], label='CDP', marker = 'D', color = 'tab:purple'))
+    legend_hanles.append(plt.Line2D([], [], label='Correlated-DSGD', marker = 'o', color = 'tab:green'))
+    legend_hanles.append(plt.Line2D([], [], label='LDP', marker = '^', color = 'tab:orange'))
+    legend_hanles.append(plt.Line2D([], [], label='Topology'))
+    legend_hanles.append(plt.Line2D([], [], label='Centralized', linestryle = topo_to_style['centralized']))
+    legend_hanles.append(plt.Line2D([], [], label='Grid', linestryle = topo_to_style['grid']))
+    legend_hanles.append(plt.Line2D([], [], label='Ring', linestryle = topo_to_style['ring']))
+    plt.legend(handles = legend_hanles, loc='upper left', bbox_to_anchor=(1, 1))
     
     folder_path = './loss_epsilon'
     if not os.path.exists(folder_path):
