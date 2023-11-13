@@ -231,14 +231,14 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
 
     # Legend
     legend_hanles = []
-    legend_hanles.append(plt.Line2D([], [], label='Algorithm'))
+    legend_hanles.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None'))
     legend_hanles.append(plt.Line2D([], [], label='CDP', marker = 'D', color = 'tab:purple'))
     legend_hanles.append(plt.Line2D([], [], label='Correlated-DSGD', marker = 'o', color = 'tab:green'))
     legend_hanles.append(plt.Line2D([], [], label='LDP', marker = '^', color = 'tab:orange'))
-    legend_hanles.append(plt.Line2D([], [], label='Topology'))
-    legend_hanles.append(plt.Line2D([], [], label='Centralized', linestryle = topo_to_style['centralized']))
-    legend_hanles.append(plt.Line2D([], [], label='Grid', linestryle = topo_to_style['grid']))
-    legend_hanles.append(plt.Line2D([], [], label='Ring', linestryle = topo_to_style['ring']))
+    legend_hanles.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
+    legend_hanles.append(plt.Line2D([], [], label='Centralized', linestyle = topo_to_style['centralized'], color = 'k'))
+    legend_hanles.append(plt.Line2D([], [], label='Grid', linestyle = topo_to_style['grid'], color = 'k'))
+    legend_hanles.append(plt.Line2D([], [], label='Ring', linestyle = topo_to_style['ring'], color = 'k'))
     plt.legend(handles = legend_hanles, loc='upper left', bbox_to_anchor=(1, 1))
     
     folder_path = './loss_epsilon'
