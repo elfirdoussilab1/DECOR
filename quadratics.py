@@ -2,7 +2,7 @@ from utils import *
 import numpy as np
 import pandas as pd
 from csv import writer
-from utils import plotting, dp_account
+from utils import plotting, dp_account, topology, optimizers
 import matplotlib.pyplot as plt
 import misc
 
@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     
     A, B = generate_functions(params["num_nodes"], params["num_dim"], zeta = 0)
-    epsilon_grid = np.array([1, 3, 5, 7, 10, 15, 20, 30, 40]) # there is also 25
+    epsilon_grid = np.array([3, 5, 7, 10, 15, 20, 25, 30, 40]) # there is also 1 (but not intersting)
     # Storing sigmas and sigmas_cor for loss in function of epsilon
     sigmas = np.zeros((len(params['topology_names']), len(epsilon_grid))) 
     sigmas_cor = np.zeros((len(params['topology_names']), len(epsilon_grid))) 
@@ -35,15 +35,15 @@ if __name__ == "__main__":
         #plotting.plot_comparison_loss_CI(A = A, B = B, target_eps = target_eps, sigmas = sigmas[:,j], sigmas_cor = sigmas_cor[:,j],**params)
     
     seeds = np.arange(1, 6)
-    # Plotting the results in a 3x3 plot (1, 3, 5 | 7, 10, 15 | 20, 30, 40)
+    # Plotting the results in a 3x3 plot (3, 5, 7 |10, 15, 20 | 25, 30, 40)
     epsilon_grid = epsilon_grid.reshape(3, 3)
     plt.style.use('ggplot')
-    fig, axes = plt.subplots(3, 3, figsize=(20, 12))
+    fig, axes = plt.subplots(3, 3, figsize=(25, 15))
     W_centr = topology.FixedMixingMatrix("centralized", params["num_nodes"])
     
     for i in range(3):
         for j in range(3):
-            X = np.ones(shape=(num_dim, num_nodes))
+            X = np.ones(shape=(params["num_dim"], params["num_nodes"]))
             # sigma_cdp and sigma_ldp
             eps_iter = dp_account.reverse_eps(epsilon_grid[i, j], params["num_iter"], params["delta"])
             sigma_ldp = params["c_clip"] * np.sqrt(2 / eps_iter)
@@ -56,18 +56,19 @@ if __name__ == "__main__":
                 errors_centr.append(optimizers.optimize_decentralized_correlated(X, W_centr, A, B, params["gamma"], sigma_cdp, 0, params["c_clip"], num_gossip=params["num_gossip"], 
                 num_iter=params["num_iter"])[0])
 
-            t = np.arange(0, num_iter + 1)[::20]
+            t = np.arange(0, params["num_iter"] + 1)[::20]
             axes[i, j].semilogy(t, np.mean(errors_centr, axis = 0)[::20], color='tab:purple', linestyle = 'solid', alpha = 0.8)
             axes[i, j].fill_between(t, (np.mean(errors_centr, axis = 0) - np.std(errors_centr, axis = 0))[::20], (np.mean(errors_centr, axis = 0) + np.std(errors_centr, axis = 0))[::20], 
                     facecolor = 'tab:purple', alpha = 0.2)
 
             for k, topology_name in enumerate(params["topology_names"]):
-                W = topology.FixedMixingMatrix(topology_name, num_nodes)
+                W = topology.FixedMixingMatrix(topology_name, params["num_nodes"])
 
                 # Storing results
                 errors_cor = []
                 errors_ldp = []
-                for seed in seeds: 
+                for seed in seeds:
+                    misc.fix_seed(seed) 
                     filename= f"result_gridsearch_{topology_name}_Corr_epsilon_{epsilon_grid[i,j]}.csv"
                     df = pd.read_csv(filename)
                     sigma = df.iloc[-1]["sigma"]
@@ -85,7 +86,11 @@ if __name__ == "__main__":
                             linestyle = plotting.topo_to_style[topology_name], alpha = 0.8)
                 axes[i, j].fill_between(t, (np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0))[::20], (np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0))[::20], 
                                 facecolor = 'tab:orange', alpha = 0.2)
-    
+                axes[i, j].set_xlabel('iteration')
+                #axes[i, j].set_ylabel('Loss')
+                axes[i, j].set_title(f"User-privacy  {round(epsilon_grid[i, j])}")
+                axes[i, j].grid(True)
+
     # Special Legend
     legend_hanles = []
     legend_hanles.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None'))
@@ -100,7 +105,8 @@ if __name__ == "__main__":
     # Make legend at the end of each row
     for i in range(3):
         axes[i, -1].legend(handles = legend_hanles, loc='center left', bbox_to_anchor=(1, 1))
-    
+        axes[i, 0].set_ylabel('Loss')
+
     folder_path = './losses'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)

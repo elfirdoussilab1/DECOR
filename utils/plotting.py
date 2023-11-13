@@ -126,6 +126,7 @@ def plot_comparison_loss_CI(topology_names, A, B, num_nodes, num_dim, gamma, c_c
         errors_cor = []
         errors_ldp = []
         for seed in seeds: 
+            misc.fix_seed(seed)
             errors_cor.append(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigmas[i], sigmas_cor[i], c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
             errors_ldp.append(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma_ldp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0])
 
