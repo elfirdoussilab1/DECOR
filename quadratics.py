@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     
     A, B = generate_functions(params["num_nodes"], params["num_dim"], zeta = 0)
-    epsilon_grid = np.array([3, 5, 7, 10, 15, 20, 25, 30, 40]) # there is also 1 (but not intersting)
+    epsilon_grid = np.array([3, 5, 7, 15, 20, 40]) # there is also 1 (but not intersting)
     # Storing sigmas and sigmas_cor for loss in function of epsilon
     sigmas = np.zeros((len(params['topology_names']), len(epsilon_grid))) 
     sigmas_cor = np.zeros((len(params['topology_names']), len(epsilon_grid))) 
@@ -36,13 +36,13 @@ if __name__ == "__main__":
     
     seeds = np.arange(1, 6)
     # Plotting the results in a 3x3 plot (3, 5, 7 |10, 15, 20 | 25, 30, 40)
-    epsilon_grid = epsilon_grid.reshape(3, 3)
+    epsilon_grid = epsilon_grid.reshape(3, 2)
     plt.style.use('ggplot')
-    fig, axes = plt.subplots(3, 3, figsize=(20, 15))
+    fig, axes = plt.subplots(3, 2, figsize=(15, 12))
     W_centr = topology.FixedMixingMatrix("centralized", params["num_nodes"])
     
     for i in range(3):
-        for j in range(3):
+        for j in range(2):
             X = np.ones(shape=(params["num_dim"], params["num_nodes"]))
             # sigma_cdp and sigma_ldp
             eps_iter = dp_account.reverse_eps(epsilon_grid[i, j], params["num_iter"], params["delta"])
@@ -104,14 +104,14 @@ if __name__ == "__main__":
 
     # Make legend at the end of each row
     for i in range(3):
-        axes[i, -1].legend(handles = legend_hanles, loc='center left', bbox_to_anchor=(1, 0.5))
         axes[i, 0].set_ylabel('Loss')
 
+    fig.legend(handles = legend_hanles, loc='lower center', bbox_to_anchor=(0.5, -0.1), ncol=2, prop={'size': 15})
     folder_path = './losses'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    plt.savefig(folder_path + '/loss-n_{}-d_{}-lr_{}-clip_{}-delta_{}-T_{}.png'.format(params['num_nodes'], params['num_dim'], params['gamma'], 
-        params['c_clip'], params['delta'], params['num_iter']))
+    fig.savefig(folder_path + '/loss-n_{}-d_{}-lr_{}-clip_{}-delta_{}-T_{}.png'.format(params['num_nodes'], params['num_dim'], params['gamma'], 
+        params['c_clip'], params['delta'], params['num_iter']), bbox_inches='tight')
 
     # plotting.loss_epsilon(epsilon_grid= epsilon_grid, A = A, B = B, sigmas = sigmas, sigmas_cor = sigmas_cor, **params)
     
