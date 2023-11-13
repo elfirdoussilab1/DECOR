@@ -38,7 +38,7 @@ if __name__ == "__main__":
     # Plotting the results in a 3x3 plot (3, 5, 7 |10, 15, 20 | 25, 30, 40)
     epsilon_grid = epsilon_grid.reshape(3, 3)
     plt.style.use('ggplot')
-    fig, axes = plt.subplots(3, 3, figsize=(25, 15))
+    fig, axes = plt.subplots(3, 3, figsize=(20, 15))
     W_centr = topology.FixedMixingMatrix("centralized", params["num_nodes"])
     
     for i in range(3):
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     # Make legend at the end of each row
     for i in range(3):
-        axes[i, -1].legend(handles = legend_hanles, loc='center left', bbox_to_anchor=(1, 1))
+        axes[i, -1].legend(handles = legend_hanles, loc='center left', bbox_to_anchor=(1, 0.5))
         axes[i, 0].set_ylabel('Loss')
 
     folder_path = './losses'
