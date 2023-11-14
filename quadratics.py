@@ -35,7 +35,6 @@ if __name__ == "__main__":
         #plotting.plot_comparison_loss_CI(A = A, B = B, target_eps = target_eps, sigmas = sigmas[:,j], sigmas_cor = sigmas_cor[:,j],**params)
     plotting.loss_epsilon(epsilon_grid= epsilon_grid, A = A, B = B, sigmas = sigmas, sigmas_cor = sigmas_cor, **params)
 
-    """
     seeds = np.arange(1, 6)
     # Plotting the results in a 3x3 plot (3, 5, 7 |10, 15, 20 | 25, 30, 40)
     epsilon_grid = epsilon_grid.reshape(3, 2)
@@ -90,7 +89,7 @@ if __name__ == "__main__":
                                 facecolor = 'tab:orange', alpha = 0.2)
                 axes[i, j].set_xlabel('iteration')
                 #axes[i, j].set_ylabel('Loss')
-                axes[i, j].set_title(f"User-privacy  {round(epsilon_grid[i, j])}")
+                axes[i, j].set_title(f"User-level Privacy  {round(epsilon_grid[i, j])}")
                 axes[i, j].grid(True)
 
     # Special Legend
@@ -114,7 +113,7 @@ if __name__ == "__main__":
         os.makedirs(folder_path)
     fig.savefig(folder_path + '/loss-n_{}-d_{}-lr_{}-clip_{}-delta_{}-T_{}.png'.format(params['num_nodes'], params['num_dim'], params['gamma'], 
         params['c_clip'], params['delta'], params['num_iter']), bbox_inches='tight')    
-    """
+    
 # if __name__ == "__main__":
 #     base_params = {
 #         "num_nodes": 100,

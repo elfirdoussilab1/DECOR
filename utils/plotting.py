@@ -225,9 +225,9 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
         ax.fill_between(epsilon_grid, np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0), np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0), alpha = 0.3)
     
 
-    ax.set_xlabel('User-Privacy $\epsilon$')
+    ax.set_xlabel('User-level Privacy $\epsilon$')
     ax.set_ylabel('error')
-    ax.set_title(f"Evolution of L2 Loss with User-privacy ")
+    ax.set_title(f"Evolution of the L2 Loss with User-level Privacy ")
     ax.grid(True)
 
     # Legend
