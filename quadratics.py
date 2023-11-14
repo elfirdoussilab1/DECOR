@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     
     A, B = generate_functions(params["num_nodes"], params["num_dim"], zeta = 0)
-    epsilon_grid = np.array([3, 5, 7, 15, 20, 40]) # there is also 1 (but not intersting)
+    epsilon_grid = np.array([1, 3, 5, 7, 10, 15, 20, 25, 30, 40]) # there is also 1 (but not intersting)
     # Storing sigmas and sigmas_cor for loss in function of epsilon
     sigmas = np.zeros((len(params['topology_names']), len(epsilon_grid))) 
     sigmas_cor = np.zeros((len(params['topology_names']), len(epsilon_grid))) 

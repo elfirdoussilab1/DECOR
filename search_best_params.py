@@ -13,7 +13,7 @@ if __name__ == "__main__":
             "num_dim": 10,
             "c_clip_grid":np.linspace(1, 4, 7),
             "max_loss": np.inf,
-            "num_iter": 2500,
+            "num_iter": 3500,
             "num_gossip": 1,
             "delta": 1e-5
         }
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         }
     """  
     A, B = generate_functions(params["num_nodes"], params["num_dim"], zeta = 0)
-    eps_targets = [30]
+    eps_targets = [20]
     
     topologies = ["centralized"]
     for topology_name in topologies:

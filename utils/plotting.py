@@ -245,7 +245,7 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
     folder_path = './loss_epsilon'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    plt.savefig(folder_path + '/loss-n_{}-d_{}-topology_{}-lr_{}-clip_{}-delta_{}-T_{}.png'.format(num_nodes, num_dim, topology_name, gamma, c_clip, delta, num_iter))
+    plt.savefig(folder_path + '/loss-n_{}-d_{}-lr_{}-clip_{}-delta_{}-T_{}.png'.format(num_nodes, num_dim, gamma, c_clip, delta, num_iter))
 
 # Plotting loss in function of Number of Nodes
 def loss_num_nodes(topology_name, A, B, num_nodes_grid, num_dim, gamma, c_clip, sigma, sigma_cor, target_eps, num_gossip=1, num_iter = 300, delta = 1e-5, seeds = np.arange(1, 6)):
