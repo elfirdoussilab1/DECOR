@@ -52,10 +52,12 @@ tools.success("Running experiments...")
 # Base parameters for the MNIST experiments
 params = {
     "dataset": "mnist",
-    "batch-size": 25,
-    "loss": "NLLLoss",
-    "learning-rate-decay-delta": 50,
-    "learning-rate-decay": 50,
+    #"batch-size": 25,
+    "batch-size": 64,
+    #"loss": "NLLLoss",
+    "loss": "CrossEntropyLoss",
+    "learning-rate-decay-delta": 200,
+    "learning-rate-decay": 2,
     "weight-decay": 1e-4,
     "evaluation-delta": 5,
     "gradient-clip": 2,
@@ -67,7 +69,8 @@ params = {
     }
 
 # Hyperparameters to test
-models = [("cnn_mnist", 0.75)]
+#models = [("cnn_mnist", 0.75)]
+models = [("simple_mnist_model", 1e-1)]
 topologies = [("centralized", "cdp")]# ,("ring", "corr"), ("ring", "ldp")]
 alphas = [0.1]
 epsilons = [50]
@@ -104,8 +107,10 @@ for alpha in alphas:
 
                     # sigma_cdp and sigma_ldp
                     sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
-                    #sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
-                    sigma_cdp = 0
+                    sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
+                    # Training model without noise
+                    jobs.submit(f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}", make_command(params))
+
 
                     if "corr" in method: # CD-SGD
                         # Determining the couples (sigma, sigma_cor) that can be considered
@@ -165,7 +170,13 @@ with tools.Context("mnist", "info"):
                     values = dict()
                     # Plot top-1 cross-accuracies
                     plot = study.LinePlot()
-                    legend = []
+                    legend = ["Average"]
+                    
+                    # Plot average (without any noise)
+                    name = f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}"
+                    values[dataset] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
+                    plot.include(values[dataset][0], "Accuracy", errs="-err", lalp=0.8)
+                    
                     for topology_name, method in topologies:
                         name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}-eps_{target_eps}"
                         values[topology_name, method] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))

@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 
 # ---------------------------------------------------------------------------- #
-# Simple Linear model for MNIST (97 % accuracy)
+# Simple Linear model for MNIST (96 % accuracy)
 
 # Batch_size = 64
 # Epochs = 5
