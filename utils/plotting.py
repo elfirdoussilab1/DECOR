@@ -152,7 +152,7 @@ def plot_comparison_loss_CI(topology_names, A, B, num_nodes, num_dim, gamma, c_c
     plt.savefig('comparison_losses_CI/loss-n_{}-d_{}-lr_{}-clip_{}-sigma-cdp_{}-sigmas_ldp{}-delta_{}.png'.format(num_nodes, num_dim, gamma, c_clip, round(sigma_cdp, 2), round(sigma_ldp, 2), delta))
 
 # Plotting loss in function of epsilon
-def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, c_clip, sigmas, sigmas_cor, num_gossip=1, num_iter = 2500, delta = 1e-5, seeds= np.arange(1, 6)):
+def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, c_clip, sigmas, sigmas_cor, num_gossip=1, num_iter = 3500, delta = 1e-5, seeds= np.arange(1, 6)):
     """
     Plotting Losses in function of epsilons
     args:  

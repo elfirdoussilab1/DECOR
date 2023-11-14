@@ -33,7 +33,9 @@ if __name__ == "__main__":
             sigmas_cor[i, j] = df.iloc[-1]["sigma_cor"]
             print("done")
         #plotting.plot_comparison_loss_CI(A = A, B = B, target_eps = target_eps, sigmas = sigmas[:,j], sigmas_cor = sigmas_cor[:,j],**params)
-    
+    plotting.loss_epsilon(epsilon_grid= epsilon_grid, A = A, B = B, sigmas = sigmas, sigmas_cor = sigmas_cor, **params)
+
+    """
     seeds = np.arange(1, 6)
     # Plotting the results in a 3x3 plot (3, 5, 7 |10, 15, 20 | 25, 30, 40)
     epsilon_grid = epsilon_grid.reshape(3, 2)
@@ -111,11 +113,8 @@ if __name__ == "__main__":
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
     fig.savefig(folder_path + '/loss-n_{}-d_{}-lr_{}-clip_{}-delta_{}-T_{}.png'.format(params['num_nodes'], params['num_dim'], params['gamma'], 
-        params['c_clip'], params['delta'], params['num_iter']), bbox_inches='tight')
-
-    # plotting.loss_epsilon(epsilon_grid= epsilon_grid, A = A, B = B, sigmas = sigmas, sigmas_cor = sigmas_cor, **params)
-    
-    
+        params['c_clip'], params['delta'], params['num_iter']), bbox_inches='tight')    
+    """
 # if __name__ == "__main__":
 #     base_params = {
 #         "num_nodes": 100,
