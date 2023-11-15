@@ -35,6 +35,7 @@ momentum = 0.
 weight_decay = 1e-4
 topology_name = "centralized"
 method = "cdp"
+
 # Fix seed
 misc.fix_seed(1)
 
@@ -52,6 +53,7 @@ train_loader_dict, test_loader = dataset.make_train_test_datasets(dataset=datase
 # Tuning: looping over the hyperparameters
 for lr in lr_grid:
     for gradient_clip in gradient_clip_grid:
+        
         # Weights matrix
         W = topology.FixedMixingMatrix(topology_name= topology_name, n_nodes= num_nodes)(0)
 
@@ -118,34 +120,39 @@ for lr in lr_grid:
         # ------------------------------------------------------------------------ #
         # Training
         current_step = 0
+        eval_filename = result_directory + f"mean_accuracy-{dataset_name}-lr-{lr}-clip-{gradient_clip}-epsilon-{target_eps}-T-{num_iter}"
         while current_step <= num_iter:
             
             # Evaluate the model if milestone is reached
-            filename = result_directory + f"mean_accuraccy_lr_{lr}_clip_{gradient_clip}_T_{num_iter}"
-
             # Initialization of the dataframe
-            data = [{"topology": topology_name, "method": method, "lr": lr, "clip": gradient_clip, "eps_iter": target_eps_iter, "eps": target_eps, "sigma": -1, "sigma_cor": -1, "loss":np.inf}]
+            data = [{"step": -1, "topology": topology_name, "method": method, "lr": lr, "clip" : gradient_clip, "sigma": sigma, "sigma_cor": sigma_cor, 
+                     "epsilon": target_eps, "accuracy":0}]
             result = pd.DataFrame(data)
             milestone_evaluation = evaluation_delta > 0 and current_step % evaluation_delta == 0        
             if milestone_evaluation:
-                mean_accuracy = np.mean([workers[i].compute_accuracy() for i in range(args.num_nodes)])
-                
-
-            
-            # Update the learning rate
-            lr = update_learning_rate(current_step, lr, args)
-
+                mean_accuracy = np.mean([workers[i].compute_accuracy() for i in range(num_nodes)])
+                new_row = {"step": current_step,
+                            "topology": topology_name,
+                            "method": method,
+                            "lr": lr, 
+                            "clip": gradient_clip,
+                            "sigma": sigma,
+                            "sigma_cor": sigma_cor,
+                            "epsilon": target_eps,
+                            "accuracy": mean_accuracy                
+                            }
+                result = pd.concat([result, pd.DataFrame([new_row])], ignore_index=True)
             # Apply the algorithm
             all_parameters = []
 
             # Step t + 1/2
-            for i in range(args.num_nodes):
-                all_parameters.append(workers[i].grad_descent(V[i], lr = lr, weight_decay = args.weight_decay))
+            for i in range(num_nodes):
+                all_parameters.append(workers[i].grad_descent(V[i], lr = lr, weight_decay = weight_decay))
             
-            all_parameters = torch.stack(all_parameters).to(args.device)
+            all_parameters = torch.stack(all_parameters).to(device)
             
             # Step t + 1
-            for i in range(args.num_nodes):
+            for i in range(num_nodes):
                 workers[i].decentralized_learning(weights = W[i], workers_parameters = all_parameters)
 
             current_step += 1
