@@ -142,6 +142,7 @@ for lr in lr_grid:
                             "accuracy": mean_accuracy                
                             }
                 result = pd.concat([result, pd.DataFrame([new_row])], ignore_index=True)
+                result.to_csv(eval_filename)
             # Apply the algorithm
             all_parameters = []
 
