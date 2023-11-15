@@ -158,7 +158,7 @@ class Jobs:
       # Run the picked experiment
       self._run(self._res_dir, name, seed, device, command)
 
-  def __init__(self, res_dir, devices=["cpu"], devmult=1, seeds=tuple(range(1, 6))):
+  def __init__(self, res_dir, devices=["cpu"], devmult=1, seeds=tuple(range(1, 2))):
     """ Initialize the instance, launch the worker pool.
     Args:
       res_dir Path to the directory containing the result sub-directories

@@ -57,7 +57,7 @@ params = {
     #"loss": "NLLLoss",
     "loss": "CrossEntropyLoss",
     "learning-rate-decay-delta": 200,
-    "learning-rate-decay": 2,
+    "learning-rate-decay": 200,
     "weight-decay": 1e-4,
     "evaluation-delta": 5,
     "gradient-clip": 2,
@@ -70,7 +70,7 @@ params = {
 
 # Hyperparameters to test
 #models = [("cnn_mnist", 0.75)]
-models = [("simple_mnist_model", 1e-1)]
+models = [("simple_mnist_model", 2e-1)]
 topologies = [("centralized", "cdp")]# ,("ring", "corr"), ("ring", "ldp")]
 alphas = [0.1]
 epsilons = [50]
@@ -174,8 +174,8 @@ with tools.Context("mnist", "info"):
                     
                     # Plot average (without any noise)
                     name = f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}"
-                    values[dataset] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
-                    plot.include(values[dataset][0], "Accuracy", errs="-err", lalp=0.8)
+                    dsgd = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
+                    plot.include(dsgd[0], "Accuracy", errs="-err", lalp=0.8)
                     
                     for topology_name, method in topologies:
                         name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}-eps_{target_eps}"
