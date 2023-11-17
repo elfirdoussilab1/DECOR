@@ -25,11 +25,9 @@ def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, preci
             sigma_matrix = sps.csr_matrix(sigma_matrix)
         elif cho:
             L, low = spl.cho_factor(sigma_matrix)
-        # print(L, low)
 
         max_entry = 0
         for i in range(n):
-            # print(i)
             b = [int(j == i) for j in range(n)]
             if not sparse:
                 x = spl.solve(sigma_matrix, b, assume_a='pos')
@@ -37,9 +35,6 @@ def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, preci
                 x = spl.cho_solve((L, low), b)
             else:
                 x = spsl.spsolve(sigma_matrix, b)
-            # print(b)
-            # print(L @ x)
-            # max_entry = max(max_entry, x @ x)
             max_entry = max(max_entry, x[i])
 
         eps = max_entry
@@ -48,7 +43,6 @@ def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, preci
         if sparse:
             degree_matrix = sps.csr_matrix(degree_matrix)
             dmax = max(np.diag(degree_matrix.todense()))
-            # inv_sq_lambda = sps.csr_matrix(inv_sq_lambda)
         else:
             print(degree_matrix)
             print(np.diag(degree_matrix))
@@ -68,7 +62,6 @@ def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, preci
             series_M, M_k = np.eye(n), np.eye(n)
         if q > 1:
             for i in range(min(q - 1, p - 1)):
-                # print(i)
                 M_k = M_k @ M
                 series_M += M
 
@@ -78,7 +71,6 @@ def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, preci
                 else:
                     series_M_q, M_k_q = np.eye(n), M_k
                 for i in range(int(np.ceil(q / p))):
-                    # print(i)
                     M_k_q = M_k_q @ M_k
                     series_M_q += M_k_q
                 series_M = series_M @ series_M_q
@@ -93,13 +85,10 @@ def minimize_alpha(rdp_eps, alpha_int_max=100, n_points=1000):
     alpha_int_space = np.arange(2, alpha_int_max + 1, 1)
     argmin_int = np.argmin([rdp_eps(alpha_int) for alpha_int in alpha_int_space])
     alpha_int_min = alpha_int_space[argmin_int]
-    # print("alpha_int_min: {}".format(alpha_int_min))
 
     alpha_lower = alpha_int_min - 1. + 1e-4
     alpha_upper = alpha_int_min + 1.
-    # print(alpha_lower, alpha_upper)
     alpha_float_space = np.linspace(alpha_lower, alpha_upper, n_points)
-    # print(alpha_float_space)
 
     return min([rdp_eps(alpha_float) for alpha_float in alpha_float_space])
 
@@ -146,8 +135,6 @@ def rdp_subsample(eps, subsample):
     """
 
     def int_rdp_subsample(alpha):
-        # print("alpha: {}".format(alpha))
-        # print(np.log(1 + (subsample ** 2) * math.comb(alpha, 2) * min(4 * (np.exp(eps(2)) - 1), 2 * np.exp(eps(2))) + 2 * sum([(subsample ** j) * math.comb(alpha, j) * np.exp((j - 1) * eps(j)) for j in range(3, alpha + 1)])))
         return (1. / (alpha - 1.)) * np.log(1 + (subsample ** 2) * math.comb(alpha, 2) * min(4 * (np.exp(eps(2)) - 1), 2 * np.exp(eps(2))) + 2 * sum([(subsample ** j) * math.comb(alpha, j) * np.exp((j - 1) * eps(j)) for j in range(3, alpha + 1)]))
 
     def out(alpha):
