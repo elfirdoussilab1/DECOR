@@ -6,10 +6,15 @@ from utils.topology import *
 import time
 import matplotlib.pyplot as plt
 from matplotlib import ticker
+import math
 import matplotlib.cm as cm
 
 
-def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, precision=0, p=0, sparse=True, cho=False):
+def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, precision=0, p=0,
+                sparse=True, cho=False):
+    """Returns the output of Algorithm 2 in the paper (single-iteration RDP without amplification by subsampling)
+    TODO: Redirect all calls of rdp_account in the project to rdp_compose_convert
+    """
     n = degree_matrix.shape[0]
     eps = 0
 
@@ -20,11 +25,9 @@ def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, preci
             sigma_matrix = sps.csr_matrix(sigma_matrix)
         elif cho:
             L, low = spl.cho_factor(sigma_matrix)
-        # print(L, low)
 
         max_entry = 0
         for i in range(n):
-            # print(i)
             b = [int(j == i) for j in range(n)]
             if not sparse:
                 x = spl.solve(sigma_matrix, b, assume_a='pos')
@@ -32,9 +35,6 @@ def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, preci
                 x = spl.cho_solve((L, low), b)
             else:
                 x = spsl.spsolve(sigma_matrix, b)
-            # print(b)
-            # print(L @ x)
-            # max_entry = max(max_entry, x @ x)
             max_entry = max(max_entry, x[i])
 
         eps = max_entry
@@ -43,13 +43,15 @@ def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, preci
         if sparse:
             degree_matrix = sps.csr_matrix(degree_matrix)
             dmax = max(np.diag(degree_matrix.todense()))
-            # inv_sq_lambda = sps.csr_matrix(inv_sq_lambda)
         else:
+            print(degree_matrix)
+            print(np.diag(degree_matrix))
             dmax = max(np.diag(degree_matrix))
-        q = int(np.ceil(np.log(2 * np.sqrt(n) * clip ** 2 / (precision * sigmacdp ** 2)) / np.log(1 + sigmacdp ** 2 / (dmax * sigmacor ** 2))))
+        q = int(np.ceil(np.log(2 * np.sqrt(n) * clip ** 2 / (precision * sigmacdp ** 2)) / np.log(
+            1 + sigmacdp ** 2 / (dmax * sigmacor ** 2))))
         if p == 0:
             p = int(np.ceil(np.sqrt(q)))
-        print(q, q/p)
+        print(q, q / p)
         lambda_matrix = (sigmacdp ** 2) * np.eye(n) + (sigmacor ** 2) * degree_matrix
         inv_sq_lambda = np.sqrt(np.diag(1 / np.diag(lambda_matrix)))
         M = (sigmacor ** 2) * inv_sq_lambda @ adjacency_matrix @ inv_sq_lambda
@@ -59,8 +61,7 @@ def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, preci
         else:
             series_M, M_k = np.eye(n), np.eye(n)
         if q > 1:
-            for i in range(min(q-1, p-1)):
-                # print(i)
+            for i in range(min(q - 1, p - 1)):
                 M_k = M_k @ M
                 series_M += M
 
@@ -69,8 +70,7 @@ def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, preci
                     series_M_q, M_k_q = sps.csr_matrix(np.eye(n)), M_k
                 else:
                     series_M_q, M_k_q = np.eye(n), M_k
-                for i in range(int(np.ceil(q/p))):
-                    # print(i)
+                for i in range(int(np.ceil(q / p))):
                     M_k_q = M_k_q @ M_k
                     series_M_q += M_k_q
                 series_M = series_M @ series_M_q
@@ -81,21 +81,75 @@ def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, preci
     return 2 * (clip ** 2) * eps + precision
 
 
-def rdp_compose_convert(num_iter, rdp_eps, delta):
-    """The single-iteration RDP guaranteed is assumed to be of the form (alpha, alpha*rdp_eps)"""
-    return num_iter * rdp_eps + 2 * np.sqrt(num_iter * rdp_eps * np.log(1 / delta))
+def minimize_alpha(rdp_eps, alpha_int_max=100, n_points=1000):
+    alpha_int_space = np.arange(2, alpha_int_max + 1, 1)
+    argmin_int = np.argmin([rdp_eps(alpha_int) for alpha_int in alpha_int_space])
+    alpha_int_min = alpha_int_space[argmin_int]
 
-def reverse_eps(eps, num_iter, delta):
-    """ Find eps_iter from eps
+    alpha_lower = alpha_int_min - 1. + 1e-4
+    alpha_upper = alpha_int_min + 1.
+    alpha_float_space = np.linspace(alpha_lower, alpha_upper, n_points)
+
+    return min([rdp_eps(alpha_float) for alpha_float in alpha_float_space])
+
+
+def rdp_compose_convert(num_iter, delta, sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, subsample=1., batch_size=1.):
     """
-    return (np.sqrt(np.log(1/delta) + eps) - np.sqrt(np.log(1/delta)))**2 / num_iter
+
+    Main Args:
+        subsample: subsampling ratio, set to 1 for user-level DP
+        batch_size: mini-batch size, ignored if user-level DP
+
+    Returns: DP epsilon after T iterations of Correlated DSGD; user-level if subsample == 1. and example-level otherwise.
+
+    """
+    if subsample == 1.:
+        rdp_eps_no_sub = rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix)
+        return num_iter * rdp_eps_no_sub + 2 * np.sqrt(num_iter * rdp_eps_no_sub * np.log(1 / delta))
+
+    rdp_eps_no_sub = rdp_account(sigmacdp, sigmacor, clip/batch_size, degree_matrix, adjacency_matrix)
+    rdp_eps_func = lambda alpha: alpha * rdp_eps_no_sub
+    rdp_eps_func_sub = rdp_subsample(rdp_eps_func, subsample)
+    out = minimize_alpha(rdp_eps_func_sub)
+    return out
+
+
+def reverse_eps(eps, num_iter, delta, subsample=1.):
+    """ Find single-iteration RDP epsilon (eps_iter) from total DP epsilon (eps)
+    IMPORTANT: only works assuming user-level DP, or no data subsampling
+    TODO: implement case subsample < 1
+    """
+    if subsample == 1.:
+        return (np.sqrt(np.log(1 / delta) + eps) - np.sqrt(np.log(1 / delta))) ** 2 / num_iter
+
+    raise NotImplementedError
+
+
+def rdp_subsample(eps, subsample):
+    """
+    Args:
+        eps: function of alpha, returns RDP epsilon (with alpha)
+        subsample: subsampling ratio
+
+    Returns: rdp subsampled epsilon as a function of alpha
+    """
+
+    def int_rdp_subsample(alpha):
+        return (1. / (alpha - 1.)) * np.log(1 + (subsample ** 2) * math.comb(alpha, 2) * min(4 * (np.exp(eps(2)) - 1), 2 * np.exp(eps(2))) + 2 * sum([(subsample ** j) * math.comb(alpha, j) * np.exp((j - 1) * eps(j)) for j in range(3, alpha + 1)]))
+
+    def out(alpha):
+        tmp = 0. if math.floor(alpha) == 1 else (1-alpha+math.floor(alpha)) * (math.floor(alpha)-1) / (alpha-1) * int_rdp_subsample(math.floor(alpha))
+        return tmp + (alpha-math.floor(alpha)) * (math.ceil(alpha)-1) / (alpha - 1) * int_rdp_subsample(math.ceil(alpha))
+
+    return out
+
 
 def test_time():
     n, d = 10, 2
     sigmacdp, sigmacor = np.sqrt(1 / n), np.sqrt(100)
     clip = .1
     degree_matrix = d * np.eye(n)
-    degree_matrix = sps.csr_matrix(degree_matrix)
+    # degree_matrix = sps.csr_matrix(degree_matrix)
 
     adjacency_matrix = np.zeros((n, n))
     np.fill_diagonal(adjacency_matrix[1:], 1, wrap=False)
@@ -116,12 +170,16 @@ def test_time():
     print(rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, precision=0, sparse=True))
     end_time_2 = time.time()
     print("time 2: {}".format(end_time_2 - end_time_1))
-    print(
-        rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, precision=precision, p=0, sparse=False))
+    print(rdp_compose_convert(10, 1e-5, sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, subsample=.5, batch_size=1))
     end_time_3 = time.time()
     print("time 3: {}".format(end_time_3 - end_time_2))
+    # print(
+    #     rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, precision=precision, p=0, sparse=False))
+    # end_time_3 = time.time()
+    # print("time 3: {}".format(end_time_3 - end_time_2))
     # print(rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, precision=precision, p=0, sparse=True))
     # print("time 4: {}".format(time.time() - end_time_3))
+
 
 def plot_pareto(c_clip=1, num_nodes=16, topo_name="ring"):
     topo = FixedMixingMatrix(topo_name, num_nodes)
@@ -165,7 +223,8 @@ def plot_pareto(c_clip=1, num_nodes=16, topo_name="ring"):
     # plt.plot()
     # plt.show()
 
-def plot_sigmacor(sigma_cdp= 0.1,c_clip=1, num_nodes=256, topo_name="ring"):
+
+def plot_sigmacor(sigma_cdp=0.1, c_clip=1, num_nodes=256, topo_name="ring"):
     topo = FixedMixingMatrix(topo_name, num_nodes)
     adjacency_matrix = np.array(topo(0) != 0, dtype=float)
     adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
@@ -189,18 +248,19 @@ def plot_sigmacor(sigma_cdp= 0.1,c_clip=1, num_nodes=256, topo_name="ring"):
     ax.set_title('Single-iteration RDP epsilon')
     ax.set_xlabel('$\sigma_{\mathrm{cor}}^2$')
     ax.set_ylabel('$\\varepsilon_{\mathrm{RDP}}$')
-    plt.savefig('plots/sigmacor-n{}-sigmacdp{}-{}.png'.format(num_nodes,sigma_cdp,topo_name))
+    plt.savefig('plots/sigmacor-n{}-sigmacdp{}-{}.png'.format(num_nodes, sigma_cdp, topo_name))
     # plt.plot()
     # plt.show()
 
 
 if __name__ == "__main__":
-    params = {
-        "num_nodes": [4, 16, 256],
-        "sigma_cdp": np.sqrt([1, 10, 100]),
-        "sigma_cor": np.sqrt([10, 100, 1000]),
-        "topology": ['ring', 'grid'],
-    }
+    test_time()
+    # params = {
+    #     "num_nodes": [4, 16, 256],
+    #     "sigma_cdp": np.sqrt([1, 10, 100]),
+    #     "sigma_cor": np.sqrt([10, 100, 1000]),
+    #     "topology": ['ring', 'grid'],
+    # }
     # plot_pareto()
     # for n in params["num_nodes"]:
     #     for sigma_cdp in params["sigma_cdp"]:
