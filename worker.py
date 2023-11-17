@@ -17,13 +17,12 @@ class Worker(object):
         self.train_iterator = iter(train_data_loader)
         self.test_iterator = iter(test_data_loader)
 
-        self.device = device
-        if self.device == "cuda":
-            # Model is on GPU and not explicitly restricted to one particular card => enable data parallelism
-            self.model = torch.nn.DataParallel(self.model, device_ids = [0, 1])
         self.loss = getattr(torch.nn, loss)()
         self.model = getattr(models, model)().to(device)
-        
+        self.device = device
+        #if self.device == "cuda":
+        #    # Model is on GPU and not explicitly restricted to one particular card => enable data parallelism
+        #    self.model = torch.nn.DataParallel(self.model, device_ids = [0, 1])
 
         # List of shapes of the model in question, used when unflattening gradients and model parameters
         self.model_shapes = list(param.shape for param in self.model.parameters())

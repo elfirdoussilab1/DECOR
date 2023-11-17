@@ -3,7 +3,6 @@ import torch
 from models import *
 import misc, os, worker, dataset
 from utils import dp_account, topology, plotting
-from train import result_make, result_get, result_store
 import numpy as np
 import pandas as pd
 
@@ -29,7 +28,7 @@ num_evaluations = 100
 
 # Hyper-parameters
 lr_grid = [0.01, 0.05, 0.1, 0.5, 1]
-gradient_clip_grid = np.linspace(1, 4, 7)
+gradient_clip_grid = [2.]
 batch_size = 64
 momentum = 0.
 weight_decay = 1e-4
@@ -42,7 +41,7 @@ misc.fix_seed(1)
 # Storing reults
 evaluation_delta = 5
 
-result_directory = "./results-tuning-" + dataset
+result_directory = "./results-tuning-" + dataset_name
 if not os.path.exists(result_directory):
     os.makedirs(result_directory)
 
@@ -118,20 +117,22 @@ for lr in lr_grid:
         V = misc.to_antisymmetric(V).to(device)
 
         # ------------------------------------------------------------------------ #
-        # Training
+
         current_step = 0
-        eval_filename = result_directory + f"mean_accuracy-{dataset_name}-lr-{lr}-clip-{gradient_clip}-epsilon-{target_eps}-T-{num_iter}"
+        eval_filename = result_directory + f"/mean_accuracy-{dataset_name}-lr-{lr}-clip-{gradient_clip}-epsilon-{target_eps}-T-{num_iter}.csv"
+        # Initialization of the dataframe
+        data = [{"Step": -1, "topology": topology_name, "method": method, "lr": lr, "clip" : gradient_clip, "sigma": sigma, "sigma_cor": sigma_cor, 
+                    "epsilon": target_eps, "accuracy":0}]
+        result = pd.DataFrame(data)
+        
+        # Training
         while current_step <= num_iter:
             
             # Evaluate the model if milestone is reached
-            # Initialization of the dataframe
-            data = [{"step": -1, "topology": topology_name, "method": method, "lr": lr, "clip" : gradient_clip, "sigma": sigma, "sigma_cor": sigma_cor, 
-                     "epsilon": target_eps, "accuracy":0}]
-            result = pd.DataFrame(data)
             milestone_evaluation = evaluation_delta > 0 and current_step % evaluation_delta == 0        
             if milestone_evaluation:
                 mean_accuracy = np.mean([workers[i].compute_accuracy() for i in range(num_nodes)])
-                new_row = {"step": current_step,
+                new_row = {"Step": current_step,
                             "topology": topology_name,
                             "method": method,
                             "lr": lr, 
@@ -142,7 +143,7 @@ for lr in lr_grid:
                             "accuracy": mean_accuracy                
                             }
                 result = pd.concat([result, pd.DataFrame([new_row])], ignore_index=True)
-                result.to_csv(eval_filename)
+                result.set_index(['Step']).to_csv(eval_filename)
             # Apply the algorithm
             all_parameters = []
 
