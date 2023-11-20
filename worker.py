@@ -78,14 +78,30 @@ class Worker(object):
         """
         # Verification of compatibility of shapes
         assert noises[0].shape == self.gradient.shape
+        self.model.train()
         X, y = self.sample_train_batch()
         X, y = X.to(self.device), y.to(self.device)
-        gradient = self.compute_gradient(X, y)
+        z = y.view(-1, 1).to(self.device)
+        # X. shape = (batch, 1, 28, 28), y.shape = (batch)
         
-        # Clipping
-        # TODO: change it to clip each gradient in the batch
-        if self.gradient_clip is not None:
-            gradient = misc.clip_vector(gradient, self.gradient_clip)
+        # User-level Clipping
+        # gradient = self.compute_gradient(X, y)
+        #if self.gradient_clip is not None:
+        #    gradient = misc.clip_vector(gradient, self.gradient_clip)
+
+        # Example-level clipping
+        gradient = torch.zeros_like(self.flat_parameters).to(self.device)
+        for i in range(self.batch_size):
+            self.model.zero_grad()
+            loss = self.loss(self.model(X[i]), z[i])
+            loss.backward()
+            grad_i = [param.grad for param in self.model.parameters()]
+
+            # Clipping
+            grad_i.mul_(1 / max(1, grad_i.norm() / self.gradient_clip))
+
+            gradient.add_(misc.flatten(grad_i))
+        gradient.mul_(1 / self.batch_size)
         
         # Sample noise from normal (0, sigma^2)
         cdp_noise = torch.normal(mean = torch.zeros_like(self.gradient), std = self.sigma)
