@@ -3,12 +3,12 @@ import scipy.linalg as spl
 import scipy.sparse as sps
 import scipy.sparse.linalg as spsl
 from utils.topology import *
-import time
+import time, math
 import matplotlib.pyplot as plt
 from matplotlib import ticker
-import math
 import matplotlib.cm as cm
-
+from . import param_search
+import pandas as pd
 
 def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, precision=0, p=0,
                 sparse=True, cho=False):
@@ -125,8 +125,32 @@ def reverse_eps(eps, num_iter, delta, clip, degree_matrix, adjacency_matrix, sub
         return (np.sqrt(np.log(1 / delta) + eps) - np.sqrt(np.log(1 / delta))) ** 2 / num_iter
 
     else: # Binary search
+        # Find couples (sigma, sigma_corr) that give eps
+        sigma_grid = np.linspace(1e-3, 1e-1, 100)
+        sigma_cor_grid = np.linspace(1e-3, 1e-1, 1000)
         
-        raise NotImplementedError
+        # Initialize dataframe
+        data = [{"clip": clip, "sigma": -1, "sigma-cor": -1, "eps_iter": -1, "eps": -1}]
+        result = pd.DataFrame(data)
+        for sigma in sigma_grid:
+            print(f"Looping for sigma {sigma}")
+            all_sigma_cor = param_search.find_sigma_cor(eps, sigma, sigma_cor_grid, clip, degree_matrix, adjacency_matrix, num_iter, delta, subsample, batch_size)
+            print(all_sigma_cor)
+            if len(all_sigma_cor) != 0: # Not empty
+                for sigma_cor in all_sigma_cor:
+                        
+                    eps_iter = rdp_account(sigma, sigma_cor, clip, degree_matrix, adjacency_matrix)
+                    new_row = {"c_clip": clip,
+                                "sigma": sigma, 
+                                "sigma-cor": sigma_cor,
+                                "eps_iter": eps_iter ,
+                                "eps": rdp_compose_convert(num_iter, delta, sigma, sigma_cor, clip, degree_matrix, adjacency_matrix, subsample, batch_size)
+                                }
+                    result = pd.concat([result, pd.DataFrame([new_row])], ignore_index=True)
+                    #result = result.append(new_row, ignore_index = True)
+                    print(f"added with privacy {new_row['eps']}")
+
+        return result
 
 
 def rdp_subsample(eps, subsample):
