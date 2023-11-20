@@ -80,6 +80,8 @@ def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, preci
 
     return 2 * (clip ** 2) * eps + precision
 
+def user_level_rdp(num_iter, eps_iter, delta):
+    return num_iter * eps_iter + 2 * np.sqrt(num_iter * eps_iter * np.log(1 / delta))
 
 def minimize_alpha(rdp_eps, alpha_int_max=100, n_points=1000):
     alpha_int_space = np.arange(2, alpha_int_max + 1, 1)
@@ -103,9 +105,9 @@ def rdp_compose_convert(num_iter, delta, sigmacdp, sigmacor, clip, degree_matrix
     Returns: DP epsilon after T iterations of Correlated DSGD; user-level if subsample == 1. and example-level otherwise.
 
     """
-    if subsample == 1.:
+    if math.isclose(subsample, 1.):
         rdp_eps_no_sub = rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix)
-        return num_iter * rdp_eps_no_sub + 2 * np.sqrt(num_iter * rdp_eps_no_sub * np.log(1 / delta))
+        return user_level_rdp(num_iter, rdp_eps_no_sub, delta)
 
     rdp_eps_no_sub = rdp_account(sigmacdp, sigmacor, clip/batch_size, degree_matrix, adjacency_matrix)
     rdp_eps_func = lambda alpha: alpha * rdp_eps_no_sub
@@ -114,15 +116,17 @@ def rdp_compose_convert(num_iter, delta, sigmacdp, sigmacor, clip, degree_matrix
     return out
 
 
-def reverse_eps(eps, num_iter, delta, subsample=1.):
+def reverse_eps(eps, num_iter, delta, clip, degree_matrix, adjacency_matrix, subsample=1., batch_size=1.):
     """ Find single-iteration RDP epsilon (eps_iter) from total DP epsilon (eps)
     IMPORTANT: only works assuming user-level DP, or no data subsampling
     TODO: implement case subsample < 1
     """
-    if subsample == 1.:
+    if math.isclose(subsample, 1.):
         return (np.sqrt(np.log(1 / delta) + eps) - np.sqrt(np.log(1 / delta))) ** 2 / num_iter
 
-    raise NotImplementedError
+    else: # Binary search
+        
+        raise NotImplementedError
 
 
 def rdp_subsample(eps, subsample):

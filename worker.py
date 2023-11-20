@@ -83,6 +83,7 @@ class Worker(object):
         gradient = self.compute_gradient(X, y)
         
         # Clipping
+        # TODO: change it to clip each gradient in the batch
         if self.gradient_clip is not None:
             gradient = misc.clip_vector(gradient, self.gradient_clip)
         

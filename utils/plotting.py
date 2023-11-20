@@ -22,7 +22,7 @@ def plot_loss(topology_name, method, A, B, gamma, num_nodes, num_dim, sigma, sig
         adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
         degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
         eps_iter = dp_account.rdp_account(sigma, sigma_cor, c_clip, degree_matrix, adjacency_matrix)
-        eps = dp_account.rdp_compose_convert(num_iter, eps_iter, delta)
+        eps = dp_account.user_level_rdp(num_iter, eps_iter, delta)
     
     fig, ax = plt.subplots()
     t = np.arange(0, num_iter + 1)
@@ -247,10 +247,6 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
         os.makedirs(folder_path)
     plt.savefig(folder_path + '/loss-n_{}-d_{}-lr_{}-clip_{}-delta_{}-T_{}.png'.format(num_nodes, num_dim, gamma, c_clip, delta, num_iter))
 
-# Plotting loss in function of Number of Nodes
-def loss_num_nodes(topology_name, A, B, num_nodes_grid, num_dim, gamma, c_clip, sigma, sigma_cor, target_eps, num_gossip=1, num_iter = 300, delta = 1e-5, seeds = np.arange(1, 6)):
-    pass
-
 #------------------------------------------------------------------------------------------------------------------------------#
 # Parameter tuning
 # Binary search for 'sigma_cor' in a grid 'sigma_cor_grid' such that the privacy is close close to the target 'eps_taget'
@@ -350,7 +346,7 @@ def find_best_params(topology_name, method, A, B, num_nodes, num_dim, gamma_grid
                                             "gamma": gamma, 
                                             "c_clip": c_clip,
                                             "eps_iter": eps_iter ,
-                                            "eps": dp_account.rdp_compose_convert(num_iter, eps_iter, delta),
+                                            "eps": dp_account.user_level_rdp(num_iter, eps_iter, delta),
                                             "sigma": sigma,
                                             "sigma_cor": sigma_cor,
                                             "loss": np.mean(errors[-200:-1]),
