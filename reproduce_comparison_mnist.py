@@ -54,10 +54,10 @@ params = {
     "dataset": "mnist",
     #"batch-size": 25,
     "batch-size": 64,
-    "loss": "NLLLoss",
-    #"loss": "CrossEntropyLoss",
-    "learning-rate-decay-delta": 50,
-    "learning-rate-decay": 50,
+    #"loss": "NLLLoss",
+    "loss": "CrossEntropyLoss",
+    "learning-rate-decay-delta": 200,
+    "learning-rate-decay": 200,
     "weight-decay": 1e-4,
     "evaluation-delta": 5,
     "gradient-clip": 2,
@@ -69,8 +69,8 @@ params = {
     }
 
 # Hyperparameters to test
-models = [("cnn_mnist", 0.75)]
-#models = [("simple_mnist_model", 2e-1)]
+#models = [("cnn_mnist", 0.75)]
+models = [("simple_mnist_model", 2e-1)]
 topologies = [("centralized", "cdp")]# ,("ring", "corr"), ("ring", "ldp")]
 alphas = [1]
 epsilons = [5]
