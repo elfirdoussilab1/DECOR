@@ -7,7 +7,8 @@ import time, math
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 import matplotlib.cm as cm
-from . import param_search
+from utils import param_search
+import warnings
 import pandas as pd
 
 def rdp_account(sigmacdp, sigmacor, clip, degree_matrix, adjacency_matrix, precision=0, p=0,
@@ -84,8 +85,10 @@ def user_level_rdp(num_iter, eps_iter, delta):
     return num_iter * eps_iter + 2 * np.sqrt(num_iter * eps_iter * np.log(1 / delta))
 
 def minimize_alpha(rdp_eps, alpha_int_max=100, n_points=1000):
+    warnings.filterwarnings('ignore', category=RuntimeWarning)
+
     alpha_int_space = np.arange(2, alpha_int_max + 1, 1)
-    argmin_int = np.argmin([rdp_eps(alpha_int) for alpha_int in alpha_int_space])
+    argmin_int = np.nanargmin([rdp_eps(alpha_int) for alpha_int in alpha_int_space])
     alpha_int_min = alpha_int_space[argmin_int]
 
     alpha_lower = alpha_int_min - 1. + 1e-4
