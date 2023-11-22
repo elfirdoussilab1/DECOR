@@ -119,41 +119,19 @@ def rdp_compose_convert(num_iter, delta, sigmacdp, sigmacor, clip, degree_matrix
     return out
 
 
-def reverse_eps(eps, num_iter, delta, clip, degree_matrix, adjacency_matrix, subsample=1., batch_size=1.):
+def reverse_eps(eps, num_iter, delta, num_nodes, clip, topology_name, degree_matrix, adjacency_matrix, subsample=1., batch_size=1., multiple = True, **kwargs):
     """ Find single-iteration RDP epsilon (eps_iter) from total DP epsilon (eps)
     IMPORTANT: only works assuming user-level DP, or no data subsampling
-    TODO: implement case subsample < 1
     """
     if math.isclose(subsample, 1.):
         return (np.sqrt(np.log(1 / delta) + eps) - np.sqrt(np.log(1 / delta))) ** 2 / num_iter
 
     else: # Binary search
-        # Find couples (sigma, sigma_corr) that give eps
-        sigma_grid = np.linspace(1e-3, 1e-1, 100)
-        sigma_cor_grid = np.linspace(1e-3, 1e-1, 1000)
-        
-        # Initialize dataframe
-        data = [{"clip": clip, "sigma": -1, "sigma-cor": -1, "eps_iter": -1, "eps": -1}]
-        result = pd.DataFrame(data)
-        for sigma in sigma_grid:
-            print(f"Looping for sigma {sigma}")
-            all_sigma_cor = param_search.find_sigma_cor(eps, sigma, sigma_cor_grid, clip, degree_matrix, adjacency_matrix, num_iter, delta, subsample, batch_size)
-            print(all_sigma_cor)
-            if len(all_sigma_cor) != 0: # Not empty
-                for sigma_cor in all_sigma_cor:
-                        
-                    eps_iter = rdp_account(sigma, sigma_cor, clip, degree_matrix, adjacency_matrix)
-                    new_row = {"c_clip": clip,
-                                "sigma": sigma, 
-                                "sigma-cor": sigma_cor,
-                                "eps_iter": eps_iter ,
-                                "eps": rdp_compose_convert(num_iter, delta, sigma, sigma_cor, clip, degree_matrix, adjacency_matrix, subsample, batch_size)
-                                }
-                    result = pd.concat([result, pd.DataFrame([new_row])], ignore_index=True)
-                    #result = result.append(new_row, ignore_index = True)
-                    print(f"added with privacy {new_row['eps']}")
+        result = param_search.binary_search_eps(eps, num_iter, delta, num_nodes, clip, degree_matrix, adjacency_matrix, subsample, batch_size, multiple)
+        filename= f"result_gridsearch_example-level_{topology_name}_epsilon_{eps}.csv"
+        result.to_csv(filename)
+        return result.iloc[1]["eps-iter"]
 
-        return result
 
 
 def rdp_subsample(eps, subsample):

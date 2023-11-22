@@ -54,14 +54,14 @@ params = {
     "dataset": "mnist",
     #"batch-size": 25,
     "batch-size": 64,
-    #"loss": "NLLLoss",
-    "loss": "CrossEntropyLoss",
-    "learning-rate-decay-delta": 200,
-    "learning-rate-decay": 200,
+    "loss": "NLLLoss",
+    #"loss": "CrossEntropyLoss",
+    "learning-rate-decay-delta": 50,
+    "learning-rate-decay": 50,
     "weight-decay": 1e-4,
     "evaluation-delta": 5,
     "gradient-clip": 2,
-    "num-iter": 1000,
+    "num-iter": 800,
     "num-nodes": 16,
     "momentum": 0.,
     "num-labels": 10,
@@ -69,11 +69,11 @@ params = {
     }
 
 # Hyperparameters to test
-#models = [("cnn_mnist", 0.75)]
-models = [("simple_mnist_model", 2e-1)]
+models = [("cnn_mnist", 0.75)]
+#models = [("simple_mnist_model", 2e-1)]
 topologies = [("centralized", "cdp")]# ,("ring", "corr"), ("ring", "ldp")]
-alphas = [0.1]
-epsilons = [50]
+alphas = [1]
+epsilons = [5]
 
 
 # Command maker helper
@@ -85,6 +85,9 @@ def make_command(params):
 # Jobs
 jobs  = tools.Jobs(args.result_directory, devices=args.devices, devmult=args.supercharge)
 seeds = jobs.get_seeds()
+
+# Dataset to total number of samples
+dataset_samples = {"mnist": 60000}
 
 # Submit all experiments
 for alpha in alphas:
@@ -98,45 +101,32 @@ for alpha in alphas:
                     params["method"] = method
                     params["epsilon"] = target_eps
 
+                    # Training model without noise
+                    jobs.submit(f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}", make_command(params))
+
                     # Privacy
-                    eps_iter = dp_account.reverse_eps(target_eps, params["num-iter"], params["delta"])
                     W = topology.FixedMixingMatrix(topology_name, params["num-nodes"])
                     adjacency_matrix = np.array(W(0) != 0, dtype=float)
                     adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
                     degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
 
+                    subsample = params["batch-size"] / (dataset_samples[params["dataset"]] / params["num-nodes"])
+                    eps_iter = dp_account.reverse_eps(target_eps, params["num-iter"], params["delta"], params["num-nodes"], params["gradient-clip"], 
+                                                      topology_name, degree_matrix, adjacency_matrix, subsample, params["batch-size"], multiple = False)
+
                     # sigma_cdp and sigma_ldp
                     sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
                     sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
-                    # Training model without noise
-                    jobs.submit(f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}", make_command(params))
-
 
                     if "corr" in method: # CD-SGD
                         # Determining the couples (sigma, sigma_cor) that can be considered
-                        sigmas_df = pd.DataFrame(columns = ["topology", "sigma", "sigma-cor", "epsilon"])
-                        sigma_grid = np.linspace(sigma_cdp, sigma_ldp, 50)
-                        sigma_cor_grid = np.linspace(1, 1000, 1000)
-                        for sigma in sigma_grid:
-                            all_sigma_cor = plotting.find_sigma_cor(sigma, sigma_cor_grid, params["gradient-clip"], degree_matrix, adjacency_matrix, eps_iter)
-                            #tools.success(all_sigma_cor)
-                            # check non-emptyness and add it
-                            if len(all_sigma_cor) !=0:
-                
-                                new_row = {"topology": topology_name,
-                                           "sigma": sigma,
-                                           "sigma-cor": all_sigma_cor[0],
-                                           "epsilon": target_eps}
-                                sigmas_df = pd.concat([sigmas_df, pd.DataFrame([new_row])], ignore_index=True)
-
-                        # Store result of ooking for sigmas
-                        filename = f'result_grid_corr_epsilon_{target_eps}.csv'
-                        sigmas_df.to_csv(filename)
-
+                        filename= f"result_gridsearch_example-level_{topology_name}_epsilon_{target_eps}.csv"
+                        df = pd.read_csv(filename)
+                    
                         # Taking the values on the first row (correspond to the least sigma)
-                        params["sigma"] = sigmas_df.iloc[0]["sigma"]
-                        params["sigma-cor"]= sigmas_df.iloc[0]["sigma-cor"]
+                        params["sigma"], params["sigma-cor"] = df.iloc[1]["sigma", "sigma-cor"]
                         jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}-eps_{target_eps}", make_command(params))
+
                     elif "ldp" in method: # LDP
                         params["sigma-cor"] = 0
                         params["sigma"] = sigma_ldp

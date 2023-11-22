@@ -42,20 +42,28 @@ if __name__ == "__main__":
         }
     """  
 
-    W = topology.FixedMixingMatrix("centralized", 16)
+    # Parameters
+    num_nodes = 16
+    topology_name = "centralized"
+    W = topology.FixedMixingMatrix("centralized", num_nodes)
     adjacency_matrix = np.array(W(0) != 0, dtype=float)
     adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
     degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
 
-    # Plotting rdp_compose with (sigma, sigma_cor)
-    sigma = 1e-1
-    sigma_cor_grid = np.linspace(1e-1, 1, 100)
-
     clip = 2.
-    delta = 1e-4
+    delta = 1e-5
     num_iter = 1000
-    subsample = 128/3750
-    batch_size = 128
+    subsample = 64/3750
+    batch_size = 64
+
+    eps = 5
+    eps_iter = dp_account.reverse_eps(eps, num_iter, delta, num_nodes, clip, topology_name, degree_matrix, adjacency_matrix, subsample, batch_size, multiple = False)
+    print(eps_iter)
+
+    """
+    # Plotting rdp_compose with (sigma, sigma_cor)
+    sigma = 5e-3
+    sigma_cor_grid = np.linspace(1e-2, 1, 100)
 
     eps = np.zeros_like(sigma_cor_grid)
     for i in range(len(eps)):
@@ -70,7 +78,7 @@ if __name__ == "__main__":
         os.makedirs(folder_path)
     plt.savefig(folder_path + f'/epsilon_vs_sigma-cor_sigma={sigma}.png', bbox_inches='tight')
 
-    """
+   
     # Create a 3D plot
     sigma_mesh, sigma_cor_mesh = np.meshgrid(sigma_grid, sigma_cor_grid)
     eps = np.zeros_like(sigma_mesh)
