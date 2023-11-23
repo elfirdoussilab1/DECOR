@@ -54,10 +54,10 @@ params = {
     "dataset": "mnist",
     #"batch-size": 25,
     "batch-size": 64,
-    "loss": "NLLLoss",
-    #"loss": "CrossEntropyLoss",
-    "learning-rate-decay-delta": 50,
-    "learning-rate-decay": 50,
+    #"loss": "NLLLoss",
+    "loss": "CrossEntropyLoss",
+    "learning-rate-decay-delta": 200,
+    "learning-rate-decay": 200,
     "weight-decay": 1e-4,
     "evaluation-delta": 5,
     "gradient-clip": 2,
@@ -69,10 +69,10 @@ params = {
     }
 
 # Hyperparameters to test
-models = [("cnn_mnist", 0.75)]
-#models = [("simple_mnist_model", 2e-1)]
-topologies = [("centralized", "cdp")]# ,("ring", "corr"), ("ring", "ldp")]
-alphas = [1]
+#models = [("cnn_mnist", 0.75)]
+models = [("simple_mnist_model", 2e-1)]
+topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
+alphas = [1.]
 epsilons = [5]
 
 
@@ -102,7 +102,7 @@ for alpha in alphas:
                     params["epsilon"] = target_eps
 
                     # Training model without noise
-                    jobs.submit(f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}", make_command(params))
+                    #jobs.submit(f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}", make_command(params))
 
                     # Privacy
                     W = topology.FixedMixingMatrix(topology_name, params["num-nodes"])
@@ -160,12 +160,13 @@ with tools.Context("mnist", "info"):
                     values = dict()
                     # Plot top-1 cross-accuracies
                     plot = study.LinePlot()
-                    legend = ["Average"]
+                    #legend = ["Average"]
+                    legend = []
                     
                     # Plot average (without any noise)
-                    name = f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}"
-                    dsgd = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
-                    plot.include(dsgd[0], "Accuracy", errs="-err", lalp=0.8)
+                    #name = f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}"
+                    #dsgd = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
+                    #plot.include(dsgd[0], "Accuracy", errs="-err", lalp=0.8)
                     
                     for topology_name, method in topologies:
                         name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}-eps_{target_eps}"

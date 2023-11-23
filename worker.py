@@ -91,7 +91,7 @@ class Worker(object):
 
         # Example-level clipping
         gradient = torch.zeros_like(self.flat_parameters).to(self.device)
-        for i in range(self.batch_size):
+        for i in range(len(X)):
             self.model.zero_grad()
             loss = self.loss(self.model(X[i]), z[i])
             loss.backward()
@@ -100,8 +100,8 @@ class Worker(object):
             # Clipping
             grad_i.mul_(1 / max(1, grad_i.norm() / self.gradient_clip))
 
-            gradient.add_(misc.flatten(grad_i))
-        gradient.mul_(1 / self.batch_size)
+            gradient.add_(grad_i)
+        gradient.mul_(1 / len(X))
         
         # Sample noise from normal (0, sigma^2)
         cdp_noise = torch.normal(mean = torch.zeros_like(self.gradient), std = self.sigma)
