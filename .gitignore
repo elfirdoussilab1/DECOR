@@ -21,3 +21,4 @@ datasets
 !*.png
 !*.csv
 !*.txt
+!*.t
