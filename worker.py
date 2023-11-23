@@ -20,9 +20,9 @@ class Worker(object):
         self.loss = getattr(torch.nn, loss)()
         self.model = getattr(models, model)().to(device)
         self.device = device
-        if self.device == "cuda":
-            # Model is on GPU and not explicitly restricted to one particular card => enable data parallelism
-            self.model = torch.nn.DataParallel(self.model, device_ids = [0, 1])
+        #if self.device == "cuda":
+        #    # Model is on GPU and not explicitly restricted to one particular card => enable data parallelism
+        #    self.model = torch.nn.DataParallel(self.model, device_ids = [0, 1])
 
         # List of shapes of the model in question, used when unflattening gradients and model parameters
         self.model_shapes = list(param.shape for param in self.model.parameters())
@@ -91,7 +91,7 @@ class Worker(object):
 
         # Example-level clipping
         gradient = torch.zeros_like(self.flat_parameters).to(self.device)
-        for i in range(len(X)):
+        for i in range(len(X)): # len(X) can be equal to batch_size or less
             self.model.zero_grad()
             loss = self.loss(self.model(X[i]), z[i])
             loss.backward()
