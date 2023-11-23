@@ -119,14 +119,16 @@ def rdp_compose_convert(num_iter, delta, sigmacdp, sigmacor, clip, degree_matrix
     return out
 
 
-def reverse_eps(eps, num_iter, delta, num_nodes, clip, topology_name, degree_matrix, adjacency_matrix, subsample=1., batch_size=1., multiple = True, **kwargs):
+def reverse_eps(eps, num_iter, delta, num_nodes= None, clip= None, topology_name= None, degree_matrix= None, adjacency_matrix= None, subsample=1., batch_size=1., multiple = True, **kwargs):
     """ Find single-iteration RDP epsilon (eps_iter) from total DP epsilon (eps)
     IMPORTANT: only works assuming user-level DP, or no data subsampling
     """
     if math.isclose(subsample, 1.):
+        print("good")
         return (np.sqrt(np.log(1 / delta) + eps) - np.sqrt(np.log(1 / delta))) ** 2 / num_iter
 
     else: # Binary search
+        print("bad")
         result = param_search.binary_search_eps(eps, num_iter, delta, num_nodes, clip, degree_matrix, adjacency_matrix, subsample, batch_size, multiple)
         filename= f"result_gridsearch_example-level_{topology_name}_epsilon_{eps}.csv"
         result.to_csv(filename)

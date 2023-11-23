@@ -101,7 +101,7 @@ def plot_comparison_loss_CI(topology_names, A, B, num_nodes, num_dim, gamma, c_c
     W_centr = topology.FixedMixingMatrix("centralized", num_nodes)
 
     # sigma_cdp and sigma_ldp
-    eps_iter = dp_account.reverse_eps(target_eps, num_iter, delta)
+    eps_iter = dp_account.reverse_eps(eps=target_eps, num_iter=num_iter, delta=delta)
     sigma_ldp = c_clip * np.sqrt(2 / eps_iter)
     sigma_cdp = sigma_ldp / np.sqrt(num_nodes)
 
@@ -184,7 +184,7 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
         misc.fix_seed(seed)
         losses_centr = []
         for target_eps in epsilon_grid:
-            eps_iter = dp_account.reverse_eps(target_eps, num_iter, delta)
+            eps_iter = dp_account.reverse_eps(eps=target_eps, num_iter = num_iter, delta=delta, subsample = 1)
             sigma_cdp = c_clip * np.sqrt(2 / eps_iter) / np.sqrt(num_nodes)
             losses_centr.append(np.mean(optimizers.optimize_decentralized_correlated(X, W_centr, A, B, gamma, sigma_cdp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0][-200:-1]))
         # Adding result
@@ -207,7 +207,7 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
             losses_ldp = []
             for j, target_eps in enumerate(epsilon_grid):
                 # sigma_cdp and sigma_ldp
-                eps_iter = dp_account.reverse_eps(target_eps, num_iter, delta)
+                eps_iter = dp_account.reverse_eps(eps=target_eps, num_iter=num_iter, delta=delta, subsample = 1)
                 sigma_ldp = c_clip * np.sqrt(2 / eps_iter)
                 losses_cor.append(np.mean(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigmas[i][j], sigmas_cor[i][j], c_clip, num_gossip=num_gossip, num_iter=num_iter)[0][-200:-1]))
                 losses_ldp.append(np.mean(optimizers.optimize_decentralized_correlated(X, W, A, B, gamma, sigma_ldp, 0, c_clip, num_gossip=num_gossip, num_iter=num_iter)[0][-200:-1]))
