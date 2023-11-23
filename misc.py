@@ -34,8 +34,7 @@ def fix_seed(seed):
     random.seed(seed)
 
 # ---------------------------------------------------------------------------- #
-# Criterions to evaluate accuracy of models. Used in worker.py and p2pWorker.py
-
+# Criterions to evaluate accuracy of models using torchvision datasets. Used in worker.py
 def topk(output, target, k=1):
       """ Compute the top-k criterion from the output and the target.
       Args:
@@ -46,6 +45,15 @@ def topk(output, target, k=1):
       """
       res = (output.topk(k, dim=1)[1] == target.view(-1).unsqueeze(1)).any(dim=1).sum()
       return torch.cat((res.unsqueeze(0), torch.tensor(target.shape[0], dtype=res.dtype, device=res.device).unsqueeze(0)))
+
+# ---------------------------------------------------------------------------- #
+# Criterions to evaluate accuracy of LibSVM model
+def libsvm_criterion(output, targets):
+    # return a tensor of shape (1, 2), where [number of correct pred, batch_size]
+    # Transform all values of preds to 0 (if value < 0.5) and 1
+    preds = 1 * (output > torch.ones_like(output).mul_(0.5))
+    
+    return torch.tensor([(preds.view(1, -1).int() == targets.int()).sum(), len(targets)])
 
 # ---------------------------------------------------------------------------- #
 # Functions used for dataset manipulation in dataset.py

@@ -5,6 +5,7 @@ import torch, torchvision
 import torchvision.transforms as T
 import numpy as np
 import misc
+from sklearn.datasets import load_svmlight_file
 
 # ---------------------------------------------------------------------------- #
 # Collection of default transforms
@@ -32,7 +33,31 @@ dataset_names = {
     "cifar100":     "CIFAR100",
     "imagenet":     "ImageNet"
 }
+# LIBSVM dataset
+class LIBSVM(torch.utils.data.Dataset):
+    def __init__(self, path):
+        super().__init__()
+        # Load the dataset
+        data, targets = load_svmlight_file(path, n_features = 123)
 
+        # Convert targets for values in {0, 1}
+        targets = (targets + 1) / 2
+        
+        # Convert to PyTorch tensors
+        data = torch.from_numpy(data.toarray()).float()
+        targets = torch.from_numpy(targets).float()
+
+        self.data = data
+        self.targets = targets
+    
+    def __len__(self):
+        return len(self.data)
+    
+    def __getitem__(self, index):
+        return self.data[index], self.targets[index]
+
+libsvm_train_path = './libsvm_data/a9a.txt'
+libsvm_test_path = './libsvm_data/a9a.t'
 # ---------------------------------------------------------------------------- #
 # Dataset wrapper class
 class Dataset:
@@ -54,7 +79,10 @@ class Dataset:
 
         if train:
             # Load the initial training dataset
-            dataset = getattr(torchvision.datasets, dataset_names[dataset_name])(root = get_default_root(), train = True, download = True,
+            if "libsvm" in dataset_name:
+                dataset = LIBSVM(libsvm_train_path)
+            else:
+                dataset = getattr(torchvision.datasets, dataset_names[dataset_name])(root = get_default_root(), train = True, download = True,
                                                                                 transform = T.Compose(transforms[dataset_name][0]))
             
             targets = dataset.targets
@@ -107,7 +135,10 @@ class Dataset:
 
         else:
             # testing set
-            dataset_test = getattr(torchvision.datasets, dataset_names[dataset_name])(root=get_default_root(), train=False, download=False,
+            if "libsvm" in dataset_name:
+                dataset_test = LIBSVM(libsvm_test_path)
+            else:
+                dataset_test = getattr(torchvision.datasets, dataset_names[dataset_name])(root=get_default_root(), train=False, download=False,
                                                                                     transform=T.Compose(transforms[dataset_name][0]))
             self.data_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=False)
 

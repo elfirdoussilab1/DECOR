@@ -62,6 +62,17 @@ class logreg_mnist(torch.nn.Module):
 		return torch.sigmoid(self._linear(x.view(-1, 784)))
 
 # ---------------------------------------------------------------------------- #
+# Logistic regression on LibSVM
+class libsvm_model(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.linear = torch.nn.Linear(123, 1)
+    
+    def forward(self, x):
+        x = self.linear(x)
+        return torch.sigmoid(x)
+
+# ---------------------------------------------------------------------------- #
 #JS: Simple convolutional model, for CIFAR-10/100 (3 input channels)
 class cnn_cifar(torch.nn.Module):
   """ Simple, small convolutional model."""
