@@ -146,6 +146,10 @@ def process_commandeline():
         action = "store_true",
         default= None,
         help = "Execute the full gradient descent algorithm")
+    parser.add_argument("--privacy",
+        type = str,
+        default= None,
+        help = "type of privacy: either user or example")
 
     return parser.parse_args(sys.argv[1:])
 
@@ -276,7 +280,8 @@ with tools.Context("training", "info"):
         data_loader = train_loader_dict[i]
         worker_i = worker.Worker(train_data_loader=data_loader, test_data_loader=test_loader, batch_size=args.batch_size, 
                     model = args.model, loss = args.loss, momentum = args.momentum, gradient_clip= args.gradient_clip, sigma= args.sigma,
-                    num_labels= args.num_labels, criterion= args.criterion, num_evaluations= args.num_evaluations, device= args.device)
+                    num_labels= args.num_labels, criterion= args.criterion, num_evaluations= args.num_evaluations, device= args.device,
+                    privacy= args.privacy)
         workers.append(worker_i)
     
     # Weights matrix

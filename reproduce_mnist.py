@@ -56,24 +56,25 @@ params = {
     "batch-size": 64,
     #"loss": "NLLLoss",
     "loss": "CrossEntropyLoss",
-    "learning-rate-decay-delta": 200,
-    "learning-rate-decay": 200,
+    "learning-rate-decay-delta": 500,
+    "learning-rate-decay": 500,
     "weight-decay": 1e-4,
     "evaluation-delta": 5,
-    "gradient-clip": 2,
-    "num-iter": 800,
+    "gradient-clip": 3.,
+    "num-iter": 500,
     "num-nodes": 16,
     "momentum": 0.,
     "num-labels": 10,
-    "delta": 1e-5
+    "delta": 1e-5, 
+    "privacy": "example"
     }
 
 # Hyperparameters to test
 #models = [("cnn_mnist", 0.75)]
-models = [("simple_mnist_model", 2e-1)]
+models = [("simple_mnist_model", 1e-1)]
 topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
 alphas = [1.]
-epsilons = [5]
+epsilons = [1]
 
 
 # Command maker helper
@@ -112,7 +113,7 @@ for alpha in alphas:
 
                     subsample = params["batch-size"] / (dataset_samples[params["dataset"]] / params["num-nodes"])
                     eps_iter = dp_account.reverse_eps(target_eps, params["num-iter"], params["delta"], params["num-nodes"], params["gradient-clip"], 
-                                                      topology_name, degree_matrix, adjacency_matrix, subsample, params["batch-size"], multiple = False)
+                                                      topology_name, degree_matrix, adjacency_matrix, subsample, params["batch-size"], multiple = True)
 
                     # sigma_cdp and sigma_ldp
                     sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
@@ -124,7 +125,8 @@ for alpha in alphas:
                         df = pd.read_csv(filename)
                     
                         # Taking the values on the first row (correspond to the least sigma)
-                        params["sigma"], params["sigma-cor"] = df.iloc[1]["sigma", "sigma-cor"]
+                        params["sigma"] =  df.iloc[-1]["sigma"]
+                        params["sigma-cor"] = df.iloc[-1]["sigma-cor"]
                         jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}-eps_{target_eps}", make_command(params))
 
                     elif "ldp" in method: # LDP
@@ -171,10 +173,10 @@ with tools.Context("mnist", "info"):
                     for topology_name, method in topologies:
                         name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}-eps_{target_eps}"
                         values[topology_name, method] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
-                        plot.include(values[topology_name, method][0], "Accuracy", errs="-err", lalp=0.8)
+                        plot.include(values[topology_name, method], "Accuracy", errs="-err", lalp=0.8)
                         legend.append(f"{topology_name} + {method}")
 
-                    #JS: plot every time graph in terms of the maximum number of steps
+                    #JS: plot every time graph 
                     plot_name = f"{dataset} _model= {model} _lr= {lr}_momentum={params['momentum']}_alpha={alpha}_eps={target_eps}"
                     plot.finalize(None, "Step number", "Test accuracy", xmin=0, xmax=params['num-iter'], ymin=0, ymax=1, legend=legend)
                     plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)

@@ -34,8 +34,8 @@ def find_sigma_cor_eps(eps_target, sigma, sigma_cor_grid, clip, degree_matrix, a
 
 def binary_search_eps(eps, num_iter, delta, num_nodes, clip, degree_matrix, adjacency_matrix, subsample, batch_size, multiple = True):
     # Find couples (sigma, sigma_corr) that give eps
-    sigma_grid = np.linspace(1e-3, 1e-2, 50)
-    sigma_cor_grid = np.linspace(1e-3, 5e-2, 500)
+    sigma_grid = np.linspace(5e-3, 1e-2, 50)
+    sigma_cor_grid = np.linspace(5e-3, 5e-2, 500)
     
     # Initialize dataframe
     data = [{"clip": clip, "sigma": -1, "sigma-cor": -1, "eps-iter": -1, "eps": -1, "sigma-cdp": -1, "sigma-ldp": -1}]

@@ -5,7 +5,7 @@ import misc
 class Worker(object):
     """ A worker for Decentralized learning (node) """
     def __init__(self, train_data_loader, test_data_loader, batch_size, model, loss, momentum, gradient_clip, sigma,
-                 num_labels, criterion, num_evaluations, device):
+                 num_labels, criterion, num_evaluations, device, privacy):
         
         # Data loaders
         self.train_data_loader = train_data_loader
@@ -44,6 +44,9 @@ class Worker(object):
 
         # How many evaluations on test batch size to perform during test phase
         self.num_evaluations = num_evaluations
+
+        # whether we use user-level or example-level privacy
+        self.privacy = privacy
 
     # Training phase
     def sample_train_batch(self):
@@ -84,24 +87,25 @@ class Worker(object):
         z = y.view(-1, 1).to(self.device)
         # X. shape = (batch, 1, 28, 28), y.shape = (batch)
         
-        # User-level Clipping
-        # gradient = self.compute_gradient(X, y)
-        #if self.gradient_clip is not None:
-        #    gradient = misc.clip_vector(gradient, self.gradient_clip)
+        # User-level Clipping, used when working with libsvm
+        if "user" in self.privacy:
+            gradient = self.compute_gradient(X, y)
+            if self.gradient_clip is not None:
+                gradient = misc.clip_vector(gradient, self.gradient_clip)
+        else: 
+            # Example-level clipping
+            gradient = torch.zeros_like(self.flat_parameters).to(self.device)
+            for i in range(len(X)): # len(X) can be equal to batch_size or less
+                self.model.zero_grad()
+                loss = self.loss(self.model(X[i]), z[i])
+                loss.backward()
+                grad_i = misc.flatten([param.grad for param in self.model.parameters()])
 
-        # Example-level clipping
-        gradient = torch.zeros_like(self.flat_parameters).to(self.device)
-        for i in range(len(X)): # len(X) can be equal to batch_size or less
-            self.model.zero_grad()
-            loss = self.loss(self.model(X[i]), z[i])
-            loss.backward()
-            grad_i = misc.flatten([param.grad for param in self.model.parameters()])
+                # Clipping
+                grad_i.mul_(1 / max(1, grad_i.norm() / self.gradient_clip))
 
-            # Clipping
-            grad_i.mul_(1 / max(1, grad_i.norm() / self.gradient_clip))
-
-            gradient.add_(grad_i)
-        gradient.mul_(1 / len(X))
+                gradient.add_(grad_i)
+            gradient.mul_(1 / len(X))
         
         # Sample noise from normal (0, sigma^2)
         cdp_noise = torch.normal(mean = torch.zeros_like(self.gradient), std = self.sigma)
