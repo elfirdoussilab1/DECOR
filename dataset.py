@@ -57,7 +57,7 @@ class LIBSVM(torch.utils.data.Dataset):
         return self.data[index], self.targets[index]
 
 libsvm_train_path = './libsvm_data/a9a.txt'
-libsvm_test_path = './libsvm_data/a9a.t'
+libsvm_test_path = './libsvm_data/a9a_t.txt'
 # ---------------------------------------------------------------------------- #
 # Dataset wrapper class
 class Dataset:

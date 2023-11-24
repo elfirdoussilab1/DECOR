@@ -53,23 +53,24 @@ tools.success("Running experiments...")
 params = {
     "dataset":  dataset,
     #"batch-size": 25,
-    "batch-size": 64,
+    "batch-size": 128,
     "loss": "BCELoss",
     "learning-rate-decay-delta": 200,
     "learning-rate-decay": 200,
-    "weight-decay": 1e-6,
+    "weight-decay": 1e-4,
     "evaluation-delta": 5,
-    "gradient-clip": 2,
-    "num-iter": 800,
+    "gradient-clip": 1.5,
+    "num-iter": 500,
     "num-nodes": 16,
     "momentum": 0.,
     "num-labels": 2,
     "delta": 1e-5,
-    "criterion": "libsvm_criterion"
+    "criterion": "libsvm_criterion",
+    "privacy": "example"
     }
 
 # Hyperparameters to test
-models = [("libsvm_model", 1e-1)]
+models = [("libsvm_model", 1e-2)]
 topologies = [("centralized", "cdp") ]#, ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
 alphas = [1.]
 epsilons = [10]
@@ -98,7 +99,7 @@ for alpha in alphas:
                     params["epsilon"] = target_eps
 
                     # Training model without noise
-                    #jobs.submit(f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-alpha_{alpha}", make_command(params))
+                    jobs.submit(f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-alpha_{alpha}", make_command(params))
 
                     # Privacy
                     W = topology.FixedMixingMatrix(topology_name, params["num-nodes"])
@@ -112,13 +113,30 @@ for alpha in alphas:
                     sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
 
                     if "corr" in method: # CD-SGD
-                        # TODO
                         # Determining the couples (sigma, sigma_cor) that can be considered
-                        filename= f"result_gridsearch_{topology_name}_epsilon_{target_eps}.csv"
-                        df = pd.read_csv(filename)
+                        df = pd.DataFrame(columns = ["topology", "sigma", "sigma-cor", "epsilon", "sigma-cdp", "sigma-ldp"])
+                        sigma_grid = np.linspace(sigma_cdp, sigma_ldp, 50)
+                        sigma_cor_grid = np.linspace(1, 100, 1000)
+                        for sigma in sigma_grid:
+                            all_sigma_cor = plotting.find_sigma_cor(sigma, sigma_cor_grid, params["gradient-clip"], degree_matrix, adjacency_matrix, eps_iter)
+                            # check non-emptyness and add it
+                            if len(all_sigma_cor) !=0:
+                
+                                new_row = {"topology": topology_name,
+                                           "sigma": sigma,
+                                           "sigma-cor": all_sigma_cor[0],
+                                           "epsilon": target_eps,
+                                           "sigma-cdp": sigma_cdp,
+                                           "sigma-ldp": sigma_ldp}
+                                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
                     
                         # Taking the values on the first row (correspond to the least sigma)
-                        params["sigma"], params["sigma-cor"] = df.iloc[1]["sigma", "sigma-cor"]
+                        params["sigma"] = df.iloc[-1]["sigma"]
+                        params["sigma-cor"] = df.iloc[-1]["sigma-cor"]
+                        
+                        # Store result
+                        filename= f"result_gridsearch_user-level_{topology_name}_epsilon_{target_eps}.csv"
+                        df.to_csv(filename)
                         jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-alpha_{alpha}-eps_{target_eps}", make_command(params))
 
                     elif "ldp" in method: # LDP
@@ -130,7 +148,6 @@ for alpha in alphas:
                     else: # CDP
                         params["sigma-cor"] = 0
                         params["sigma"] = sigma_cdp
-                        print(sigma_cdp)
                         #tools.success("Submitting CDP")
                         jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-alpha_{alpha}-eps_{target_eps}", make_command(params))
 
