@@ -59,7 +59,7 @@ class Worker(object):
     # Compute gradients on batch = (inputs, targets)
     def compute_gradient(self, X, y):
         self.model.train()
-        loss = self.loss(self.model(X), y)
+        loss = self.loss(self.model(X), y.view(-1, 1))
         self.model.zero_grad()
         loss.backward()
         flattened_grad = [param.grad for param in self.model.parameters()]
@@ -69,7 +69,7 @@ class Worker(object):
         # X and y are the whole training dataset
         X, y = next(iter(loader))
         X, y = X.to(self.device), y.to(self.device)
-        return self.loss(self.model(X), y.view(-1, 1)).detach().numpy()
+        return self.loss(self.model(X), y.view(-1, 1)).detach().cpu().numpy()
 
 
     def update_model_parameters(self):

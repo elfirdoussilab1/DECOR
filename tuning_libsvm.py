@@ -22,7 +22,7 @@ alpha = 1.
 delta = 1e-5
 target_eps = 10
 num_iter = 500
-min_loss = 1e-1 # find_min(loss, lr, data)
+min_loss = 0.3236 # find_min(loss, lr, data)
 
 # Hyper-parameters
 lr_grid = [0.01, 0.05, 0.1, 0.5, 1]
@@ -59,7 +59,7 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
         data_loader = train_loader_dict[i]
         worker_i = worker.Worker(train_data_loader=data_loader, test_data_loader=test_loader, batch_size=batch_size, 
                     model = model, loss = loss, momentum = momentum, gradient_clip= gradient_clip, sigma= sigma,
-                    num_labels= num_labels, criterion= "libsvm_accuracy", num_evaluations= 100, device= device)
+                    num_labels= num_labels, criterion= "libsvm_topk", num_evaluations= 100, device= device, privacy = "user")
         workers.append(worker_i)
     
     # Noise tensor: shape (num_nodes, num_nodes, model_size)
