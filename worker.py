@@ -65,11 +65,13 @@ class Worker(object):
         flattened_grad = [param.grad for param in self.model.parameters()]
         return misc.flatten(flattened_grad)
     
-    def compute_train_loss(self, loader):
+    def compute_train_loss(self):
         # X and y are the whole training dataset
-        X, y = next(iter(loader))
-        X, y = X.to(self.device), y.to(self.device)
-        return self.loss(self.model(X), y.view(-1, 1)).detach().cpu().numpy()
+        train_loss = 0
+        for X, y in self.train_data_loader:
+            X, y = X.to(self.device), y.to(self.device)
+            train_loss += self.loss(self.model(X), y.view(-1, 1)).detach().cpu().numpy()
+        return train_loss / len(self.train_data_loader)
 
 
     def update_model_parameters(self):
