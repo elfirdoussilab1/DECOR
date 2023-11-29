@@ -40,7 +40,7 @@ misc.fix_seed(1)
 # Storing reults
 evaluation_delta = 5
 
-result_directory = "./results-tuning-" + dataset_name
+result_directory = "./results-tuning-" + dataset_name + "-" + method
 if not os.path.exists(result_directory):
     os.makedirs(result_directory)
 
@@ -48,10 +48,11 @@ if not os.path.exists(result_directory):
 train_loader_dict, test_loader = dataset.make_train_test_datasets(dataset=dataset_name, num_labels=num_labels, 
                                 alpha_dirichlet= alpha, num_nodes=num_nodes, train_batch=batch_size, test_batch=100)
 
-# Testing model
-server = evaluator.Evaluator(train_loader_dict, test_loader, model, loss, num_labels, criterion, num_evaluations= 100, device=device)
-
 def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter):
+    
+    # Testing model
+    server = evaluator.Evaluator(train_loader_dict, test_loader, model, loss, num_labels, criterion, num_evaluations= 100, device=device)
+
     # Initialize Workers
     workers = []
     for i in range(num_nodes):
@@ -216,6 +217,8 @@ for lr in lr_grid:
             row = {"topology": topology_name,
                     "lr": lr,
                     "clip": gradient_clip,
+                    "sigma": df.iloc[-1]["sigma"],
+                    "sigma_cor": df.iloc[-1]["sigma_cor"],
                     "T": num_iter,
                     "loss": df.iloc[-1]["loss"]}
             summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)

@@ -1,7 +1,7 @@
 # Main file for experiments
 import torch, argparse, sys, signal, pathlib, os
 from worker import *
-import dataset, tools, models, misc
+import dataset, tools, models, misc, evaluator
 import worker
 tools.success("Module loading...")
 from utils import topology
@@ -76,12 +76,16 @@ def process_commandeline():
         help = "Model to use in training")
     parser.add_argument("--loss",
         type = str,
-        default="NLLLoss",
+        default=None,
         help = "Loss to use")
     parser.add_argument("--criterion",
         type = str,
         default="topk",
         help = "Evaluation Criterion")
+    parser.add_argument("--metric",
+        type = str,
+        default="accuracy",
+        help = "Evaluation to plot, either: Loss (LibSVM) or Accuracy (torchvision datasets)")
     parser.add_argument("--dataset",
         type = str,
         default= None,
@@ -238,6 +242,10 @@ with tools.Context("setup", "info"):
     train_loader_dict, test_loader = dataset.make_train_test_datasets(dataset=args.dataset, gradient_descent= args.gradient_descent, heterogeneity=args.hetero,
                                   num_labels=args.num_labels, alpha_dirichlet= args.dirichlet_alpha, num_nodes=args.num_nodes, train_batch=args.batch_size, test_batch=args.batch_size_test)
     
+    # Create the evaluator
+    server = evaluator.Evaluator(train_loader_dict, test_loader, model = args.model, loss = args.loss, num_labels= args.num_labels, criterion = args.criterion, num_evaluations= args.num_evaluations, 
+                                 device=args.device)
+
     reproducible = (args.seed >= 0)
     if reproducible:
         misc.fix_seed(args.seed)
@@ -255,8 +263,11 @@ with tools.Context("setup", "info"):
         result_fds = dict()
         # Make evaluation file
         if args.evaluation_delta > 0:
-            result_make("eval", ["Step number", "Mean-accuracy"])
-        result_make("track", ["Step number", "lr", "topology", "method", "sigma", "sigma_cor"])
+            if "loss" in args.metric:
+                result_make("eval", ["Step number", "Loss"])
+            else:
+                result_make("eval", ["Step number", "Accuracy"])
+        result_make("track", ["Step number", "topology", "method", "lr", "clip", "sigma", "sigma_cor"])
 
 # ---------------------------------------------------------------------------- #
 # Training
@@ -282,6 +293,9 @@ with tools.Context("training", "info"):
                     model = args.model, loss = args.loss, momentum = args.momentum, gradient_clip= args.gradient_clip, sigma= args.sigma,
                     num_labels= args.num_labels, criterion= args.criterion, num_evaluations= args.num_evaluations, device= args.device,
                     privacy= args.privacy)
+        # Agree on first parameters
+        worker_i.flat_parameters = server.flat_parameters
+        worker_i.update_model_parameters()
         workers.append(worker_i)
     
     # Weights matrix
@@ -308,12 +322,20 @@ with tools.Context("training", "info"):
         # Evaluate the model if milestone is reached
         milestone_evaluation = args.evaluation_delta > 0 and current_step % args.evaluation_delta == 0        
         if milestone_evaluation:
-            mean_accuracy = np.mean([workers[i].compute_accuracy() for i in range(args.num_nodes)])
+            #mean_accuracy = np.mean([workers[i].compute_accuracy() for i in range(args.num_nodes)])
+            mean_param = torch.stack([workers[i].flat_parameters]).mean(dim = 0)
+            server.update_model_parameters(mean_param)
+            mean_metric = 0
+            if "Loss" in args.metric:
+                mean_metric = server.compute_train_loss() - 0.3236
+            else: # accuracy
+                mean_metric = server.compute_accuracy()
             #mean_accuracy = workers[0].compute_accuracy()
-            print(f"Mean Accuracy (step {current_step})... {mean_accuracy * 100.:.2f}%.")
+            print(f"Mean {args.metric} (step {current_step})... {mean_metric * 100.:.2f}%.")
+
             # Store the evaluation result
             if fd_eval is not None:
-                result_store(fd_eval, [current_step, mean_accuracy])
+                result_store(fd_eval, [current_step, mean_metric])
             
             if fd_track is not None:
                 result_store(fd_track, [current_step, lr, args.topology_name, args.method, args.sigma, args.sigma_cor])

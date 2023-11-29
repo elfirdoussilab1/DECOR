@@ -66,7 +66,8 @@ params = {
     "num-labels": 2,
     "delta": 1e-5,
     "criterion": "libsvm_criterion",
-    "privacy": "example"
+    "privacy": "example",
+    "metric": "Loss"
     }
 
 # Hyperparameters to test
