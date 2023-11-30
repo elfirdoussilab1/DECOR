@@ -1,7 +1,7 @@
 # This file is used to tune our CDP model
 import torch
 from models import *
-import misc, os, worker, dataset
+import misc, os, worker, dataset, evaluator
 from utils import dp_account, topology, plotting
 import numpy as np
 import pandas as pd
@@ -22,13 +22,13 @@ num_labels = 10
 alpha = 1.
 delta = 1e-5
 target_eps = 5
-num_iter = 800
 criterion = "topk"
 num_evaluations = 100
 
 # Hyper-parameters
 lr_grid = [0.01, 0.05, 0.1, 0.5, 1]
-gradient_clip_grid = [0.1, 1., 1.5, 2., 3.]
+gradient_clip_grid = [0.1, 1., 1.5, 2., 4.]
+T_grid = [500, 1000, 2000]
 batch_size = 64
 subsample = 64/3750
 momentum = 0.
@@ -50,7 +50,10 @@ if not os.path.exists(result_directory):
 train_loader_dict, test_loader = dataset.make_train_test_datasets(dataset=dataset_name, num_labels=num_labels, 
                                 alpha_dirichlet= alpha, num_nodes=num_nodes, train_batch=batch_size, test_batch=batch_size_test)
 
-def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter):
+def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter):
+    # Testing model
+    server = evaluator.Evaluator(train_loader_dict, test_loader, model, loss, num_labels, criterion, num_evaluations= 100, device=device)
+
     # Initialize Workers
     workers = []
     for i in range(num_nodes):

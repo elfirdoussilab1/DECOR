@@ -147,7 +147,8 @@ def compute_avg_err_op(name, seeds, result_directory, location, *colops, avgs=""
             if op is not None:
                 if ro is not None:
                     raise RuntimeError(f"column selector {col!r} selected more than one column ({(', ').join(subds[0].columns)}) while a reduction operation was requested")
-                ro = tuple(getattr(subd[cn], op)().item() for subd in subds)
+                #ro = tuple(getattr(subd[cn], op)().item() for subd in subds)
+                ro = tuple(getattr(subd[cn], op)() for subd in subds)
         # Return the built data frame and optional computed reduction
         return df, ro
     dfs = list()
