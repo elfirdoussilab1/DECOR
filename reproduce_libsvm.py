@@ -53,24 +53,24 @@ tools.success("Running experiments...")
 params = {
     "dataset":  dataset,
     #"batch-size": 25,
-    "batch-size": 128,
+    "batch-size": 64,
     "loss": "BCELoss",
     "learning-rate-decay-delta": 200,
     "learning-rate-decay": 200,
     "weight-decay": 1e-4,
     "evaluation-delta": 5,
     "gradient-clip": 1.5,
-    "num-iter": 500,
+    "num-iter": 400,
     "num-nodes": 16,
     "momentum": 0.,
     "num-labels": 2,
     "delta": 1e-5,
     "criterion": "libsvm_criterion",
-    "privacy": "example"
+    "privacy": "user"
     }
 
 # Hyperparameters to test
-models = [("libsvm_model", 1e-2)]
+models = [("libsvm_model", 1e-3)]
 topologies = [("centralized", "cdp") ]#, ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
 alphas = [1.]
 epsilons = [10]
