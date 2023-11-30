@@ -66,7 +66,8 @@ params = {
     "momentum": 0.,
     "num-labels": 10,
     "delta": 1e-5, 
-    "privacy": "example"
+    "privacy": "example",
+    "metric": "Accuracy"
     }
 
 # Hyperparameters to test

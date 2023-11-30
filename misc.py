@@ -48,7 +48,7 @@ def topk(output, target, k=1):
 
 # ---------------------------------------------------------------------------- #
 # Criterions to evaluate accuracy of LibSVM model
-def libsvm_criterion(output, targets):
+def libsvm_topk(output, targets):
     # return a tensor of shape (1, 2), where [number of correct pred, batch_size]
     # Transform all values of preds to 0 (if value < 0.5) and 1
     preds = 1 * (output > torch.ones_like(output).mul_(0.5))
