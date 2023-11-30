@@ -31,8 +31,8 @@ T_grid = [500, 1000, 2000]
 batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
-topology_name = "centralized"
-method = "ldp"
+topology_name = "grid"
+method = "corr"
 
 # Fix seed
 misc.fix_seed(1)
@@ -74,7 +74,7 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
 
     # ------------------------------------------------------------------------ #
     current_step = 0
-    eval_filename = result_directory + f"/mean_loss-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-epsilon-{target_eps}-T-{num_iter}.csv"
+    eval_filename = result_directory + f"/mean_loss-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-sigma-{sigma}-sigmacor-{sigma_cor}-epsilon-{target_eps}-T-{num_iter}.csv"
     # Initialization of the dataframe
     data = [{"Step": -1, "topology": topology_name, "method": method, "lr": lr, "clip" : gradient_clip, "sigma": sigma, "sigma_cor": sigma_cor, 
                 "epsilon": target_eps, "loss":-1}]
@@ -115,18 +115,20 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
             workers[i].decentralized_learning(weights = W[i], workers_parameters = all_parameters)
 
         current_step += 1
+    return result.iloc[-1]["loss"]
+
+# Creating a dictionary that will contain the values of loss for all couples considered, and will be sorted
+summary = pd.DataFrame(columns = ["topology", "lr", "clip", "sigma", "sigma-cor", "T", "loss"])
 
 # Tuning: looping over the hyperparameters
 for lr in lr_grid:
     for gradient_clip in gradient_clip_grid:
         for num_iter in T_grid:
-            check_filename = result_directory + f"/mean_loss-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-epsilon-{target_eps}-T-{num_iter}.csv"
-            if os.path.exists(check_filename):
-                print("Already done")
-                continue
             # Weights matrix
             W = topology.FixedMixingMatrix(topology_name= topology_name, n_nodes= num_nodes)(0)
-
+            adjacency_matrix = np.array(W != 0, dtype=float)
+            adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
+            degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
             # Convert it to tensor
             W = torch.tensor(W, dtype= torch.float).to(device)
             print(W[0])
@@ -139,33 +141,48 @@ for lr in lr_grid:
 
             if "cdp" in method:
                 sigma = sigma_cdp
-                train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+                final_loss= train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+                row = {"topology": topology_name,
+                    "lr": lr,
+                    "clip": gradient_clip,
+                    "sigma": sigma,
+                    "sigma-cor": sigma_cor,
+                    "T": num_iter,
+                    "loss": final_loss}
+                summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
+
             elif "ldp" in method:
                 sigma = sigma_ldp
-                train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+                final_loss = train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+                row = {"topology": topology_name,
+                    "lr": lr,
+                    "clip": gradient_clip,
+                    "sigma": sigma,
+                    "sigma-cor": sigma_cor,
+                    "T": num_iter,
+                    "loss": final_loss}
+                summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
             else: # corr
-                adjacency_matrix = np.array(W(0) != 0, dtype=float)
-                adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
-                degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
-
                 # Determining the couples (sigma, sigma_cor) that can be considered
                 sigmas_df = pd.DataFrame(columns = ["topology", "sigma", "sigma-cor", "epsilon"])
                 sigma_grid = np.linspace(sigma_cdp, sigma_ldp, 50)
-                sigma_cor_grid = np.linspace(1, 1000, 1000)
+                sigma_cor_grid = np.linspace(1e-4, 100, 1000)
 
                 for sigma in sigma_grid:
                     all_sigma_cor = plotting.find_sigma_cor(sigma, sigma_cor_grid, gradient_clip, degree_matrix, adjacency_matrix, eps_iter)
                     # check non-emptyness and add it
                     if len(all_sigma_cor) !=0:
-
+                        eps = dp_account.rdp_compose_convert(num_iter, delta, sigma, all_sigma_cor[0], gradient_clip,
+                                                                              degree_matrix, adjacency_matrix, subsample =1)
                         new_row = {"topology": topology_name,
                                     "sigma": sigma,
                                     "sigma-cor": all_sigma_cor[0],
-                                    "epsilon": target_eps}
-                        sigmas_df = pd.concat([sigmas_df, pd.DataFrame([new_row])], ignore_index=True)
+                                    "epsilon": eps}
+                        if int(eps) == target_eps:
+                            sigmas_df = pd.concat([sigmas_df, pd.DataFrame([new_row])], ignore_index=True)
 
                 # Store result of ooking for sigmas
-                filename = f'result_gridsearch_tuning_{topology_name}_corr_{target_eps}.csv'
+                filename = f'result_gridsearch_tuning_{topology_name}_corr_{target_eps}_T_{num_iter}.csv'
                 sigmas_df.to_csv(filename)
 
                 # Taking the values on the first row (correspond to the least sigma)
@@ -177,38 +194,87 @@ for lr in lr_grid:
                     # single couple
                     sigma = sigmas_df.iloc[0]["sigma"]
                     sigma_cor = sigmas_df.iloc[0]["sigma-cor"]
-                    train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
-
+                    final_loss = train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+                    row = {"topology": topology_name,
+                        "lr": lr,
+                        "clip": gradient_clip,
+                        "sigma": sigma,
+                        "sigma-cor": sigma_cor,
+                        "T": num_iter,
+                        "loss": final_loss}
+                    summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
                 elif n == 2:
                     # First couple
                     sigma = sigmas_df.iloc[0]["sigma"]
                     sigma_cor = sigmas_df.iloc[0]["sigma-cor"]
-                    train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+                    final_loss = train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+                    row = {"topology": topology_name,
+                        "lr": lr,
+                        "clip": gradient_clip,
+                        "sigma": sigma,
+                        "sigma-cor": sigma_cor,
+                        "T": num_iter,
+                        "loss": final_loss}
+                    summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
 
                     # Second couple
                     sigma = sigmas_df.iloc[1]["sigma"]
                     sigma_cor = sigmas_df.iloc[1]["sigma-cor"]
-                    train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+                    final_loss = train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+                    row = {"topology": topology_name,
+                        "lr": lr,
+                        "clip": gradient_clip,
+                        "sigma": sigma,
+                        "sigma-cor": sigma_cor,
+                        "T": num_iter,
+                        "loss": final_loss}
+                    summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
                 else: #n > 3
                     # First couple
                     sigma = sigmas_df.iloc[0]["sigma"]
                     sigma_cor = sigmas_df.iloc[0]["sigma-cor"]
-                    train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
-
+                    final_loss = train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+                    row = {"topology": topology_name,
+                        "lr": lr,
+                        "clip": gradient_clip,
+                        "sigma": sigma,
+                        "sigma-cor": sigma_cor,
+                        "T": num_iter,
+                        "loss": final_loss}
+                    summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
                     # Second couple
                     sigma = sigmas_df.iloc[n//2]["sigma"]
                     sigma_cor = sigmas_df.iloc[n//2]["sigma-cor"]
-                    train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
-
+                    final_loss = train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+                    row = {"topology": topology_name,
+                        "lr": lr,
+                        "clip": gradient_clip,
+                        "sigma": sigma,
+                        "sigma-cor": sigma_cor,
+                        "T": num_iter,
+                        "loss": final_loss}
+                    summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
                     # Last couple
                     sigma = sigmas_df.iloc[-1]["sigma"]
                     sigma_cor = sigmas_df.iloc[-1]["sigma-cor"]
-                    train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+                    final_loss = train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+                    row = {"topology": topology_name,
+                        "lr": lr,
+                        "clip": gradient_clip,
+                        "sigma": sigma,
+                        "sigma-cor": sigma_cor,
+                        "T": num_iter,
+                        "loss": final_loss}
+                    summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
 
-# Creating a dictionary that will contain the values of loss for all couples considered, and will be sorted
-summary = pd.DataFrame(columns = ["topology", "lr", "clip", "T", "loss"])
+                summary.to_csv(result_directory + f"/summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
+
 
 # Produce the last file
+sorted_summary = summary.sort_values(by='loss')
+sorted_summary.to_csv(result_directory + f"/sorted-summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
+
+'''
 for lr in lr_grid:
     for gradient_clip in gradient_clip_grid:
         for num_iter in T_grid:
@@ -223,5 +289,4 @@ for lr in lr_grid:
                     "loss": df.iloc[-1]["loss"]}
             summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
 
-sorted_summary = summary.sort_values(by='loss')
-sorted_summary.to_csv(result_directory + f"/summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
+'''
