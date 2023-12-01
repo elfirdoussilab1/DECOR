@@ -31,7 +31,7 @@ T_grid = [500, 1000, 2000]
 batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
-topology_name = "grid"
+topology_name = "ring"
 method = "corr"
 
 # Fix seed
@@ -40,7 +40,7 @@ misc.fix_seed(1)
 # Storing reults
 evaluation_delta = 5
 
-result_directory = "./results-tuning-" + dataset_name + "-" + method
+result_directory = "./results-tuning-" + dataset_name + "-" + method  + "-" + topology_name
 if not os.path.exists(result_directory):
     os.makedirs(result_directory)
 
