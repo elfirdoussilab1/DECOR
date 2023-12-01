@@ -27,7 +27,7 @@ criterion = "libsvm_topk"
 # Hyper-parameters
 lr_grid = [0.005, 0.01, 0.05, 0.1, 0.5]
 gradient_clip_grid = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-T_grid = [500, 1000, 2000]
+T_grid = 2000
 batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
