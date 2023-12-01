@@ -56,12 +56,12 @@ params = {
     #"batch-size": 25,
     "batch-size": 64,
     "loss": "BCELoss",
-    "learning-rate-decay-delta": 200,
-    "learning-rate-decay": 200,
+    "learning-rate-decay-delta": 2000,
+    "learning-rate-decay": 2000,
     "weight-decay": 1e-5,
     "evaluation-delta": 5,
     "gradient-clip": 0.1,
-    "num-iter": 500,
+    "num-iter": 2000,
     "num-nodes": 16,
     "momentum": 0.,
     "num-labels": 2,
@@ -173,7 +173,7 @@ method_to_color = {"ldp": "tab:orange", "cdp": "tab:purple", "corr": "tab:green"
 method_to_marker = {"ldp": "^", "cdp": "D", "corr": "o"}
 
 # Plot Loss VS iterations
-with tools.Context("mnist", "info"):
+with tools.Context("libsvm", "info"):
     for alpha in alphas:
         for model in models:
             for target_eps in epsilons:
@@ -208,20 +208,42 @@ with tools.Context("mnist", "info"):
                     plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
 
 # Plot Loss VS Epsilon
-# TODO: change the order of for loops 
-with tools.Context("mnist", "info"):
+# TODO: change the order of for loops : done ut not checked yet
+
+with tools.Context("libsvm", "info"):
     for alpha in alphas:
         for model in models:
-            for target_eps in epsilons:
-                    values = dict()
-                    plot = study.LinePlot()
-                    for topology_name, method in topologies:
-                        name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}"
-                        values[topology_name, method] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", (params["metric"], "max"))
-                        plot.include(values[topology_name, method][0], params["metric"], errs="-err", linestyle = topo_to_style[topology_name], 
-                                     marker = method_to_marker[method], color = method_to_color[method], lalp=0.8, logscale = True)
+            plot = study.LinePlot()
+            legend_topos = []
+            legend_methods = []
+            for topology_name, method in topologies:
+                if topology_name not in legend_topos:
+                    legend_topos.append(topology_name)
+                if method not in legend_methods:
+                    legend_methods.append(method)
 
-                    #JS: plot every time graph in terms of the maximum number of steps
-                    plot_name = f"{dataset}_model= {model}_momentum={params['momentum']}_alpha={alpha}_eps={target_eps}"
-                    plot.finalize(None, "Step number", "Test accuracy", xmin=0, xmax=params['num-iter'], ymin=1e-4, ymax=1)
-                    plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
+                values = pd.DataFrame(columns = ["epsilon", params["metric"], params["metric"] +"-err"])
+                for target_eps in epsilons:
+                    name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}"
+                    df = misc.compute_avg_err_op(name, seeds, result_directory, "eval", (params["metric"], "max"))[0]
+                    new_row = {"epsilon": target_eps,
+                                params["metric"]: df.iloc[-1][params["metric"]],
+                                params["metric"] +"-err" : df.iloc[-1][params["metric"] +"-err"]}
+                    values = pd.concat([values, pd.DataFrame([new_row])], ignore_index=True)
+                    
+
+                plot.include(values, params["metric"], errs="-err", linestyle = topo_to_style[topology_name], 
+                                    mark = method_to_marker[method], color = method_to_color[method], lalp=0.8, logscale = True)
+            # Making the legend
+            legend = []
+            legend.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None' ))
+            for method in legend_methods:
+                legend.append(plt.Line2D([], [], label=method.upper(), color = method_to_color[method], marker = method_to_marker[method]))
+            legend.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
+            for topo in legend_topos:
+                legend.append(plt.Line2D([], [], label= topo.upper(), linestyle = topo_to_style[topo], color = 'k'))
+
+            #JS: plot every time graph in terms of the maximum number of steps
+            plot_name = f"Loss_vs_epsilon_{dataset}_model={model}_momentum={params['momentum']}_alpha={alpha}"
+            plot.finalize(None, "Step number", "Test accuracy", xticks = epsilons, ymin=1e-4, ymax=1)
+            plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)

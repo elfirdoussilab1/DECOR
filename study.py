@@ -452,7 +452,7 @@ class LinePlot:
 		# Return self for chaining
 		return self
 
-	def finalize(self, title, xlabel, ylabel, zlabel=None, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zmax=None, legend=None):
+	def finalize(self, title, xlabel, ylabel, zlabel=None, xticks = None, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zmax=None, legend=None):
 		""" Finalize the plot, can be done only once and would prevent further inclusion.
 		Args:
 			title	Plot title
@@ -503,7 +503,10 @@ class LinePlot:
 		elif self._tax is not None:
 			tools.warning(f"No label provided for the secondary y-axis; using label {ylabel!r} from the primary")
 			self._tax.set_ylabel(ylabel)
-		self._ax.set_xlim(left=xmin, right=xmax)
+		if xticks is not None:
+			self._ax.set_xticks(xticks)
+		else:
+			self._ax.set_xlim(left=xmin, right=xmax)
 		self._ax.set_ylim(bottom=ymin, top=ymax)
 		if self._tax is not None:
 			self._tax.set_ylim(bottom=zmin, top=zmax)
