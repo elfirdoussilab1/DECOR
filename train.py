@@ -328,7 +328,7 @@ with tools.Context("training", "info"):
             mean_metric = 0
             if "Loss" in args.metric:
                 mean_metric = server.compute_train_loss() - 0.3236
-            else: # accuracy
+            else: # Accuracy
                 mean_metric = server.compute_accuracy()
             #mean_accuracy = workers[0].compute_accuracy()
             print(f"Mean {args.metric} (step {current_step})... {mean_metric * 100.:.2f}%.")

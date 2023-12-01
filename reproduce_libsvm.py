@@ -57,10 +57,10 @@ params = {
     "loss": "BCELoss",
     "learning-rate-decay-delta": 200,
     "learning-rate-decay": 200,
-    "weight-decay": 1e-4,
+    "weight-decay": 1e-5,
     "evaluation-delta": 5,
-    "gradient-clip": 1.5,
-    "num-iter": 400,
+    "gradient-clip": 0.1,
+    "num-iter": 500,
     "num-nodes": 16,
     "momentum": 0.,
     "num-labels": 2,
@@ -71,10 +71,10 @@ params = {
     }
 
 # Hyperparameters to test
-models = [("libsvm_model", 1e-3)]
-topologies = [("centralized", "cdp") ]#, ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
+models = ["libsvm_model"]
+topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
 alphas = [1.]
-epsilons = [10]
+epsilons = [3, 5, 7, 10, 15, 20, 25, 30, 40]
 
 
 # Command maker helper
@@ -89,18 +89,14 @@ seeds = jobs.get_seeds()
 
 # Submit all experiments
 for alpha in alphas:
-    for model, lr in models:
+    for model in models:
         for target_eps in epsilons:
                 for topology_name, method in topologies:
                     params["model"] = model
-                    params["learning-rate"] = lr
                     params["dirichlet-alpha"] = alpha
                     params["topology-name"] = topology_name
                     params["method"] = method
                     params["epsilon"] = target_eps
-
-                    # Training model without noise
-                    jobs.submit(f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-alpha_{alpha}", make_command(params))
 
                     # Privacy
                     W = topology.FixedMixingMatrix(topology_name, params["num-nodes"])
@@ -110,10 +106,13 @@ for alpha in alphas:
                     eps_iter = dp_account.reverse_eps(eps= target_eps, num_iter = params["num-iter"], delta = params["delta"], subsample = 1, multiple = False)
 
                     # sigma_cdp and sigma_ldp
+                    params["gradient-clip"] = 0.1
                     sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
                     sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
 
                     if "corr" in method: # CD-SGD
+                        params["learning-rate"] = 0.1 # To adapt with the result of the tuning
+                        
                         # Determining the couples (sigma, sigma_cor) that can be considered
                         df = pd.DataFrame(columns = ["topology", "sigma", "sigma-cor", "epsilon", "sigma-cdp", "sigma-ldp"])
                         sigma_grid = np.linspace(sigma_cdp, sigma_ldp, 50)
@@ -130,27 +129,30 @@ for alpha in alphas:
                                            "sigma-cdp": sigma_cdp,
                                            "sigma-ldp": sigma_ldp}
                                 df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-                    
-                        # Taking the values on the first row (correspond to the least sigma)
+
+                        # TODO: adapt it with the result of the tuning (see which values go the best!)
+                        # Taking the values on the first row (correspond to the least sigma): 
                         params["sigma"] = df.iloc[-1]["sigma"]
                         params["sigma-cor"] = df.iloc[-1]["sigma-cor"]
                         
                         # Store result
                         filename= f"result_gridsearch_user-level_{topology_name}_epsilon_{target_eps}.csv"
                         df.to_csv(filename)
-                        jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-alpha_{alpha}-eps_{target_eps}", make_command(params))
+                        jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
 
                     elif "ldp" in method: # LDP
+                        params["learning-rate"] = 0.1 # To adapt with the result of the tuning
                         params["sigma-cor"] = 0
                         params["sigma"] = sigma_ldp
                         #tools.success("Submitting LDP")
-                        jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-alpha_{alpha}-eps_{target_eps}", make_command(params))
+                        jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
                     
                     else: # CDP
+                        params["learning-rate"] = 0.1 # To adapt with the result of the tuning
                         params["sigma-cor"] = 0
                         params["sigma"] = sigma_cdp
                         #tools.success("Submitting CDP")
-                        jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-alpha_{alpha}-eps_{target_eps}", make_command(params))
+                        jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
 
 # Wait for the jobs to finish and close the pool
 jobs.wait(exit_is_requested)
@@ -165,10 +167,10 @@ if exit_is_requested():
 tools.success("Plotting results...")
 
 
-# Plot results without subsampling
+# Plot results
 with tools.Context("mnist", "info"):
     for alpha in alphas:
-        for model, lr in models:
+        for model in models:
             for target_eps in epsilons:
                     values = dict()
                     # Plot top-1 cross-accuracies
@@ -177,12 +179,12 @@ with tools.Context("mnist", "info"):
                     legend = []
                     
                     # Plot average (without any noise)
-                    #name = f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-alpha_{alpha}"
+                    #name = f"{dataset}-average-n_{params['num-nodes']}-model_{model}-alpha_{alpha}"
                     #dsgd = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
                     #plot.include(dsgd[0], "Accuracy", errs="-err", lalp=0.8)
                     
                     for topology_name, method in topologies:
-                        name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-alpha_{alpha}-eps_{target_eps}"
+                        name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}"
                         values[topology_name, method] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
                         plot.include(values[topology_name, method][0], "Accuracy", errs="-err", lalp=0.8)
                         legend.append(f"{topology_name} + {method}")
