@@ -182,7 +182,7 @@ for lr in lr_grid:
                             sigmas_df = pd.concat([sigmas_df, pd.DataFrame([new_row])], ignore_index=True)
 
                 # Store result of ooking for sigmas
-                filename = f'result_gridsearch_tuning_{topology_name}_corr_{target_eps}_T_{num_iter}.csv'
+                filename = f'result_gridsearch_tuning_{topology_name}_corr_{target_eps}_clip_{gradient_clip}_T_{num_iter}.csv'
                 sigmas_df.to_csv(filename)
 
                 # Taking the values on the first row (correspond to the least sigma)
