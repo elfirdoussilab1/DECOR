@@ -484,9 +484,13 @@ class LinePlot:
 						res += val
 				except StopIteration:
 					return res
-		(self._ax if self._tax is None else self._tax).legend(generator_sum(ax.get_legend_handles_labels()[0] for ax in self._axs.values()), generator_sum(ax.get_legend_handles_labels()[1] for ax in self._axs.values()) if legend is None else legend, loc="best", prop={'size': 13})
+		#(self._ax if self._tax is None else self._tax).legend(generator_sum(ax.get_legend_handles_labels()[0] for ax in self._axs.values()), generator_sum(ax.get_legend_handles_labels()[1] for ax in self._axs.values()) if legend is None else legend, loc="best", prop={'size': 13})
+		# Style
+		plt.style.use('ggplot')
+		# Legend
+		self.ax.legend(handles = legend, loc = 'upper left', bbox_to_anchor = (1, 1))
 		# Plot the grid and labels
-		self._ax.grid()
+		self._ax.grid(True)
 		self._ax.set_xlabel(xlabel, fontsize=20)
 		self._ax.set_ylabel(ylabel, fontsize=20)
 		self._ax.set_title(title, fontsize=20)

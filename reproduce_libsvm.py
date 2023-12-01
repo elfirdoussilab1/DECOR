@@ -12,6 +12,7 @@ tools.success("Module loading...")
 import signal, torch
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 # ---------------------------------------------------------------------------- #
 # Miscellaneous initializations
@@ -169,28 +170,41 @@ tools.success("Plotting results...")
 # dictionary for plot colors ans style
 topo_to_style = {"ring": (0, (1, 1)), "grid": (0, (5, 5)), "centralized": 'solid'}
 method_to_color = {"ldp": "tab:orange", "cdp": "tab:purple", "corr": "tab:green"}
-method_to_marker = {"ldp": "^", "cdp": "s", "corr": "o"}
+method_to_marker = {"ldp": "^", "cdp": "D", "corr": "o"}
 
 # Plot Loss VS iterations
-# TODO: change plot.finalize to make the desired legend 
 with tools.Context("mnist", "info"):
     for alpha in alphas:
         for model in models:
             for target_eps in epsilons:
                     values = dict()
                     plot = study.LinePlot()
-                    legend = []
+                    legend_topos = []
+                    legend_methods = []
                     
                     for topology_name, method in topologies:
                         name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}"
                         values[topology_name, method] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", (params["metric"], "max"))
                         plot.include(values[topology_name, method][0], params["metric"], errs="-err", linestyle = topo_to_style[topology_name], 
                         color = method_to_color[method], lalp=0.8, logscale = True)
-                        legend.append(f"{topology_name} + {method}")
-
+                        #legend.append(f"{topology_name} + {method}")
+                        if topology_name not in legend_topos:
+                            legend_topos.append(topology_name)
+                        if method not in legend_methods:
+                            legend_methods.append(method)
+                    
+                    # Making the legend
+                    legend = []
+                    legend.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None'))
+                    for method in legend_methods:
+                        legend.append(plt.Line2D([], [], label=method.upper(), color = method_to_color[method]))
+                    legend.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
+                    for topo in legend_topos:
+                        legend.append(plt.Line2D([], [], label= topo.upper(), linestyle = topo_to_style[topo], color = 'k'))
+                        
                     #JS: plot every time graph in terms of the maximum number of steps
                     plot_name = f"{dataset}_model= {model}_momentum={params['momentum']}_alpha={alpha}_eps={target_eps}"
-                    plot.finalize(None, "Step number", "Test accuracy", xmin=0, xmax=params['num-iter'], ymin=1e-4, ymax=1, legend=legend)
+                    plot.finalize(None, "Step number", "$ \mathcal{L} - \mathcal{L}^*$", xmin=0, xmax=params['num-iter'], ymin=1e-3, ymax=1, legend=legend)
                     plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
 
 # Plot Loss VS Epsilon

@@ -18,15 +18,15 @@ dataset_name = "libsvm"
 loss = "BCELoss"
 num_nodes = 16
 num_labels = 2
-alpha = 1.
+alpha = 10.
 delta = 1e-5
 target_eps = 10
 min_loss = 0.3236 # found in train_libsvm_bce.ipynb
 criterion = "libsvm_topk"
 
 # Hyper-parameters
-lr_grid = [0.01, 0.05, 0.1, 0.5]
-gradient_clip_grid = [0.01, 0.05, 0.1, 0.5, 1]
+lr_grid = [0.005, 0.01, 0.05, 0.1, 0.5]
+gradient_clip_grid = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
 T_grid = [500, 1000, 2000]
 batch_size = 64
 momentum = 0.
@@ -74,10 +74,10 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
 
     # ------------------------------------------------------------------------ #
     current_step = 0
-    eval_filename = result_directory + f"/mean_loss-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-sigma-{sigma}-sigmacor-{sigma_cor}-epsilon-{target_eps}-T-{num_iter}.csv"
+    eval_filename = result_directory + f"/mean_loss-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-mom-{momentum}-sigma-{sigma}-sigmacor-{sigma_cor}-epsilon-{target_eps}-T-{num_iter}.csv"
     # Initialization of the dataframe
-    data = [{"Step": -1, "topology": topology_name, "method": method, "lr": lr, "clip" : gradient_clip, "sigma": sigma, "sigma_cor": sigma_cor, 
-                "epsilon": target_eps, "loss":-1}]
+    data = [{"Step": -1, "topology": topology_name, "method": method, "lr": lr, "momentum": momentum, "clip" : gradient_clip, 
+             "sigma": sigma, "sigma_cor": sigma_cor, "epsilon": target_eps, "loss":-1}]
     result = pd.DataFrame(data)
     
     # Training
@@ -94,8 +94,9 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
                         "method": method,
                         "lr": lr, 
                         "clip": gradient_clip,
+                        "momentum" : momentum,
                         "sigma": sigma,
-                        "sigma_cor": sigma_cor,
+                        "sigma-cor": sigma_cor,
                         "epsilon": target_eps,
                         "loss": mean_loss                
                         }
@@ -118,7 +119,7 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
     return result.iloc[-1]["loss"]
 
 # Creating a dictionary that will contain the values of loss for all couples considered, and will be sorted
-summary = pd.DataFrame(columns = ["topology", "lr", "clip", "sigma", "sigma-cor", "T", "loss"])
+summary = pd.DataFrame(columns = ["topology", "lr", "clip", "momentum", "sigma", "sigma-cor", "T", "loss"])
 
 # Tuning: looping over the hyperparameters
 for lr in lr_grid:
@@ -145,6 +146,7 @@ for lr in lr_grid:
                 row = {"topology": topology_name,
                     "lr": lr,
                     "clip": gradient_clip,
+                    "momentum" : momentum,
                     "sigma": sigma,
                     "sigma-cor": sigma_cor,
                     "T": num_iter,
@@ -157,6 +159,7 @@ for lr in lr_grid:
                 row = {"topology": topology_name,
                     "lr": lr,
                     "clip": gradient_clip,
+                    "momentum" : momentum,
                     "sigma": sigma,
                     "sigma-cor": sigma_cor,
                     "T": num_iter,
@@ -198,6 +201,7 @@ for lr in lr_grid:
                     row = {"topology": topology_name,
                         "lr": lr,
                         "clip": gradient_clip,
+                        "momentum" : momentum,
                         "sigma": sigma,
                         "sigma-cor": sigma_cor,
                         "T": num_iter,
@@ -211,6 +215,7 @@ for lr in lr_grid:
                     row = {"topology": topology_name,
                         "lr": lr,
                         "clip": gradient_clip,
+                        "momentum" : momentum,
                         "sigma": sigma,
                         "sigma-cor": sigma_cor,
                         "T": num_iter,
@@ -224,6 +229,7 @@ for lr in lr_grid:
                     row = {"topology": topology_name,
                         "lr": lr,
                         "clip": gradient_clip,
+                        "momentum" : momentum,
                         "sigma": sigma,
                         "sigma-cor": sigma_cor,
                         "T": num_iter,
@@ -237,6 +243,7 @@ for lr in lr_grid:
                     row = {"topology": topology_name,
                         "lr": lr,
                         "clip": gradient_clip,
+                        "momentum" : momentum,
                         "sigma": sigma,
                         "sigma-cor": sigma_cor,
                         "T": num_iter,
@@ -249,6 +256,7 @@ for lr in lr_grid:
                     row = {"topology": topology_name,
                         "lr": lr,
                         "clip": gradient_clip,
+                        "momentum" : momentum,
                         "sigma": sigma,
                         "sigma-cor": sigma_cor,
                         "T": num_iter,
@@ -261,6 +269,7 @@ for lr in lr_grid:
                     row = {"topology": topology_name,
                         "lr": lr,
                         "clip": gradient_clip,
+                        "momentum" : momentum,
                         "sigma": sigma,
                         "sigma-cor": sigma_cor,
                         "T": num_iter,
