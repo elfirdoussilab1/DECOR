@@ -162,34 +162,52 @@ jobs.close()
 if exit_is_requested():
     exit(0)
 
- # ---------------------------------------------------------------------------- #
- # Plot results
+# ---------------------------------------------------------------------------- #
+# Plot results
 tools.success("Plotting results...")
 
+# dictionary for plot colors ans style
+topo_to_style = {"ring": (0, (1, 1)), "grid": (0, (5, 5)), "centralized": 'solid'}
+method_to_color = {"ldp": "tab:orange", "cdp": "tab:purple", "corr": "tab:green"}
+method_to_marker = {"ldp": "^", "cdp": "s", "corr": "o"}
 
-# Plot results
+# Plot Loss VS iterations
+# TODO: change plot.finalize to make the desired legend 
 with tools.Context("mnist", "info"):
     for alpha in alphas:
         for model in models:
             for target_eps in epsilons:
                     values = dict()
-                    # Plot top-1 cross-accuracies
                     plot = study.LinePlot()
-                    #legend = ["Average"]
                     legend = []
-                    
-                    # Plot average (without any noise)
-                    #name = f"{dataset}-average-n_{params['num-nodes']}-model_{model}-alpha_{alpha}"
-                    #dsgd = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
-                    #plot.include(dsgd[0], "Accuracy", errs="-err", lalp=0.8)
                     
                     for topology_name, method in topologies:
                         name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}"
-                        values[topology_name, method] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
-                        plot.include(values[topology_name, method][0], "Accuracy", errs="-err", lalp=0.8)
+                        values[topology_name, method] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", (params["metric"], "max"))
+                        plot.include(values[topology_name, method][0], params["metric"], errs="-err", linestyle = topo_to_style[topology_name], 
+                        color = method_to_color[method], lalp=0.8, logscale = True)
                         legend.append(f"{topology_name} + {method}")
 
                     #JS: plot every time graph in terms of the maximum number of steps
-                    plot_name = f"{dataset} _model= {model} _lr= {lr}_momentum={params['momentum']}_alpha={alpha}_eps={target_eps}"
-                    plot.finalize(None, "Step number", "Test accuracy", xmin=0, xmax=params['num-iter'], ymin=0, ymax=1, legend=legend)
+                    plot_name = f"{dataset}_model= {model}_momentum={params['momentum']}_alpha={alpha}_eps={target_eps}"
+                    plot.finalize(None, "Step number", "Test accuracy", xmin=0, xmax=params['num-iter'], ymin=1e-4, ymax=1, legend=legend)
+                    plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
+
+# Plot Loss VS Epsilon
+# TODO: change the order of for loops 
+with tools.Context("mnist", "info"):
+    for alpha in alphas:
+        for model in models:
+            for target_eps in epsilons:
+                    values = dict()
+                    plot = study.LinePlot()
+                    for topology_name, method in topologies:
+                        name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}"
+                        values[topology_name, method] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", (params["metric"], "max"))
+                        plot.include(values[topology_name, method][0], params["metric"], errs="-err", linestyle = topo_to_style[topology_name], 
+                                     marker = method_to_marker[method], color = method_to_color[method], lalp=0.8, logscale = True)
+
+                    #JS: plot every time graph in terms of the maximum number of steps
+                    plot_name = f"{dataset}_model= {model}_momentum={params['momentum']}_alpha={alpha}_eps={target_eps}"
+                    plot.finalize(None, "Step number", "Test accuracy", xmin=0, xmax=params['num-iter'], ymin=1e-4, ymax=1)
                     plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
