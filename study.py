@@ -388,7 +388,7 @@ class LinePlot:
 		# Return self for chaining
 		return self
 
-	def include(self, data, *cols, errs=None, mark=False, lalp=1., ccnt=None, logscale= False):
+	def include(self, data, *cols, errs=None, mark=None, linestyle = None, color = None, lalp=1., ccnt=None, logscale= False):
 		""" Add the columns of the given data frame, can only be done before finalization.
 		Args:
 			data Session or dataframe holding the column(s) to add
@@ -442,7 +442,7 @@ class LinePlot:
 				if errn is not None and errn in data:
 					derr = data[errn].to_numpy()
 					axis.fill_between(x, davg - derr, davg + derr, facecolor=color, alpha=0.2)
-				axis.plot(x, davg, marker=(markstyle if mark else None), label=scol, linestyle=linestyle, color=color, alpha=lalp, linewidth=2.25)
+				axis.plot(x, davg, marker= mark, label=scol, linestyle=linestyle, color=color, alpha=lalp, linewidth=2.25)
 				if logscale:
 					axis.set_xscale('log')
 				# Increase the counter only on success
