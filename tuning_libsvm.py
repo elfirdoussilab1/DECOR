@@ -32,7 +32,7 @@ batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
 topology_name = "centralized"
-method = "cdp"
+method = "ldp"
 
 # Fix seed
 misc.fix_seed(1)
