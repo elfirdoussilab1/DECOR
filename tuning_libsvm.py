@@ -27,7 +27,7 @@ criterion = "libsvm_topk"
 # Hyper-parameters
 lr_grid = [0.005, 0.01, 0.05, 0.1, 0.5]
 gradient_clip_grid = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-T_grid = 2000
+T_grid = [2000]
 batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
@@ -77,7 +77,7 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
     eval_filename = result_directory + f"/mean_loss-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-mom-{momentum}-sigma-{sigma}-sigmacor-{sigma_cor}-epsilon-{target_eps}-T-{num_iter}.csv"
     # Initialization of the dataframe
     data = [{"Step": -1, "topology": topology_name, "method": method, "lr": lr, "momentum": momentum, "clip" : gradient_clip, 
-             "sigma": sigma, "sigma_cor": sigma_cor, "epsilon": target_eps, "loss":-1}]
+             "sigma": sigma, "sigma-cor": sigma_cor, "epsilon": target_eps, "loss":-1}]
     result = pd.DataFrame(data)
     
     # Training
@@ -169,7 +169,7 @@ for lr in lr_grid:
                 # Determining the couples (sigma, sigma_cor) that can be considered
                 sigmas_df = pd.DataFrame(columns = ["topology", "sigma", "sigma-cor", "epsilon"])
                 sigma_grid = np.linspace(sigma_cdp, sigma_ldp, 50)
-                sigma_cor_grid = np.linspace(1e-4, 100, 1000)
+                sigma_cor_grid = np.linspace(1e-5, 100, 1000)
 
                 for sigma in sigma_grid:
                     all_sigma_cor = plotting.find_sigma_cor(sigma, sigma_cor_grid, gradient_clip, degree_matrix, adjacency_matrix, eps_iter)
