@@ -27,13 +27,12 @@ criterion = "libsvm_topk"
 # Hyper-parameters
 lr_grid = [0.005, 0.01, 0.05, 0.1, 0.5]
 gradient_clip_grid = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-#gradient_clip_grid = [0.005]
 T_grid = [4000]
 batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
-topology_name = "ring"
-method = "corr"
+topology_name = "centralized"
+method = "cdp"
 
 # Fix seed
 misc.fix_seed(1)
@@ -41,7 +40,7 @@ misc.fix_seed(1)
 # Storing reults
 evaluation_delta = 5
 
-result_directory = "./results-tuning-" + dataset_name + "-" + method  + "-" + topology_name + "-"
+result_directory = "./results-tuning-" + dataset_name + "-" + method  + "-" + topology_name
 if not os.path.exists(result_directory):
     os.makedirs(result_directory)
 
