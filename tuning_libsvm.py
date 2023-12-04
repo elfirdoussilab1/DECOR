@@ -32,7 +32,7 @@ batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
 topology_name = "ring"
-method = "corr"
+method = "ldp"
 
 # Fix seed
 misc.fix_seed(1)
@@ -76,10 +76,11 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
     current_step = 0
     eval_filename = result_directory + f"/mean_loss-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-mom-{momentum}-sigma-{sigma}-sigmacor-{sigma_cor}-epsilon-{target_eps}-T-{num_iter}.csv"
     # Initialization of the dataframe
-    data = [{"Step": -1, "topology": topology_name, "method": method, "lr": lr, "momentum": momentum, "clip" : gradient_clip, 
-             "sigma": sigma, "sigma-cor": sigma_cor, "epsilon": target_eps, "loss":-1}]
-    result = pd.DataFrame(data)
-    
+    #data = [{"Step": -1, "topology": topology_name, "method": method, "lr": lr, "momentum": momentum, "clip" : gradient_clip, 
+    #         "sigma": sigma, "sigma-cor": sigma_cor, "epsilon": target_eps, "loss":-1}]
+    #result = pd.DataFrame(data)
+    result = pd.DataFrame(columns = ["Step", "topology", "method", "lr", "clip", "momentum", "sigma", "sigma-cor", "epsilon", "loss"])
+
     # Training
     while current_step <= num_iter:
         
