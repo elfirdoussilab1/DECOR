@@ -6,6 +6,7 @@ from utils import dp_account, topology, plotting
 import numpy as np
 import pandas as pd
 from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
 
 if torch.cuda.is_available():
     device = "cuda"
@@ -32,7 +33,7 @@ batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
 topology_name = "centralized"
-method = "ldp"
+method = "cdp"
 
 # Fix seed
 misc.fix_seed(1)
@@ -75,6 +76,7 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
     # ------------------------------------------------------------------------ #
     current_step = 0
     eval_filename = result_directory + f"/mean_loss-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-mom-{momentum}-sigma-{sigma}-sigmacor-{sigma_cor}-epsilon-{target_eps}-T-{num_iter}.csv"
+    plot_filename = result_directory + f"/mean_loss-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-mom-{momentum}-sigma-{sigma}-sigmacor-{sigma_cor}-epsilon-{target_eps}-T-{num_iter}.png"
     # Initialization of the dataframe
     #data = [{"Step": -1, "topology": topology_name, "method": method, "lr": lr, "momentum": momentum, "clip" : gradient_clip, 
     #         "sigma": sigma, "sigma-cor": sigma_cor, "epsilon": target_eps, "loss":-1}]
@@ -117,6 +119,9 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
             workers[i].decentralized_learning(weights = W[i], workers_parameters = all_parameters)
 
         current_step += 1
+    plt.semilogy(values["loss"][1:], label = topology_name + method)
+    plt.legend()
+    plt.savefig(plot_filename)
     return result.iloc[-1]["loss"]
 
 # Creating a dictionary that will contain the values of loss for all couples considered, and will be sorted
