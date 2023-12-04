@@ -92,7 +92,7 @@ def process_commandeline():
         help = "Dataset to use")
     parser.add_argument("--batch-size",
         type = int,
-        default= 25,
+        default= 64,
         help = "Training batch size")
     parser.add_argument("--batch-size-test",
         type = int,
@@ -148,7 +148,7 @@ def process_commandeline():
         help = "The parameter of Dirichlet distribution")
     parser.add_argument("--gradient-descent",
         action = "store_true",
-        default= None,
+        default= False,
         help = "Execute the full gradient descent algorithm")
     parser.add_argument("--privacy",
         type = str,
@@ -241,14 +241,14 @@ with tools.Context("setup", "info"):
     # Create train and test loaders
     train_loader_dict, test_loader = dataset.make_train_test_datasets(dataset=args.dataset, gradient_descent= args.gradient_descent, heterogeneity=args.hetero,
                                   num_labels=args.num_labels, alpha_dirichlet= args.dirichlet_alpha, num_nodes=args.num_nodes, train_batch=args.batch_size, test_batch=args.batch_size_test)
-    
-    # Create the evaluator
-    server = evaluator.Evaluator(train_loader_dict, test_loader, model = args.model, loss = args.loss, num_labels= args.num_labels, criterion = args.criterion, num_evaluations= args.num_evaluations, 
-                                 device=args.device)
 
     reproducible = (args.seed >= 0)
     if reproducible:
         misc.fix_seed(args.seed)
+
+    # Create the evaluator
+    server = evaluator.Evaluator(train_loader_dict, test_loader, model = args.model, loss = args.loss, num_labels= args.num_labels, criterion = args.criterion, num_evaluations= args.num_evaluations, 
+                                 device=args.device)
     torch.backends.cudnn.deterministic = reproducible
     torch.backends.cudnn.benchmark   = not reproducible
 
@@ -319,7 +319,6 @@ with tools.Context("training", "info"):
         # Evaluate the model if milestone is reached
         milestone_evaluation = args.evaluation_delta > 0 and current_step % args.evaluation_delta == 0        
         if milestone_evaluation:
-            #mean_accuracy = np.mean([workers[i].compute_accuracy() for i in range(args.num_nodes)])
             mean_param = torch.stack([workers[i].flat_parameters]).mean(dim = 0)
             server.update_model_parameters(mean_param)
             mean_metric = 0

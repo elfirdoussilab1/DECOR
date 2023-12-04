@@ -27,12 +27,13 @@ criterion = "libsvm_topk"
 # Hyper-parameters
 lr_grid = [0.005, 0.01, 0.05, 0.1, 0.5]
 gradient_clip_grid = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-T_grid = [2000]
+#gradient_clip_grid = [0.005]
+T_grid = [4000]
 batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
 topology_name = "ring"
-method = "ldp"
+method = "corr"
 
 # Fix seed
 misc.fix_seed(1)
@@ -40,7 +41,7 @@ misc.fix_seed(1)
 # Storing reults
 evaluation_delta = 5
 
-result_directory = "./results-tuning-" + dataset_name + "-" + method  + "-" + topology_name
+result_directory = "./results-tuning-" + dataset_name + "-" + method  + "-" + topology_name + "-"
 if not os.path.exists(result_directory):
     os.makedirs(result_directory)
 
@@ -237,7 +238,7 @@ for lr in lr_grid:
                         "loss": final_loss}
                     summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
                 else: #n > 3
-                    # First couple
+                    # First couple: always the worst !
                     sigma = sigmas_df.iloc[0]["sigma"]
                     sigma_cor = sigmas_df.iloc[0]["sigma-cor"]
                     final_loss = train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
@@ -263,7 +264,7 @@ for lr in lr_grid:
                         "T": num_iter,
                         "loss": final_loss}
                     summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
-                    # Last couple
+                    # Last couple: almost always the best !
                     sigma = sigmas_df.iloc[-1]["sigma"]
                     sigma_cor = sigmas_df.iloc[-1]["sigma-cor"]
                     final_loss = train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
@@ -277,12 +278,12 @@ for lr in lr_grid:
                         "loss": final_loss}
                     summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
 
-                summary.to_csv(result_directory + f"/summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
+                #summary.to_csv(result_directory + f"/summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
 
 
 # Produce the last file
-sorted_summary = summary.sort_values(by='loss')
-sorted_summary.to_csv(result_directory + f"/sorted-summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
+#sorted_summary = summary.sort_values(by='loss')
+#sorted_summary.to_csv(result_directory + f"/sorted-summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
 
 '''
 for lr in lr_grid:
