@@ -280,7 +280,9 @@ class Session:
 class LinePlot:
 	""" Line plot management class.
 	"""
-
+	# Plot style
+	plt.style.use('ggplot')
+	
 	# Known line styles
 	linestyles = ("-", "--", ":", "-.")
 
@@ -400,6 +402,7 @@ class LinePlot:
 		Returns:
 			self
 		"""
+		#plt.style.use('ggplot')
 		# Assert not already finalized
 		if self._fin:
 			raise RuntimeError("Plot is already finalized and cannot include another line")
@@ -435,7 +438,7 @@ class LinePlot:
 				if axis is None:
 					axis = self._get_ax(col)
 				# Pick a new line style and color
-				linestyle, color, markstyle = self._get_line_style(self._cnt if ccnt is None else ccnt)
+				#linestyle, color, markstyle = self._get_line_style(self._cnt if ccnt is None else ccnt)
 				# Plot the data (line or error line)
 				davg = subd[scol].to_numpy()
 				errn = None if errs is None else (scol + errs)
@@ -444,7 +447,7 @@ class LinePlot:
 					axis.fill_between(x, davg - derr, davg + derr, facecolor=color, alpha=0.2)
 				axis.plot(x, davg, marker= mark, label=scol, linestyle=linestyle, color=color, alpha=lalp, linewidth=2.25)
 				if logscale:
-					axis.set_xscale('log')
+					axis.set_yscale('log')
 				# Increase the counter only on success
 				self._cnt += 1
 			# Reset axis for next iteration
@@ -486,9 +489,9 @@ class LinePlot:
 					return res
 		#(self._ax if self._tax is None else self._tax).legend(generator_sum(ax.get_legend_handles_labels()[0] for ax in self._axs.values()), generator_sum(ax.get_legend_handles_labels()[1] for ax in self._axs.values()) if legend is None else legend, loc="best", prop={'size': 13})
 		# Style
-		plt.style.use('ggplot')
+		#plt.style.use('ggplot')
 		# Legend
-		self.ax.legend(handles = legend, loc = 'upper left', bbox_to_anchor = (1, 1))
+		self._ax.legend(handles = legend, loc = 'upper left', bbox_to_anchor = (1, 1))
 		# Plot the grid and labels
 		self._ax.grid(True)
 		self._ax.set_xlabel(xlabel, fontsize=20)

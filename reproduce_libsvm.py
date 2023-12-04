@@ -203,15 +203,15 @@ with tools.Context("libsvm", "info"):
                         legend.append(plt.Line2D([], [], label=method.upper(), color = method_to_color[method]))
                     legend.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
                     for topo in legend_topos:
-                        legend.append(plt.Line2D([], [], label= topo.upper(), linestyle = topo_to_style[topo], color = 'k'))
+                        legend.append(plt.Line2D([], [], label= topo.capitalize(), linestyle = topo_to_style[topo], color = 'k'))
                         
                     #JS: plot every time graph in terms of the maximum number of steps
                     plot_name = f"{dataset}_model= {model}_momentum={params['momentum']}_alpha={alpha}_eps={target_eps}"
-                    plot.finalize(None, "Step number", "$ \mathcal{L} - \mathcal{L}^*$", xmin=0, xmax=params['num-iter'], ymin=1e-3, ymax=1, legend=legend)
+                    plot.finalize(None, "Step number", "$ \mathcal{L} - \mathcal{L}^*$", xmin=0, xmax=params['num-iter'], ymin=1e-2, ymax=1, legend=legend)
                     plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
 
 # Plot Loss VS Epsilon
-# TODO: change the order of for loops : done but not checked yet
+# Checked !
 
 with tools.Context("libsvm", "info"):
     for alpha in alphas:
@@ -244,9 +244,9 @@ with tools.Context("libsvm", "info"):
                 legend.append(plt.Line2D([], [], label=method.upper(), color = method_to_color[method], marker = method_to_marker[method]))
             legend.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
             for topo in legend_topos:
-                legend.append(plt.Line2D([], [], label= topo.upper(), linestyle = topo_to_style[topo], color = 'k'))
+                legend.append(plt.Line2D([], [], label= topo.capitalize(), linestyle = topo_to_style[topo], color = 'k'))
 
             #JS: plot every time graph in terms of the maximum number of steps
             plot_name = f"Loss_vs_epsilon_{dataset}_model={model}_momentum={params['momentum']}_alpha={alpha}"
-            plot.finalize(None, "Step number", "Test accuracy", xticks = epsilons, ymin=1e-4, ymax=1)
+            plot.finalize(None, "Step number", "Test accuracy", xticks = epsilons, ymin=1e-2, ymax=1, legend = legend)
             plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
