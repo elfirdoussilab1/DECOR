@@ -28,7 +28,7 @@ criterion = "libsvm_topk"
 # Hyper-parameters
 lr_grid = [0.005, 0.01, 0.05, 0.1, 0.5]
 gradient_clip_grid = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-T_grid = [4000]
+T_grid = [5000]
 batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
@@ -119,10 +119,12 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
             workers[i].decentralized_learning(weights = W[i], workers_parameters = all_parameters)
 
         current_step += 1
-    plt.semilogy(result["loss"], label = topology_name + method)
-    plt.legend()
-    plt.savefig(plot_filename)
-    return result.iloc[-1]["loss"]
+    
+    fig, ax = plt.subplots()
+    ax.semilogy(result["loss"], label = topology_name + method)
+    ax.legend()
+    fig.savefig(plot_filename)
+    return np.mean(result.iloc[-200:-1]["loss"])
 
 # Creating a dictionary that will contain the values of loss for all couples considered, and will be sorted
 summary = pd.DataFrame(columns = ["topology", "lr", "clip", "momentum", "sigma", "sigma-cor", "T", "loss"])
