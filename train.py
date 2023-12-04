@@ -263,10 +263,7 @@ with tools.Context("setup", "info"):
         result_fds = dict()
         # Make evaluation file
         if args.evaluation_delta > 0:
-            if "loss" in args.metric:
-                result_make("eval", ["Step number", "Loss"])
-            else:
-                result_make("eval", ["Step number", "Accuracy"])
+            result_make("eval", ["Step number", args.metric])
         result_make("track", ["Step number", "topology", "method", "lr", "clip", "sigma", "sigma_cor"])
 
 # ---------------------------------------------------------------------------- #

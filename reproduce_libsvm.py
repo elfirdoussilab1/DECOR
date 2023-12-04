@@ -61,21 +61,22 @@ params = {
     "weight-decay": 1e-5,
     "evaluation-delta": 5,
     "gradient-clip": 0.1,
-    "num-iter": 2000,
+    "num-iter": 500,
     "num-nodes": 16,
     "momentum": 0.,
     "num-labels": 2,
     "delta": 1e-5,
-    "criterion": "libsvm_criterion",
+    "criterion": "libsvm_topk",
     "privacy": "user",
     "metric": "Loss"
     }
 
 # Hyperparameters to test
 models = ["libsvm_model"]
-topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
+#topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
+topologies = [("centralized", "cdp"), ("centralized", "ldp")]
 alphas = [1.]
-epsilons = [3, 5, 7, 10, 15, 20, 25, 30, 40]
+epsilons = [10]
 
 
 # Command maker helper
@@ -107,12 +108,12 @@ for alpha in alphas:
                     eps_iter = dp_account.reverse_eps(eps= target_eps, num_iter = params["num-iter"], delta = params["delta"], subsample = 1, multiple = False)
 
                     # sigma_cdp and sigma_ldp
-                    params["gradient-clip"] = 0.1
+                    #params["gradient-clip"] = 0.1
                     sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
                     sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
 
                     if "corr" in method: # CD-SGD
-                        params["learning-rate"] = 0.1 # To adapt with the result of the tuning
+                        # To adapt lr and clip with the result of the tuning
                         
                         # Determining the couples (sigma, sigma_cor) that can be considered
                         df = pd.DataFrame(columns = ["topology", "sigma", "sigma-cor", "epsilon", "sigma-cdp", "sigma-ldp"])
@@ -142,14 +143,16 @@ for alpha in alphas:
                         jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
 
                     elif "ldp" in method: # LDP
-                        params["learning-rate"] = 0.1 # To adapt with the result of the tuning
+                        # To adapt with the result of the tuning
+                        params["learning-rate"] = 0.01
                         params["sigma-cor"] = 0
                         params["sigma"] = sigma_ldp
                         #tools.success("Submitting LDP")
                         jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
                     
                     else: # CDP
-                        params["learning-rate"] = 0.1 # To adapt with the result of the tuning
+                        # To adapt with the result of the tuning
+                        params["learning-rate"] = 0.1
                         params["sigma-cor"] = 0
                         params["sigma"] = sigma_cdp
                         #tools.success("Submitting CDP")
@@ -208,7 +211,7 @@ with tools.Context("libsvm", "info"):
                     plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
 
 # Plot Loss VS Epsilon
-# TODO: change the order of for loops : done ut not checked yet
+# TODO: change the order of for loops : done but not checked yet
 
 with tools.Context("libsvm", "info"):
     for alpha in alphas:
