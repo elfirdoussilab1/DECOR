@@ -119,7 +119,7 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
             workers[i].decentralized_learning(weights = W[i], workers_parameters = all_parameters)
 
         current_step += 1
-    plt.semilogy(values["loss"][1:], label = topology_name + method)
+    plt.semilogy(result["loss"], label = topology_name + method)
     plt.legend()
     plt.savefig(plot_filename)
     return result.iloc[-1]["loss"]
