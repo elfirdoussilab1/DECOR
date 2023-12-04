@@ -53,7 +53,6 @@ tools.success("Running experiments...")
 # Base parameters for the MNIST experiments
 params = {
     "dataset":  dataset,
-    #"batch-size": 25,
     "batch-size": 64,
     "loss": "BCELoss",
     "learning-rate-decay-delta": 2000,
@@ -75,7 +74,7 @@ params = {
 models = ["libsvm_model"]
 #topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
 topologies = [("centralized", "cdp"), ("centralized", "ldp")]
-alphas = [1.]
+alphas = [10.]
 epsilons = [10]
 
 
