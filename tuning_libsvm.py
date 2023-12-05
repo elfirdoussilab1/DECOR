@@ -284,26 +284,35 @@ for lr in lr_grid:
                         "loss": final_loss}
                     summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
 
-                #summary.to_csv(result_directory + f"/summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
+                summary.to_csv(result_directory + f"/summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
 
 
 # Produce the last file
-#sorted_summary = summary.sort_values(by='loss')
-#sorted_summary.to_csv(result_directory + f"/sorted-summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
+sorted_summary = summary.sort_values(by='loss')
+sorted_summary.to_csv(result_directory + f"/sorted-summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
+"""
 
-'''
+# If you forget to create the smmary file and you have all data
 for lr in lr_grid:
     for gradient_clip in gradient_clip_grid:
         for num_iter in T_grid:
-            filename = result_directory + f"/mean_loss-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-epsilon-{target_eps}-T-{num_iter}.csv"
-            df = pd.read_csv(filename)
+            prefix = f"mean_loss-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-"
+            # Get a list of all files in the directory
+            all_files = os.listdir(result_directory)
+
+            # Filter files based on the prefix
+            matching_files = [file for file in all_files if file.startswith(prefix) and file.endswith(".csv")]
+            
+            file_path = os.path.join(result_directory, matching_files[0])
+            df = pd.read_csv(file_path)
             row = {"topology": topology_name,
                     "lr": lr,
                     "clip": gradient_clip,
                     "sigma": df.iloc[-1]["sigma"],
-                    "sigma_cor": df.iloc[-1]["sigma_cor"],
+                    "sigma-cor": df.iloc[-1]["sigma-cor"],
                     "T": num_iter,
-                    "loss": df.iloc[-1]["loss"]}
+                    "loss": np.mean(df.iloc[-200:-1]["loss"])}
             summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
-
-'''
+sorted_summary = summary.sort_values(by='loss')
+sorted_summary.to_csv(result_directory + f"/sorted-summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
+"""
