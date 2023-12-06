@@ -21,6 +21,5 @@ datasets
 !*.png
 !*.csv
 !*.txt
-!*.t
-!*.ipynb
+!*.ts
 !*.pth
