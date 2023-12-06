@@ -32,7 +32,7 @@ T_grid = [5000]
 batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
-topology_name = "centralized"
+topology_name = "grid"
 method = "ldp"
 
 # Fix seed
