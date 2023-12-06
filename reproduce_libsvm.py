@@ -55,19 +55,21 @@ params = {
     "dataset":  dataset,
     "batch-size": 64,
     "loss": "BCELoss",
-    "learning-rate-decay-delta": 2000,
-    "learning-rate-decay": 2000,
+    "learning-rate-decay-delta": 6000,
+    "learning-rate-decay": 6000,
     "weight-decay": 1e-5,
     "evaluation-delta": 5,
-    "gradient-clip": 0.1,
-    "num-iter": 500,
+    #"gradient-clip": 0.1,
+    "num-iter": 5000,
     "num-nodes": 16,
-    "momentum": 0.,
+    "momentum": 0,
     "num-labels": 2,
     "delta": 1e-5,
     "criterion": "libsvm_topk",
     "privacy": "user",
-    "metric": "Loss"
+    "metric": "Loss",
+    "hetero": False,
+    "gradient-descent": False
     }
 
 # Hyperparameters to test
@@ -100,16 +102,16 @@ for alpha in alphas:
                     params["epsilon"] = target_eps
 
                     # Privacy
-                    W = topology.FixedMixingMatrix(topology_name, params["num-nodes"])
+                    W = topology.FixedMixingMatrix(topology_name = topology_name, n_nodes = params["num-nodes"])
                     adjacency_matrix = np.array(W(0) != 0, dtype=float)
                     adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
                     degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
-                    eps_iter = dp_account.reverse_eps(eps= target_eps, num_iter = params["num-iter"], delta = params["delta"], subsample = 1, multiple = False)
+                    eps_iter = dp_account.reverse_eps(eps= target_eps, num_iter = params["num-iter"], delta = params["delta"], subsample = 1.)
 
                     # sigma_cdp and sigma_ldp
                     #params["gradient-clip"] = 0.1
-                    sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
-                    sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
+                    #sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
+                    #sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
 
                     if "corr" in method: # CD-SGD
                         # To adapt lr and clip with the result of the tuning
@@ -143,17 +145,19 @@ for alpha in alphas:
 
                     elif "ldp" in method: # LDP
                         # To adapt with the result of the tuning
-                        params["learning-rate"] = 0.01
+                        params["learning-rate"] = 0.05
+                        params["gradient-clip"] = 0.005
                         params["sigma-cor"] = 0
-                        params["sigma"] = sigma_ldp
+                        params["sigma"] = params["gradient-clip"] * np.sqrt(2 / eps_iter)
                         #tools.success("Submitting LDP")
                         jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
                     
                     else: # CDP
                         # To adapt with the result of the tuning
-                        params["learning-rate"] = 0.1
+                        params["learning-rate"] = 0.01
+                        params["gradient-clip"] = 0.1
                         params["sigma-cor"] = 0
-                        params["sigma"] = sigma_cdp
+                        params["sigma"] = params["gradient-clip"] * np.sqrt(2 / eps_iter) / np.sqrt(params["num-nodes"])
                         #tools.success("Submitting CDP")
                         jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
 

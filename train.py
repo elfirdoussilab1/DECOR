@@ -139,7 +139,7 @@ def process_commandeline():
         default=None,
         help = "Number of labels in the dataset")
     parser.add_argument("--hetero",
-        action = "store_true",
+        type = bool,
         default= False,
         help = "Heterogeneous setting")
     parser.add_argument("--dirichlet-alpha",
@@ -147,7 +147,7 @@ def process_commandeline():
         default= False,
         help = "The parameter of Dirichlet distribution")
     parser.add_argument("--gradient-descent",
-        action = "store_true",
+        type = bool,
         default= False,
         help = "Execute the full gradient descent algorithm")
     parser.add_argument("--privacy",
@@ -241,14 +241,13 @@ with tools.Context("setup", "info"):
     # Create train and test loaders
     train_loader_dict, test_loader = dataset.make_train_test_datasets(dataset=args.dataset, gradient_descent= args.gradient_descent, heterogeneity=args.hetero,
                                   num_labels=args.num_labels, alpha_dirichlet= args.dirichlet_alpha, num_nodes=args.num_nodes, train_batch=args.batch_size, test_batch=args.batch_size_test)
-
+    # Create the evaluator
+    server = evaluator.Evaluator(train_loader_dict, test_loader, model = args.model, loss = args.loss, num_labels= args.num_labels, criterion = args.criterion, num_evaluations= args.num_evaluations, 
+                                 device=args.device)
     reproducible = (args.seed >= 0)
     if reproducible:
         misc.fix_seed(args.seed)
 
-    # Create the evaluator
-    server = evaluator.Evaluator(train_loader_dict, test_loader, model = args.model, loss = args.loss, num_labels= args.num_labels, criterion = args.criterion, num_evaluations= args.num_evaluations, 
-                                 device=args.device)
     torch.backends.cudnn.deterministic = reproducible
     torch.backends.cudnn.benchmark   = not reproducible
 
@@ -264,7 +263,7 @@ with tools.Context("setup", "info"):
         # Make evaluation file
         if args.evaluation_delta > 0:
             result_make("eval", ["Step number", args.metric])
-        result_make("track", ["Step number", "topology", "method", "lr", "clip", "sigma", "sigma_cor"])
+        result_make("track", ["Step number", "topology", "method", "lr", "clip", "sigma", "sigma-cor"])
 
 # ---------------------------------------------------------------------------- #
 # Training
@@ -308,9 +307,9 @@ with tools.Context("training", "info"):
 
     # Antisymmetry property
     V = misc.to_antisymmetric(V).to(args.device)
-    print(V)
+    #print(V)
     # Initializing learning rate
-    lr = args.learning_rate
+    #lr = args.learning_rate
 
     # ------------------------------------------------------------------------ #
     current_step = 0
@@ -319,7 +318,7 @@ with tools.Context("training", "info"):
         # Evaluate the model if milestone is reached
         milestone_evaluation = args.evaluation_delta > 0 and current_step % args.evaluation_delta == 0        
         if milestone_evaluation:
-            mean_param = torch.stack([workers[i].flat_parameters]).mean(dim = 0)
+            mean_param = torch.stack([workers[i].flat_parameters for i in range(args.num_nodes)]).mean(dim = 0)
             server.update_model_parameters(mean_param)
             mean_metric = 0
             if "Loss" in args.metric:
@@ -334,17 +333,17 @@ with tools.Context("training", "info"):
                 result_store(fd_eval, [current_step, mean_metric])
             
             if fd_track is not None:
-                result_store(fd_track, [current_step, lr, args.topology_name, args.method, args.sigma, args.sigma_cor])
+                result_store(fd_track, [current_step, args.topology_name, args.method, args.learning_rate, args.gradient_clip, args.sigma, args.sigma_cor])
         
         # Update the learning rate
-        lr = update_learning_rate(current_step, lr, args)
+        #lr = update_learning_rate(current_step, lr, args)
 
         # Apply the algorithm
         all_parameters = []
 
         # Step t + 1/2
         for i in range(args.num_nodes):
-            all_parameters.append(workers[i].grad_descent(V[i], lr = lr, weight_decay = args.weight_decay))
+            all_parameters.append(workers[i].grad_descent(V[i], lr = args.learning_rate, weight_decay = args.weight_decay))
         
         all_parameters = torch.stack(all_parameters).to(args.device)
         
