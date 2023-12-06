@@ -32,8 +32,8 @@ T_grid = [5000]
 batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
-topology_name = "centralized"
-method = "ldp"
+topology_name = "grid"
+method = "corr"
 
 # Fix seed
 misc.fix_seed(1)
@@ -89,7 +89,7 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
         # Evaluate the model if milestone is reached
         milestone_evaluation = evaluation_delta > 0 and current_step % evaluation_delta == 0        
         if milestone_evaluation:
-            mean_param = torch.stack([workers[i].flat_parameters]).mean(dim = 0)
+            mean_param = torch.stack([workers[i].flat_parameters for i in range(num_nodes)]).mean(dim = 0)
             server.update_model_parameters(mean_param)
             mean_loss = server.compute_train_loss() - min_loss
             new_row = {"Step": current_step,
@@ -177,7 +177,7 @@ for lr in lr_grid:
                 # Determining the couples (sigma, sigma_cor) that can be considered
                 sigmas_df = pd.DataFrame(columns = ["topology", "sigma", "sigma-cor", "epsilon"])
                 sigma_grid = np.linspace(sigma_cdp, sigma_ldp, 50)
-                sigma_cor_grid = np.linspace(1e-5, 100, 1000)
+                sigma_cor_grid = np.linspace(1e-7, 10, 1000)
 
                 for sigma in sigma_grid:
                     all_sigma_cor = plotting.find_sigma_cor(sigma, sigma_cor_grid, gradient_clip, degree_matrix, adjacency_matrix, eps_iter)
