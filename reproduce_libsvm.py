@@ -74,11 +74,14 @@ params = {
 
 # Hyperparameters to test
 models = ["libsvm_model"]
-#topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
-topologies = [("centralized", "cdp"), ("centralized", "ldp")]
+topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
+#topologies = [("centralized", "cdp"), ("centralized", "ldp")]
 alphas = [10.]
-epsilons = [10]
+epsilons = [1, 3, 5, 7, 10, 15, 20, 25, 30, 40]
 
+# Hyperparameters for each algorithm
+hyperparam_dict = {("centralized", "cdp") : (0.01, 0.1), ("grid", "corr") : (0.05, 0.005), ("ring", "corr") : (0.01, 0.01), # last 
+                   ("centralized", "ldp") : (0.05, 0.005) , ("grid", "ldp") : (0.05, 0.005), ("ring", "ldp"): (0.05, 0.005)}
 
 # Command maker helper
 def make_command(params):
@@ -109,34 +112,32 @@ for alpha in alphas:
                     eps_iter = dp_account.reverse_eps(eps= target_eps, num_iter = params["num-iter"], delta = params["delta"], subsample = 1.)
 
                     # sigma_cdp and sigma_ldp
-                    #params["gradient-clip"] = 0.1
-                    #sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
-                    #sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
+                    params["learning-rate"], params["gradient-clip"] = hyperparam_dict[topology_name, method]
+                    sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
+                    sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
 
                     if "corr" in method: # CD-SGD
-                        # To adapt lr and clip with the result of the tuning
-                        
                         # Determining the couples (sigma, sigma_cor) that can be considered
                         df = pd.DataFrame(columns = ["topology", "sigma", "sigma-cor", "epsilon", "sigma-cdp", "sigma-ldp"])
                         sigma_grid = np.linspace(sigma_cdp, sigma_ldp, 50)
-                        sigma_cor_grid = np.linspace(1, 100, 1000)
+                        sigma_cor_grid = np.linspace(sigma_cdp / 100, sigma_cdp * 10, 1000)
                         for sigma in sigma_grid:
                             all_sigma_cor = plotting.find_sigma_cor(sigma, sigma_cor_grid, params["gradient-clip"], degree_matrix, adjacency_matrix, eps_iter)
                             # check non-emptyness and add it
                             if len(all_sigma_cor) !=0:
-                
+                                eps = dp_account.rdp_compose_convert(params["num-iter"], params["delta"], sigma, all_sigma_cor[0], 
+                                                                     params["gradient-clip"], degree_matrix, adjacency_matrix, subsample =1)
                                 new_row = {"topology": topology_name,
                                            "sigma": sigma,
                                            "sigma-cor": all_sigma_cor[0],
-                                           "epsilon": target_eps,
+                                           "epsilon": eps,
                                            "sigma-cdp": sigma_cdp,
                                            "sigma-ldp": sigma_ldp}
                                 df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
 
-                        # TODO: adapt it with the result of the tuning (see which values go the best!)
-                        # Taking the values on the first row (correspond to the least sigma): 
-                        params["sigma"] = df.iloc[-1]["sigma"]
-                        params["sigma-cor"] = df.iloc[-1]["sigma-cor"]
+                        # Taking the values on the last row (correspond to the least sigma_cor): 
+                        params["sigma"] = df.iloc[-2]["sigma"]
+                        params["sigma-cor"] = df.iloc[-2]["sigma-cor"]
                         
                         # Store result
                         filename= f"result_gridsearch_user-level_{topology_name}_epsilon_{target_eps}.csv"
@@ -145,19 +146,15 @@ for alpha in alphas:
 
                     elif "ldp" in method: # LDP
                         # To adapt with the result of the tuning
-                        params["learning-rate"] = 0.05
-                        params["gradient-clip"] = 0.005
                         params["sigma-cor"] = 0
-                        params["sigma"] = params["gradient-clip"] * np.sqrt(2 / eps_iter)
+                        params["sigma"] = sigma_ldp
                         #tools.success("Submitting LDP")
                         jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
                     
                     else: # CDP
                         # To adapt with the result of the tuning
-                        params["learning-rate"] = 0.01
-                        params["gradient-clip"] = 0.1
                         params["sigma-cor"] = 0
-                        params["sigma"] = params["gradient-clip"] * np.sqrt(2 / eps_iter) / np.sqrt(params["num-nodes"])
+                        params["sigma"] = sigma_cdp
                         #tools.success("Submitting CDP")
                         jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
 

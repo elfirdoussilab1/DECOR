@@ -5,7 +5,7 @@ import misc, os, worker, dataset, evaluator
 from utils import dp_account, topology, plotting
 import numpy as np
 import pandas as pd
-
+import matplotlib.pyplot as plt
 
 if torch.cuda.is_available():
     device = "cuda"
@@ -18,21 +18,21 @@ dataset_name = "mnist"
 batch_size_test = 100
 loss = "CrossEntropyLoss"
 num_nodes = 16
-num_labels = 10
-alpha = 1.
+num_labels = 10 
+alpha = 1000 # to have that each worker has approximatly 3750 samples
 delta = 1e-5
-target_eps = 5
+target_eps = 0.5
 criterion = "topk"
 num_evaluations = 100
 
 # Hyper-parameters
-lr_grid = [0.01, 0.05, 0.1, 0.5, 1]
-gradient_clip_grid = [0.1, 1., 1.5, 2., 4.]
-T_grid = [500, 1000, 2000]
+lr_grid = [0.005, 0.01, 0.05, 0.1, 0.5, 1]
+gradient_clip_grid = [0.05, 0.1, 1., 1.5, 2., 4.]
+num_iter = 5000
 batch_size = 64
 subsample = 64/3750
 momentum = 0.
-weight_decay = 1e-4
+weight_decay = 1e-5
 topology_name = "centralized"
 method = "cdp"
 
@@ -52,7 +52,7 @@ train_loader_dict, test_loader = dataset.make_train_test_datasets(dataset=datase
 
 def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter):
     # Testing model
-    server = evaluator.Evaluator(train_loader_dict, test_loader, model, loss, num_labels, criterion, num_evaluations= 100, device=device)
+    server = evaluator.Evaluator(train_loader_dict, test_loader, model, loss, num_labels, criterion, num_evaluations= num_evaluations, device=device)
 
     # Initialize Workers
     workers = []
@@ -61,6 +61,9 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
         worker_i = worker.Worker(train_data_loader=data_loader, test_data_loader=test_loader, batch_size=batch_size, 
                     model = model, loss = loss, momentum = momentum, gradient_clip= gradient_clip, sigma= sigma,
                     num_labels= num_labels, criterion= criterion, num_evaluations= 100, device= device, privacy = "example")
+        # Agree on first parameters
+        worker_i.flat_parameters = server.flat_parameters
+        worker_i.update_model_parameters()
         workers.append(worker_i)
     
     # Noise tensor: shape (num_nodes, num_nodes, model_size)
@@ -73,11 +76,9 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
     # ------------------------------------------------------------------------ #
 
     current_step = 0
-    eval_filename = result_directory + f"/mean_accuracy-{dataset_name}-lr-{lr}-clip-{gradient_clip}-epsilon-{target_eps}-T-{num_iter}.csv"
-    # Initialization of the dataframe
-    data = [{"Step": -1, "topology": topology_name, "method": method, "lr": lr, "clip" : gradient_clip, "sigma": sigma, "sigma_cor": sigma_cor, 
-                "epsilon": target_eps, "accuracy":0}]
-    result = pd.DataFrame(data)
+    eval_filename = result_directory + f"/mean_accuracy-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-mom-{momentum}-sigma-{sigma}-sigmacor-{sigma_cor}-epsilon-{target_eps}-T-{num_iter}.csv"
+    plot_filename = result_directory + f"/mean_accuracy-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-mom-{momentum}-sigma-{sigma}-sigmacor-{sigma_cor}-epsilon-{target_eps}-T-{num_iter}.png"    # Initialization of the dataframe
+    result = pd.DataFrame(columns = ["Step", "topology", "method", "lr", "clip", "momentum", "sigma", "sigma-cor", "epsilon", "accuracy"])
     
     # Training
     while current_step <= num_iter:
@@ -85,7 +86,10 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
         # Evaluate the model if milestone is reached
         milestone_evaluation = evaluation_delta > 0 and current_step % evaluation_delta == 0        
         if milestone_evaluation:
-            mean_accuracy = np.mean([workers[i].compute_accuracy() for i in range(num_nodes)])
+            #mean_accuracy = np.mean([workers[i].compute_accuracy() for i in range(num_nodes)])
+            mean_param = torch.stack([workers[i].flat_parameters for i in range(num_nodes)]).mean(dim = 0)
+            server.update_model_parameters(mean_param)
+            mean_accuracy = server.compute_accuracy()
             new_row = {"Step": current_step,
                         "topology": topology_name,
                         "method": method,
@@ -112,6 +116,14 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
             workers[i].decentralized_learning(weights = W[i], workers_parameters = all_parameters)
 
         current_step += 1
+    fig, ax = plt.subplots()
+    ax.semilogy(result["accuracy"], label = topology_name + method)
+    ax.legend()
+    fig.savefig(plot_filename)
+    return np.mean(result.iloc[-200:-1]["accuracy"])
+
+# Creating a dictionary that will contain the values of loss for all couples considered, and will be sorted
+summary = pd.DataFrame(columns = ["topology", "lr", "clip", "momentum", "sigma", "sigma-cor", "T", "accuracy"])
 
 # Tuning: looping over the hyperparameters
 for lr in lr_grid:
@@ -138,19 +150,19 @@ for lr in lr_grid:
 
         if "cdp" in method:
             sigma = sigma_cdp
-            train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+            train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter)
         elif "ldp" in method:
             sigma = sigma_ldp
-            train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+            train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter)
         else: # corr
-            # Store result of ooking for sigmas
+            # Store result of looking for sigmas
             filename= f"result_gridsearch_example-level_{topology_name}_epsilon_{target_eps}.csv"
             df = pd.read_csv(filename)
 
             # Taking the values on the last row (correspond to the highest sigma)
             sigma = df.iloc[-1]["sigma"]
             sigma_cor = df.iloc[-1]["sigma-cor"]
-            train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, min_loss, num_iter)
+            train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter)
 
         
 
