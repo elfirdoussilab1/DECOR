@@ -120,23 +120,24 @@ for alpha in alphas:
                         # Determining the couples (sigma, sigma_cor) that can be considered
                         df = pd.DataFrame(columns = ["topology", "sigma", "sigma-cor", "epsilon", "sigma-cdp", "sigma-ldp"])
                         sigma_grid = np.linspace(sigma_cdp, sigma_ldp, 50)
-                        sigma_cor_grid = np.linspace(1e-7, 10, 1000)
+                        sigma_cor_grid = np.linspace(sigma_cdp / 100, sigma_cdp * 10, 1000)
                         for sigma in sigma_grid:
                             all_sigma_cor = plotting.find_sigma_cor(sigma, sigma_cor_grid, params["gradient-clip"], degree_matrix, adjacency_matrix, eps_iter)
                             # check non-emptyness and add it
                             if len(all_sigma_cor) !=0:
-                
+                                eps = dp_account.rdp_compose_convert(params["num-iter"], params["delta"], sigma, all_sigma_cor[0], 
+                                                                     params["gradient-clip"], degree_matrix, adjacency_matrix, subsample =1)
                                 new_row = {"topology": topology_name,
                                            "sigma": sigma,
                                            "sigma-cor": all_sigma_cor[0],
-                                           "epsilon": target_eps,
+                                           "epsilon": eps,
                                            "sigma-cdp": sigma_cdp,
                                            "sigma-ldp": sigma_ldp}
                                 df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
 
                         # Taking the values on the last row (correspond to the least sigma_cor): 
-                        params["sigma"] = df.iloc[-1]["sigma"]
-                        params["sigma-cor"] = df.iloc[-1]["sigma-cor"]
+                        params["sigma"] = df.iloc[-2]["sigma"]
+                        params["sigma-cor"] = df.iloc[-2]["sigma-cor"]
                         
                         # Store result
                         filename= f"result_gridsearch_user-level_{topology_name}_epsilon_{target_eps}.csv"
