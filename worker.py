@@ -117,8 +117,9 @@ class Worker(object):
             gradient.mul_(1 / len(X))
         
         # Sample noise from normal (0, sigma^2)
-        cdp_noise = torch.normal(mean = torch.zeros_like(self.gradient), std = self.sigma)
-        gradient.add_(cdp_noise)
+        #cdp_noise = torch.normal(mean = torch.zeros_like(self.gradient), std = self.sigma)
+        cdp_noise = torch.randn(self.gradient.shape) * self.sigma
+        gradient.add_(cdp_noise.to(self.device))
         gradient.add_(torch.sum(noises, dim = 0))
         
         # Momentum

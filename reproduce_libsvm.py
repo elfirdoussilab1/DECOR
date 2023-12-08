@@ -55,8 +55,8 @@ params = {
     "dataset":  dataset,
     "batch-size": 64,
     "loss": "BCELoss",
-    "learning-rate-decay-delta": 6000,
-    "learning-rate-decay": 6000,
+    "learning-rate-decay-delta": 2500,
+    "learning-rate-decay": 2500,
     "weight-decay": 1e-5,
     "evaluation-delta": 5,
     #"gradient-clip": 0.1,
@@ -80,8 +80,8 @@ alphas = [10.]
 epsilons = [1, 3, 5, 7, 10, 15, 20, 25, 30, 40]
 
 # Hyperparameters for each algorithm
-hyperparam_dict = {("centralized", "cdp") : (0.01, 0.1), ("grid", "corr") : (0.05, 0.005), ("ring", "corr") : (0.01, 0.01), # last 
-                   ("centralized", "ldp") : (0.05, 0.005) , ("grid", "ldp") : (0.05, 0.005), ("ring", "ldp"): (0.05, 0.005)}
+hyperparam_dict = {("centralized", "cdp") : (0.01, 0.1), ("grid", "corr") : (0.005, 0.005), ("ring", "corr") : (0.01, 0.01), # last 
+                   ("centralized", "ldp") : (0.05, 0.005) , ("grid", "ldp") : (0.005, 0.01), ("ring", "ldp"): (0.05, 0.005)}
 
 # Command maker helper
 def make_command(params):
@@ -120,7 +120,7 @@ for alpha in alphas:
                         # Determining the couples (sigma, sigma_cor) that can be considered
                         df = pd.DataFrame(columns = ["topology", "sigma", "sigma-cor", "epsilon", "sigma-cdp", "sigma-ldp"])
                         sigma_grid = np.linspace(sigma_cdp, sigma_ldp, 50)
-                        sigma_cor_grid = np.linspace(sigma_cdp / 100, sigma_cdp * 10, 1000)
+                        sigma_cor_grid = np.linspace(sigma_cdp / 1000, sigma_ldp * 10, 1000)
                         for sigma in sigma_grid:
                             all_sigma_cor = plotting.find_sigma_cor(sigma, sigma_cor_grid, params["gradient-clip"], degree_matrix, adjacency_matrix, eps_iter)
                             # check non-emptyness and add it
@@ -207,7 +207,7 @@ with tools.Context("libsvm", "info"):
                         
                     #JS: plot every time graph in terms of the maximum number of steps
                     plot_name = f"{dataset}_model= {model}_momentum={params['momentum']}_alpha={alpha}_eps={target_eps}"
-                    plot.finalize(None, "Step number", "$ \mathcal{L} - \mathcal{L}^*$", xmin=0, xmax=params['num-iter'], ymin=1e-2, ymax=1, legend=legend)
+                    plot.finalize(None, "Step number", "$ \mathcal{L} - \mathcal{L}^*$", xmin=0, xmax=params['num-iter'], legend=legend)
                     plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
 
 # Plot Loss VS Epsilon
@@ -235,7 +235,7 @@ with tools.Context("libsvm", "info"):
                     values = pd.concat([values, pd.DataFrame([new_row])], ignore_index=True)
                     
 
-                plot.include(values, params["metric"], errs="-err", linestyle = topo_to_style[topology_name], 
+                plot.include(values, params["metric"], errs="-err", xticks = epsilons, linestyle = topo_to_style[topology_name], 
                                     mark = method_to_marker[method], color = method_to_color[method], lalp=0.8, logscale = True)
             # Making the legend
             legend = []
@@ -248,5 +248,5 @@ with tools.Context("libsvm", "info"):
 
             #JS: plot every time graph in terms of the maximum number of steps
             plot_name = f"Loss_vs_epsilon_{dataset}_model={model}_momentum={params['momentum']}_alpha={alpha}"
-            plot.finalize(None, "Step number", "Test accuracy", xticks = epsilons, ymin=1e-2, ymax=1, legend = legend)
+            plot.finalize(None, "Step number", "Test Loss", legend = legend)
             plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)

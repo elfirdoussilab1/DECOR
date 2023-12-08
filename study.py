@@ -390,7 +390,7 @@ class LinePlot:
 		# Return self for chaining
 		return self
 
-	def include(self, data, *cols, errs=None, mark=None, linestyle = None, color = None, lalp=1., ccnt=None, logscale= False):
+	def include(self, data, *cols, errs=None, xticks= None, mark=None, linestyle = None, color = None, lalp=1., ccnt=None, logscale= False):
 		""" Add the columns of the given data frame, can only be done before finalization.
 		Args:
 			data Session or dataframe holding the column(s) to add
@@ -412,7 +412,9 @@ class LinePlot:
 		elif not isinstance(data, pandas.DataFrame):
 			raise RuntimeError(f"Expected a Session or DataFrame for 'data', got a {tools.fullqual(type(data))!r}")
 		# Get the x-axis values
-		if self._idx is None:
+		if xticks is not None:
+			x = xticks
+		elif self._idx is None:
 			x = data.index.to_numpy()
 		else:
 			if self._idx not in data:

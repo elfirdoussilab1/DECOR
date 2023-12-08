@@ -309,7 +309,7 @@ with tools.Context("training", "info"):
     V = misc.to_antisymmetric(V).to(args.device)
     #print(V)
     # Initializing learning rate
-    #lr = args.learning_rate
+    lr = args.learning_rate
 
     # ------------------------------------------------------------------------ #
     current_step = 0
@@ -333,17 +333,17 @@ with tools.Context("training", "info"):
                 result_store(fd_eval, [current_step, mean_metric])
             
             if fd_track is not None:
-                result_store(fd_track, [current_step, args.topology_name, args.method, args.learning_rate, args.gradient_clip, args.sigma, args.sigma_cor])
+                result_store(fd_track, [current_step, args.topology_name, args.method, lr, args.gradient_clip, args.sigma, args.sigma_cor])
         
         # Update the learning rate
-        #lr = update_learning_rate(current_step, lr, args)
+        lr = update_learning_rate(current_step, lr, args)
 
         # Apply the algorithm
         all_parameters = []
 
         # Step t + 1/2
         for i in range(args.num_nodes):
-            all_parameters.append(workers[i].grad_descent(V[i], lr = args.learning_rate, weight_decay = args.weight_decay))
+            all_parameters.append(workers[i].grad_descent(V[i], lr = lr, weight_decay = args.weight_decay))
         
         all_parameters = torch.stack(all_parameters).to(args.device)
         
