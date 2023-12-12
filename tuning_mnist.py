@@ -21,20 +21,19 @@ num_nodes = 16
 num_labels = 10 
 alpha = 1000 # to have that each worker has approximatly 3750 samples
 delta = 1e-5
-target_eps = 0.5
+epsilons = np.arange(1, 10) / 10 
 criterion = "topk"
 num_evaluations = 100
 
 # Hyper-parameters
 lr_grid = [0.005, 0.01, 0.05, 0.1, 0.5, 1]
 gradient_clip_grid = [0.05, 0.1, 1., 1.5, 2., 4.]
-num_iter = 5000
+num_iter = 7000
 batch_size = 64
 subsample = 64/3750
 momentum = 0.
 weight_decay = 1e-5
-topology_name = "centralized"
-method = "cdp"
+topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
 
 # Fix seed
 misc.fix_seed(1)
@@ -42,15 +41,11 @@ misc.fix_seed(1)
 # Storing reults
 evaluation_delta = 5
 
-result_directory = "./results-tuning-" + dataset_name
-if not os.path.exists(result_directory):
-    os.makedirs(result_directory)
-
 # Create train and test dataloaders
 train_loader_dict, test_loader = dataset.make_train_test_datasets(dataset=dataset_name, num_labels=num_labels, 
                                 alpha_dirichlet= alpha, num_nodes=num_nodes, train_batch=batch_size, test_batch=batch_size_test)
 
-def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter):
+def train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, num_iter):
     # Testing model
     server = evaluator.Evaluator(train_loader_dict, test_loader, model, loss, num_labels, criterion, num_evaluations= num_evaluations, device=device)
 
@@ -120,50 +115,54 @@ def train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_cl
     ax.semilogy(result["accuracy"], label = topology_name + method)
     ax.legend()
     fig.savefig(plot_filename)
-    return np.mean(result.iloc[-200:-1]["accuracy"])
-
-# Creating a dictionary that will contain the values of loss for all couples considered, and will be sorted
-summary = pd.DataFrame(columns = ["topology", "lr", "clip", "momentum", "sigma", "sigma-cor", "T", "accuracy"])
-
-# Tuning: looping over the hyperparameters
-for lr in lr_grid:
-    for gradient_clip in gradient_clip_grid:
-        
-        # Weights matrix
-        W = topology.FixedMixingMatrix(topology_name= topology_name, n_nodes= num_nodes)(0)
-        adjacency_matrix = np.array(W != 0, dtype=float)
-        adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
-        degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
+    return np.mean(result.iloc[-40:-1]["accuracy"])
 
 
-        # Convert it to tensor
-        W = torch.tensor(W, dtype= torch.float).to(device)
-        print(W[0])
+for target_eps in epsilons:
+    for topology_name, method in topologies:
+        result_directory = "./results-tuning-" + dataset_name + "-" + method  + "-" + topology_name + "-" + str(target_eps)
+        if not os.path.exists(result_directory):
+            os.makedirs(result_directory)
+            
+        # Creating a dictionary that will contain the values of loss for all couples considered, and will be sorted
+        summary = pd.DataFrame(columns = ["topology", "lr", "clip", "momentum", "sigma", "sigma-cor", "T", "accuracy"])
 
-        # Determining eps iter
-        eps_iter = dp_account.reverse_eps(target_eps, num_iter, delta, num_nodes, gradient_clip, 
-                                            topology_name, degree_matrix, adjacency_matrix, subsample, batch_size, multiple = True)
+        # Tuning: looping over the hyperparameters
+        for lr in lr_grid:
+            for gradient_clip in gradient_clip_grid:
+                
+                # Weights matrix
+                W = topology.FixedMixingMatrix(topology_name= topology_name, n_nodes= num_nodes)(0)
+                adjacency_matrix = np.array(W != 0, dtype=float)
+                adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
+                degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
 
-        sigma_ldp = gradient_clip * np.sqrt(2 / eps_iter)
-        sigma_cdp =  sigma_ldp / np.sqrt(num_nodes)
-        sigma_cor = 0
 
-        if "cdp" in method:
-            sigma = sigma_cdp
-            train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter)
-        elif "ldp" in method:
-            sigma = sigma_ldp
-            train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter)
-        else: # corr
-            # Store result of looking for sigmas
-            filename= f"result_gridsearch_example-level_{topology_name}_epsilon_{target_eps}.csv"
-            df = pd.read_csv(filename)
+                # Convert it to tensor
+                W = torch.tensor(W, dtype= torch.float).to(device)
+                print(W[0])
 
-            # Taking the values on the last row (correspond to the highest sigma)
-            sigma = df.iloc[-1]["sigma"]
-            sigma_cor = df.iloc[-1]["sigma-cor"]
-            train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter)
+                # Determining eps iter
+                eps_iter = dp_account.reverse_eps(target_eps, num_iter, delta, num_nodes, gradient_clip, 
+                                                    topology_name, degree_matrix, adjacency_matrix, subsample, batch_size, multiple = True)
 
-        
+                sigma_ldp = gradient_clip * np.sqrt(2 / eps_iter)
+                sigma_cdp =  sigma_ldp / np.sqrt(num_nodes)
+                sigma_cor = 0
 
-        
+                if "cdp" in method:
+                    sigma = sigma_cdp
+                    train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter)
+                elif "ldp" in method:
+                    sigma = sigma_ldp
+                    train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter)
+                else: # corr
+                    # TODO: modify the selection of sigma and sigma-cor
+                    # Store result of looking for sigmas
+                    filename= f"result_gridsearch_example-level_{topology_name}_epsilon_{target_eps}.csv"
+                    df = pd.read_csv(filename)
+
+                    # Taking the values on the last row (correspond to the highest sigma)
+                    sigma = df.iloc[-1]["sigma"]
+                    sigma_cor = df.iloc[-1]["sigma-cor"]
+                    train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter)
