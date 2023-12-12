@@ -21,13 +21,14 @@ num_nodes = 16
 num_labels = 10 
 alpha = 1000 # to have that each worker has approximatly 3750 samples
 delta = 1e-5
-epsilons = np.arange(1, 10) / 10 
+#epsilons = np.arange(1, 10) / 10 
+epsilons = [0.1]
 criterion = "topk"
 num_evaluations = 100
 
 # Hyper-parameters
 lr_grid = [0.005, 0.01, 0.05, 0.1, 0.5, 1]
-gradient_clip_grid = [0.05, 0.1, 1., 1.5, 2., 4.]
+gradient_clip_grid = [0.001, 0.01 , 0.1, 1., 2., 4.]
 num_iter = 7000
 batch_size = 64
 subsample = 64/3750
@@ -91,7 +92,7 @@ def train_decentralized(topology_name, method, result_directory, sigma, sigma_co
                         "lr": lr, 
                         "clip": gradient_clip,
                         "sigma": sigma,
-                        "sigma_cor": sigma_cor,
+                        "sigma-cor": sigma_cor,
                         "epsilon": target_eps,
                         "accuracy": mean_accuracy                
                         }
