@@ -24,7 +24,7 @@ def find_sigma_cor_eps(eps_target, sigma, sigma_cor_grid, clip, degree_matrix, a
         print(f"eps_target {eps_target} is not between end {eps_end} and start {eps_start}")
         return []
     
-    if eps - eps_target < 0.5 and eps > eps_target: # found
+    if eps - eps_target < 0.05 and eps > eps_target: # found
         print(f"found {eps}")
         return [sigma_cor]
     elif eps > eps_target: # increase sigma. 
@@ -32,14 +32,13 @@ def find_sigma_cor_eps(eps_target, sigma, sigma_cor_grid, clip, degree_matrix, a
     else: #eps < eps_target  
         return find_sigma_cor_eps(eps_target, sigma,  sigma_cor_grid[:n // 2], clip, degree_matrix, adjacency_matrix, num_iter, delta, subsample, batch_size)
 
-def binary_search_eps(eps, num_iter, delta, num_nodes, clip, degree_matrix, adjacency_matrix, subsample, batch_size, multiple = True):
-    # Find couples (sigma, sigma_corr) that give eps
-    sigma_grid = np.linspace(5e-3, 1e-2, 50)
-    sigma_cor_grid = np.linspace(5e-3, 5e-2, 500)
+def binary_search_eps(eps, num_iter, delta, num_nodes, clip, topology_name, degree_matrix, adjacency_matrix, subsample, batch_size, multiple = True):
+    sigma_grid = np.linspace(clip / 1000, clip/100 , 50)
+    sigma_cor_grid = np.linspace(clip / 1000, clip / 100 , 500)
     
     # Initialize dataframe
-    data = [{"clip": clip, "sigma": -1, "sigma-cor": -1, "eps-iter": -1, "eps": -1, "sigma-cdp": -1, "sigma-ldp": -1}]
-    result = pd.DataFrame(data)
+    #data = [{"clip": clip, "sigma": -1, "sigma-cor": -1, "eps-iter": -1, "eps": -1, "sigma-cdp": -1, "sigma-ldp": -1}]
+    result = pd.DataFrame(columns = ["clip", "sigma", "sigma-cor", "eps-iter", "eps", "sigma-cdp", "sigma-ldp"])
     for sigma in sigma_grid:
         print(f"Looping for sigma {sigma}")
         all_sigma_cor = find_sigma_cor_eps(eps, sigma, sigma_cor_grid, clip, degree_matrix, adjacency_matrix, num_iter, delta, subsample, batch_size)
