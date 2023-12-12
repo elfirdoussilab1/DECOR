@@ -282,7 +282,7 @@ for target_eps in epsilons:
                                 "loss": final_loss}
                             summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
 
-                        summary.to_csv(result_directory + f"/summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
+                    summary.to_csv(result_directory + f"/summary-tuning-libsvm-{topology_name}-{method}-epsilon-{target_eps}.csv")
 
 
         # Produce the last file
