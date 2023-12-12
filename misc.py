@@ -183,20 +183,16 @@ def print_conf(subtree, level=0):
 
 #------------------------------------------------------------------------------------------
 # Transform a tensor to be antisymmetric by keeping its upper triangular part
-def to_antisymmetric(tensor):
+def to_antisymmetric(tensor): # checked !
     # tensor is of shape (n, n, d)
     # Extract the lower triangular part
     new_tensor = tensor.clone()
     lower_indices= [(i, j) for i in range(1, new_tensor.shape[0]) for j in range(i)]
 
-    # Upper part indices
-    upper_indices= [(i, j) for i in range(new_tensor.shape[0]) for j in range(i + 1, new_tensor.shape[0])]
-
     # Convert the lists of indices to LongTensors
     indices_1 = torch.LongTensor(lower_indices)
-    indices_2 = torch.LongTensor(upper_indices)
 
     # Use indexing and assignment to perform t[l_1] = t[l_2]
-    new_tensor[indices_1[:, 0], indices_1[:, 1]] = - new_tensor[indices_2[:, 0], indices_2[:, 1]]
+    new_tensor[indices_1[:, 1], indices_1[:, 0]] = - new_tensor[indices_1[:, 0], indices_1[:, 1]]
     return new_tensor
     
