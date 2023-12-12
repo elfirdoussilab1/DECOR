@@ -152,10 +152,10 @@ for target_eps in epsilons:
 
                 if "cdp" in method:
                     sigma = sigma_cdp
-                    train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter)
+                    train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, num_iter)
                 elif "ldp" in method:
                     sigma = sigma_ldp
-                    train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter)
+                    train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, num_iter)
                 else: # corr
                     # TODO: modify the selection of sigma and sigma-cor
                     # Store result of looking for sigmas
@@ -165,4 +165,4 @@ for target_eps in epsilons:
                     # Taking the values on the last row (correspond to the highest sigma)
                     sigma = df.iloc[-1]["sigma"]
                     sigma_cor = df.iloc[-1]["sigma-cor"]
-                    train_decentralized(topology_name, method, sigma, sigma_cor, lr, gradient_clip, num_iter)
+                    train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, num_iter)

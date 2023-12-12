@@ -74,14 +74,14 @@ params = {
 
 # Hyperparameters to test
 models = ["libsvm_model"]
-topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
-#topologies = [("centralized", "cdp"), ("centralized", "ldp")]
+#topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
+topologies = [("centralized", "ldp"), ("ring", "ldp")]
 alphas = [10.]
-epsilons = [1, 3, 5, 7, 10, 15, 20, 25, 30, 40]
-
+#epsilons = [1, 3, 5, 7, 10, 15, 20, 25, 30, 40]
+epsilons = [1]
 # Hyperparameters for each algorithm
 hyperparam_dict = {("centralized", "cdp") : (0.01, 0.1), ("grid", "corr") : (0.005, 0.005), ("ring", "corr") : (0.01, 0.01), # last 
-                   ("centralized", "ldp") : (0.05, 0.005) , ("grid", "ldp") : (0.005, 0.01), ("ring", "ldp"): (0.05, 0.005)}
+                   ("centralized", "ldp") : (0.005, 0.001) , ("grid", "ldp") : (0.005, 0.01), ("ring", "ldp"): (0.01, 0.001)}
 
 # Command maker helper
 def make_command(params):
