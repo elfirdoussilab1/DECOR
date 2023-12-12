@@ -21,13 +21,14 @@ num_nodes = 16
 num_labels = 2
 alpha = 10.
 delta = 1e-5
-epsilons = [1, 3, 5, 7, 15, 20, 25, 30, 40]
+epsilons = [3, 5, 7, 10, 15, 20, 25, 30, 40]
 min_loss = 0.3236 # found in train_libsvm_bce.ipynb
 criterion = "libsvm_topk"
 
 # Hyper-parameters
-lr_grid = [0.005, 0.01, 0.05, 0.1, 0.5]
-gradient_clip_grid = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+lr_grid = [0.005, 0.01, 0.05, 0.1]
+#gradient_clip_grid = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+gradient_clip_grid = np.logspace(-5, -1, 5)
 T_grid = [5000]
 batch_size = 64
 momentum = 0.
