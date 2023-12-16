@@ -183,16 +183,28 @@ def print_conf(subtree, level=0):
 
 #------------------------------------------------------------------------------------------
 # Transform a tensor to be antisymmetric by keeping its upper triangular part
-def to_antisymmetric(tensor): # checked !
+def to_antisymmetric(tensor, W, device): # checked !
     # tensor is of shape (n, n, d)
     # Extract the lower triangular part
-    new_tensor = tensor.clone()
+    new_tensor = tensor.clone().to(device)
     lower_indices= [(i, j) for i in range(1, new_tensor.shape[0]) for j in range(i)]
-
+    
     # Convert the lists of indices to LongTensors
     indices_1 = torch.LongTensor(lower_indices)
-
+    
     # Use indexing and assignment to perform t[l_1] = t[l_2]
     new_tensor[indices_1[:, 1], indices_1[:, 0]] = - new_tensor[indices_1[:, 0], indices_1[:, 1]]
-    return new_tensor
+    # removing diagonal and non-neighbors
+    for i in range(new_tensor.shape[0]):
+        new_tensor[i, i] = torch.zeros(new_tensor[0, 0].shape)
+        new_tensor[i].mul_(W[i].view(-1, 1))
     
+    return new_tensor
+
+# Indices of null vectors are in a matrix
+def list_neighbors(tensor, idx):
+    l = []
+    for i in range(len(tensor[idx])):
+        if not torch.all(tensor[idx, i].eq(0)):
+            l.append(i)
+    return l

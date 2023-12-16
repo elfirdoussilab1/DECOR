@@ -55,11 +55,10 @@ params = {
     "dataset":  dataset,
     "batch-size": 64,
     "loss": "BCELoss",
-    "learning-rate-decay-delta": 2500,
-    "learning-rate-decay": 2500,
+    "learning-rate-decay-delta": 5000,
+    "learning-rate-decay": 5000,
     "weight-decay": 1e-5,
     "evaluation-delta": 5,
-    #"gradient-clip": 0.1,
     "num-iter": 5000,
     "num-nodes": 16,
     "momentum": 0,
@@ -74,14 +73,17 @@ params = {
 
 # Hyperparameters to test
 models = ["libsvm_model"]
-#topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
-topologies = [("centralized", "ldp"), ("ring", "ldp")]
+topologies = [("centralized", "cdp"), ("centralized", "ldp") ,("grid", "ldp"), ("ring", "ldp"), ("grid", "corr"), ("ring", "corr")]
 alphas = [10.]
-#epsilons = [1, 3, 5, 7, 10, 15, 20, 25, 30, 40]
-epsilons = [1]
-# Hyperparameters for each algorithm
-hyperparam_dict = {("centralized", "cdp") : (0.01, 0.1), ("grid", "corr") : (0.005, 0.005), ("ring", "corr") : (0.01, 0.01), # last 
-                   ("centralized", "ldp") : (0.005, 0.001) , ("grid", "ldp") : (0.005, 0.01), ("ring", "ldp"): (0.01, 0.001)}
+epsilons = [3, 5, 7, 10, 15, 20, 25, 30, 40]
+# Hyperparameters for each algorithm: the true values are those of 3 and 20, the tohers I just replaced them with the closest value (3 or 20) to them
+hyperparam_dict = {("centralized", "cdp", 1) : (0.05, 0.01), ("centralized", "cdp", 3): (0.05, 0.01), ("centralized", "cdp", 5): (0.05, 0.01), ("centralized", "cdp", 7):(0.05, 0.01), ("centralized", "cdp", 10):(0.05, 0.01), ("centralized", "cdp", 15): (0.01, 0.1), ("centralized", "cdp", 20): (0.01, 0.1), ("centralized", "cdp", 25):(0.1, 0.01), ("centralized", "cdp", 30): (0.01, 0.1), ("centralized", "cdp", 40): (0.01, 0.1),
+                   ("centralized", "ldp", 1) : (0.005, 0.001), ("centralized", "ldp", 3): (0.005, 0.001), ("centralized", "ldp", 5): (0.005, 0.001), ("centralized", "ldp", 7): (0.005, 0.001), ("centralized", "ldp", 10): (0.005, 0.001), ("centralized", "ldp", 15): (0.05, 0.01), ("centralized", "ldp", 20): (0.05, 0.01), ("centralized", "ldp", 25): (0.05, 0.01), ("centralized", "ldp", 30): (0.05, 0.01), ("centralized", "ldp", 40): (0.05, 0.01),
+                   ("grid", "ldp", 1) : (0.005, 0.001), ("grid", "ldp", 3): (0.005, 0.001), ("grid", "ldp", 5): (0.005, 0.001), ("grid", "ldp", 7): (0.005, 0.001), ("grid", "ldp", 10): (0.005, 0.001), ("grid", "ldp", 15): (0.05, 0.01), ("grid", "ldp", 20): (0.05, 0.01), ("grid", "ldp", 25): (0.05, 0.01), ("grid", "ldp", 30): (0.05, 0.01), ("grid", "ldp", 40): (0.05, 0.01),
+                   ("ring", "ldp", 1) : (0.005, 0.001), ("ring", "ldp", 3): (0.005, 0.001), ("ring", "ldp", 5): (0.005, 0.001), ("ring", "ldp", 7): (0.005, 0.001), ("ring", "ldp", 10): (0.005, 0.001), ("ring", "ldp", 15): (0.05, 0.01), ("ring", "ldp", 20): (0.05, 0.01), ("ring", "ldp", 25): (0.05, 0.01), ("ring", "ldp", 30): (0.05, 0.01), ("ring", "ldp", 40): (0.05, 0.01),
+                   ("grid", "corr", 1) : (0.01, 0.001), ("grid", "corr", 3): (0.01, 0.001), ("grid", "corr", 5): (0.01, 0.001), ("grid", "corr", 7): (0.01, 0.001), ("grid", "corr", 10): (0.01, 0.001), ("grid", "corr", 15): (0.001, 0.01), ("grid", "corr", 20): (0.001, 0.01), ("grid", "corr", 25): (0.001, 0.01), ("grid", "corr", 30): (0.001, 0.01), ("grid", "corr", 40): (0.001, 0.01),
+                   ("ring", "corr", 1) : (0.01, 0.001), ("ring", "corr", 3): (0.01, 0.001), ("ring", "corr", 5): (0.01, 0.001), ("ring", "corr", 7): (0.01, 0.001), ("ring", "corr", 10): (0.01, 0.001), ("ring", "corr", 15): (0.001, 0.01), ("ring", "corr", 20): (0.001, 0.01), ("ring", "corr", 25): (0.001, 0.01), ("ring", "corr", 30): (0.001, 0.01), ("ring", "corr", 40): (0.001, 0.01)
+}
 
 # Command maker helper
 def make_command(params):
@@ -112,7 +114,7 @@ for alpha in alphas:
                     eps_iter = dp_account.reverse_eps(eps= target_eps, num_iter = params["num-iter"], delta = params["delta"], subsample = 1.)
 
                     # sigma_cdp and sigma_ldp
-                    params["learning-rate"], params["gradient-clip"] = hyperparam_dict[topology_name, method]
+                    params["learning-rate"], params["gradient-clip"] = hyperparam_dict[topology_name, method, target_eps]
                     sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
                     sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
 
@@ -136,8 +138,8 @@ for alpha in alphas:
                                 df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
 
                         # Taking the values on the last row (correspond to the least sigma_cor): 
-                        params["sigma"] = df.iloc[-2]["sigma"]
-                        params["sigma-cor"] = df.iloc[-2]["sigma-cor"]
+                        params["sigma"] = df.iloc[-1]["sigma"]
+                        params["sigma-cor"] = df.iloc[-1]["sigma-cor"]
                         
                         # Store result
                         filename= f"result_gridsearch_user-level_{topology_name}_epsilon_{target_eps}.csv"
