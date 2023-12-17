@@ -21,19 +21,20 @@ num_nodes = 16
 num_labels = 2
 alpha = 10.
 delta = 1e-5
-epsilons = [3, 5, 7, 10, 15, 20, 25, 30, 40]
+#epsilons = [3, 5, 7, 10, 15, 20, 25, 30, 40]
+epsilons = [25, 30, 40]
 min_loss = 0.3236 # found in train_libsvm_bce.ipynb
 criterion = "libsvm_topk"
 
 # Hyper-parameters
-lr_grid = [0.005, 0.01, 0.05, 0.1]
+lr_grid = [1e-3, 0.005, 0.01, 0.05, 0.1]
 #gradient_clip_grid = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-gradient_clip_grid = np.logspace(-5, -1, 5)
+gradient_clip_grid = np.logspace(-4, -1, 4)
 T_grid = [5000]
 batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
-topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
+topologies = [("grid", "corr"), ("ring", "corr"), ("grid", "ldp"), ("ring", "ldp")]
 
 # Fix seed
 misc.fix_seed(1)
@@ -46,7 +47,7 @@ train_loader_dict, test_loader = dataset.make_train_test_datasets(dataset=datase
                                 alpha_dirichlet= alpha, num_nodes=num_nodes, train_batch=batch_size, test_batch=100)
 
 def train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, min_loss, num_iter):
-    
+    misc.fix_seed(1)
     # Testing model
     server = evaluator.Evaluator(train_loader_dict, test_loader, model, loss, num_labels, criterion, num_evaluations= 100, device=device)
 
@@ -66,8 +67,8 @@ def train_decentralized(topology_name, method, result_directory, sigma, sigma_co
     V = torch.randn(num_nodes, num_nodes, workers[0].model_size) # distribution N(0, 1)
     V.mul_(sigma_cor) # rescaling ==> distribution N (0, sigma_cor^2)
 
-    # Antisymmetry property
-    V = misc.to_antisymmetric(V).to(device)
+    # Antisymmetry property and neighbours
+    V = misc.to_antisymmetric(V,W, device).to(device)
 
     # ------------------------------------------------------------------------ #
     current_step = 0
@@ -176,7 +177,7 @@ for target_eps in epsilons:
                         # Determining the couples (sigma, sigma_cor) that can be considered
                         sigmas_df = pd.DataFrame(columns = ["topology", "sigma", "sigma-cor", "epsilon"])
                         sigma_grid = np.linspace(sigma_cdp, sigma_ldp, 50)
-                        sigma_cor_grid = np.linspace(1e-7, 10, 1000)
+                        sigma_cor_grid = np.linspace(sigma_cdp / 1000, sigma_cdp * 10, 1000)
 
                         for sigma in sigma_grid:
                             all_sigma_cor = plotting.find_sigma_cor(sigma, sigma_cor_grid, gradient_clip, degree_matrix, adjacency_matrix, eps_iter)
@@ -270,8 +271,8 @@ for target_eps in epsilons:
                                 "loss": final_loss}
                             summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
                             # Second Last couple: almost always the best !
-                            sigma = sigmas_df.iloc[-2]["sigma"]
-                            sigma_cor = sigmas_df.iloc[-2]["sigma-cor"]
+                            sigma = sigmas_df.iloc[-1]["sigma"]
+                            sigma_cor = sigmas_df.iloc[-1]["sigma-cor"]
                             final_loss = train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, min_loss, num_iter)
                             row = {"topology": topology_name,
                                 "lr": lr,

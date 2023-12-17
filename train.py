@@ -306,8 +306,8 @@ with tools.Context("training", "info"):
     V.mul_(args.sigma_cor) # rescaling ==> distribution N (0, sigma_cor^2)
 
     # Antisymmetry property
-    V = misc.to_antisymmetric(V).to(args.device)
-    #print(V)
+    V = misc.to_antisymmetric(V, W, args.device)
+
     # Initializing learning rate
     lr = args.learning_rate
 
