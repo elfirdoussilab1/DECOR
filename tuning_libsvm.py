@@ -67,9 +67,9 @@ def train_decentralized(topology_name, method, result_directory, sigma, sigma_co
     V = torch.randn(num_nodes, num_nodes, workers[0].model_size) # distribution N(0, 1)
     V.mul_(sigma_cor) # rescaling ==> distribution N (0, sigma_cor^2)
 
-    # Antisymmetry property and neighbours
-    V = misc.to_antisymmetric(V,W, device).to(device)
-
+    # Antisymmetry property
+    V = misc.to_antisymmetric(V, W, device)
+    print(misc.list_neighbors(V, 0))
     # ------------------------------------------------------------------------ #
     current_step = 0
     eval_filename = result_directory + f"/mean_loss-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-mom-{momentum}-sigma-{sigma}-sigmacor-{sigma_cor}-epsilon-{target_eps}-T-{num_iter}.csv"

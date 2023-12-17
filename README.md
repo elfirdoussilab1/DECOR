@@ -1,2 +1,2 @@
 # CD-SGD
-This is the repository that we created to implement our experiments for the incoming paper: Matching Centralized Rates in Decentralized Private Optimization via Correlated Noise.
+This is the repository that we created to implement our experiments for the incoming paper: Correlated Noise for Differential Privacy in Decentralized Learning.

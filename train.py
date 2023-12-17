@@ -307,7 +307,7 @@ with tools.Context("training", "info"):
 
     # Antisymmetry property
     V = misc.to_antisymmetric(V, W, args.device)
-
+    print(misc.list_neighbors(V, 0))
     # Initializing learning rate
     lr = args.learning_rate
 

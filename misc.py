@@ -202,7 +202,7 @@ def to_antisymmetric(tensor, W, device): # checked !
     return new_tensor
 
 # Indices of null vectors are in a matrix
-def count_null(tensor, idx):
+def list_neighbors(tensor, idx):
     l = []
     for i in range(len(tensor[idx])):
         if not torch.all(tensor[idx, i].eq(0)):
