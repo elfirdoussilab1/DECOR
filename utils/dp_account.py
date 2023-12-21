@@ -127,7 +127,7 @@ def reverse_eps(eps, num_iter, delta, num_nodes= None, clip= None, topology_name
         return (np.sqrt(np.log(1 / delta) + eps) - np.sqrt(np.log(1 / delta))) ** 2 / num_iter
 
     else: # Binary search
-        result = param_search.binary_search_eps(eps, num_iter, delta, num_nodes, clip, degree_matrix, adjacency_matrix, subsample, batch_size, multiple)
+        result = param_search.binary_search_eps(eps, num_iter, delta, num_nodes, clip, topology_name, degree_matrix, adjacency_matrix, subsample, batch_size, multiple)
         filename= f"result_gridsearch_example-level_{topology_name}_epsilon_{eps}.csv"
         result.to_csv(filename)
         return result.iloc[-1]["eps-iter"]

@@ -44,26 +44,27 @@ if __name__ == "__main__":
 
     # Parameters
     num_nodes = 16
-    topology_name = "centralized"
-    W = topology.FixedMixingMatrix("centralized", num_nodes)
+    topology_name = "ring"
+    W = topology.FixedMixingMatrix(topology_name, num_nodes)
     adjacency_matrix = np.array(W(0) != 0, dtype=float)
     adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
     degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
 
-    clip = 2.
+    clip = 0.01
     delta = 1e-5
-    num_iter = 1000
+    num_iter = 5000
     subsample = 64/3750
     batch_size = 64
 
-    eps = 5
-    eps_iter = dp_account.reverse_eps(eps, num_iter, delta, num_nodes, clip, topology_name, degree_matrix, adjacency_matrix, subsample, batch_size, multiple = False)
-    print(eps_iter)
+    eps = 0.1
+    #eps_iter = dp_account.reverse_eps(eps, num_iter, delta, num_nodes, clip, topology_name, degree_matrix, adjacency_matrix, subsample, batch_size, multiple = False)
+    #print(eps_iter)
 
-    """
+
     # Plotting rdp_compose with (sigma, sigma_cor)
-    sigma = 5e-3
-    sigma_cor_grid = np.linspace(1e-2, 1, 100)
+
+    sigma = clip / 100
+    sigma_cor_grid = np.linspace(clip / 1000, clip/100, 100)
 
     eps = np.zeros_like(sigma_cor_grid)
     for i in range(len(eps)):
@@ -76,9 +77,9 @@ if __name__ == "__main__":
     folder_path = './results-search-sigma'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    plt.savefig(folder_path + f'/epsilon_vs_sigma-cor_sigma={sigma}.png', bbox_inches='tight')
+    plt.savefig(folder_path + f'/epsilon_vs_sigma-cor_topology={topology_name}_sigma={sigma}_clip={clip}_T={num_iter}.png', bbox_inches='tight')
 
-   
+"""
     # Create a 3D plot
     sigma_mesh, sigma_cor_mesh = np.meshgrid(sigma_grid, sigma_cor_grid)
     eps = np.zeros_like(sigma_mesh)
@@ -101,7 +102,7 @@ if __name__ == "__main__":
     ax.set_xlabel('sigma')
     ax.set_ylabel('sigma-cor')
     ax.set_zlabel('epsilon')
-
+    
     folder_path = './results-tuning-mnist'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
@@ -125,4 +126,4 @@ if __name__ == "__main__":
             row = df.iloc[-1] 
             plotting.plot_loss(row["topology"], row["method"], A, B, row["gamma"], params["num_nodes"], params["num_dim"], row['sigma'], row['sigma_cor'], row["c_clip"], 
                             target_eps = eps_target, num_iter = params["num_iter"], delta = params["delta"])
-    """
+"""
