@@ -390,7 +390,7 @@ class LinePlot:
 		# Return self for chaining
 		return self
 
-	def include(self, data, *cols, errs=None, xticks= None, mark=None, linestyle = None, color = None, lalp=1., ccnt=None, logscale= False):
+	def include(self, data, *cols, errs=None, xticks= None, mark=None, linestyle = None, color = None, lalp=1., ccnt=None, xlogscale = False, logscale= False):
 		""" Add the columns of the given data frame, can only be done before finalization.
 		Args:
 			data Session or dataframe holding the column(s) to add
@@ -450,6 +450,8 @@ class LinePlot:
 				axis.plot(x, davg, marker= mark, label=scol, linestyle=linestyle, color=color, alpha=lalp, linewidth=2.25)
 				if logscale:
 					axis.set_yscale('log')
+				if xlogscale:
+					axis.set_xscale('log')
 				# Increase the counter only on success
 				self._cnt += 1
 			# Reset axis for next iteration

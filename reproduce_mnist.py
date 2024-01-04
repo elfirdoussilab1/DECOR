@@ -12,7 +12,7 @@ tools.success("Module loading...")
 import signal, torch
 import pandas as pd
 import numpy as np
-
+import matplotlib.pyplot as plt
 # ---------------------------------------------------------------------------- #
 # Miscellaneous initializations
 tools.success("Miscellaneous initializations...")
@@ -56,26 +56,27 @@ params = {
     "batch-size": 64,
     #"loss": "NLLLoss",
     "loss": "CrossEntropyLoss",
-    "learning-rate-decay-delta": 500,
-    "learning-rate-decay": 500,
-    "weight-decay": 1e-4,
+    "learning-rate-decay-delta": 3000,
+    "learning-rate-decay": 3000,
+    "weight-decay": 1e-5,
     "evaluation-delta": 5,
-    "gradient-clip": 3.,
-    "num-iter": 500,
+    "gradient-clip": 1.,
+    "num-iter": 3000,
     "num-nodes": 16,
     "momentum": 0.,
     "num-labels": 10,
     "delta": 1e-5, 
     "privacy": "example",
-    "metric": "Accuracy"
+    "metric": "Accuracy",
+    "hetero": False,
+    "gradient-descent": False
     }
 
 # Hyperparameters to test
-#models = [("cnn_mnist", 0.75)]
-models = [("simple_mnist_model", 1e-1)]
+models = ["simple_mnist_model"]
 topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
-alphas = [1.]
-epsilons = [1]
+alphas = [1000.]
+epsilons = [1e-4, 1e-3, 1e-2, 1e-1]
 
 
 # Command maker helper
@@ -93,54 +94,54 @@ dataset_samples = {"mnist": 60000}
 
 # Submit all experiments
 for alpha in alphas:
-    for model, lr in models:
+    for model in models:
         for target_eps in epsilons:
-                for topology_name, method in topologies:
-                    params["model"] = model
-                    params["learning-rate"] = lr
-                    params["dirichlet-alpha"] = alpha
-                    params["topology-name"] = topology_name
-                    params["method"] = method
-                    params["epsilon"] = target_eps
+            for topology_name, method in topologies:
+                params["model"] = model
+                params["learning-rate"] = 1
+                params["dirichlet-alpha"] = alpha
+                params["topology-name"] = topology_name
+                params["method"] = method
+                params["epsilon"] = target_eps
 
-                    # Training model without noise
-                    #jobs.submit(f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}", make_command(params))
+                # Training model without noise
+                #jobs.submit(f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}", make_command(params))
 
-                    # Privacy
-                    W = topology.FixedMixingMatrix(topology_name, params["num-nodes"])
-                    adjacency_matrix = np.array(W(0) != 0, dtype=float)
-                    adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
-                    degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
+                # Privacy
+                W = topology.FixedMixingMatrix(topology_name, params["num-nodes"])
+                adjacency_matrix = np.array(W(0) != 0, dtype=float)
+                adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
+                degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
 
-                    subsample = params["batch-size"] / (dataset_samples[params["dataset"]] / params["num-nodes"])
-                    eps_iter = dp_account.reverse_eps(target_eps, params["num-iter"], params["delta"], params["num-nodes"], params["gradient-clip"], 
-                                                      topology_name, degree_matrix, adjacency_matrix, subsample, params["batch-size"], multiple = True)
+                subsample = params["batch-size"] / (dataset_samples[params["dataset"]] / params["num-nodes"])
+                eps_iter = dp_account.reverse_eps(target_eps, params["num-iter"], params["delta"], params["num-nodes"], params["gradient-clip"], 
+                                                    topology_name, degree_matrix, adjacency_matrix, subsample, params["batch-size"], multiple = True)
 
-                    # sigma_cdp and sigma_ldp
-                    sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
-                    sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
+                # sigma_cdp and sigma_ldp
+                sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
+                sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
 
-                    if "corr" in method: # CD-SGD
-                        # Determining the couples (sigma, sigma_cor) that can be considered
-                        filename= f"result_gridsearch_example-level_{topology_name}_epsilon_{target_eps}.csv"
-                        df = pd.read_csv(filename)
-                    
-                        # Taking the values on the first row (correspond to the least sigma)
-                        params["sigma"] =  df.iloc[-1]["sigma"]
-                        params["sigma-cor"] = df.iloc[-1]["sigma-cor"]
-                        jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}-eps_{target_eps}", make_command(params))
+                if "corr" in method: # CD-SGD
+                    # Determining the couples (sigma, sigma_cor) that can be considered
+                    filename= f"result_gridsearch_example-level_{topology_name}_epsilon_{target_eps}.csv"
+                    df = pd.read_csv(filename)
+                
+                    # Taking the values on the first row (correspond to the least sigma)
+                    params["sigma"] =  df.iloc[0]["sigma"]
+                    params["sigma-cor"] = df.iloc[0]["sigma-cor"]
+                    jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
 
-                    elif "ldp" in method: # LDP
-                        params["sigma-cor"] = 0
-                        params["sigma"] = sigma_ldp
-                        #tools.success("Submitting LDP")
-                        jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}-eps_{target_eps}", make_command(params))
-                    
-                    else: # CDP
-                        params["sigma-cor"] = 0
-                        params["sigma"] = sigma_cdp
-                        #tools.success("Submitting CDP")
-                        jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}-eps_{target_eps}", make_command(params))
+                elif "ldp" in method: # LDP
+                    params["sigma-cor"] = 0
+                    params["sigma"] = sigma_ldp
+                    #tools.success("Submitting LDP")
+                    jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
+                
+                else: # CDP
+                    params["sigma-cor"] = 0
+                    params["sigma"] = sigma_cdp
+                    #tools.success("Submitting CDP")
+                    jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
 
 # Wait for the jobs to finish and close the pool
 jobs.wait(exit_is_requested)
@@ -154,30 +155,84 @@ if exit_is_requested():
  # Plot results
 tools.success("Plotting results...")
 
+# dictionary for plot colors ans style
+topo_to_style = {"ring": (0, (1, 1)), "grid": (0, (5, 5)), "centralized": 'solid'}
+method_to_color = {"ldp": "tab:orange", "cdp": "tab:purple", "corr": "tab:green"}
+method_to_marker = {"ldp": "^", "cdp": "D", "corr": "o"}
 
-# Plot results without subsampling
+# Plot Loss VS iterations
 with tools.Context("mnist", "info"):
     for alpha in alphas:
-        for model, lr in models:
+        for model in models:
             for target_eps in epsilons:
-                    values = dict()
-                    # Plot top-1 cross-accuracies
-                    plot = study.LinePlot()
-                    #legend = ["Average"]
-                    legend = []
+                values = dict()
+                plot = study.LinePlot()
+                legend_topos = []
+                legend_methods = []
+                
+                for topology_name, method in topologies:
+                    name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}"
+                    values[topology_name, method] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", (params["metric"], "max"))
+                    plot.include(values[topology_name, method][0], params["metric"], errs="-err", linestyle = topo_to_style[topology_name], 
+                    color = method_to_color[method], lalp=0.8)
+                    #legend.append(f"{topology_name} + {method}")
+                    if topology_name not in legend_topos:
+                        legend_topos.append(topology_name)
+                    if method not in legend_methods:
+                        legend_methods.append(method)
+                
+                # Making the legend
+                legend = []
+                legend.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None'))
+                for method in legend_methods:
+                    legend.append(plt.Line2D([], [], label=method.upper(), color = method_to_color[method]))
+                legend.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
+                for topo in legend_topos:
+                    legend.append(plt.Line2D([], [], label= topo.capitalize(), linestyle = topo_to_style[topo], color = 'k'))
                     
-                    # Plot average (without any noise)
-                    #name = f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}"
-                    #dsgd = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
-                    #plot.include(dsgd[0], "Accuracy", errs="-err", lalp=0.8)
-                    
-                    for topology_name, method in topologies:
-                        name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}-eps_{target_eps}"
-                        values[topology_name, method] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", ("Accuracy", "max"))
-                        plot.include(values[topology_name, method], "Accuracy", errs="-err", lalp=0.8)
-                        legend.append(f"{topology_name} + {method}")
+                #JS: plot every time graph in terms of the maximum number of steps
+                plot_name = f"{dataset}_model= {model}_momentum={params['momentum']}_alpha={alpha}_eps={target_eps}"
+                plot.finalize(None, "Step number", "Test Accuracy", xmin=0, xmax=params['num-iter'], ymin = 0, ymax= 1, legend=legend)
+                plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
 
-                    #JS: plot every time graph 
-                    plot_name = f"{dataset} _model= {model} _lr= {lr}_momentum={params['momentum']}_alpha={alpha}_eps={target_eps}"
-                    plot.finalize(None, "Step number", "Test accuracy", xmin=0, xmax=params['num-iter'], ymin=0, ymax=1, legend=legend)
-                    plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
+# Plot Loss VS Epsilon
+# Checked !
+
+with tools.Context("libsvm", "info"):
+    for alpha in alphas:
+        for model in models:
+            plot = study.LinePlot()
+            legend_topos = []
+            legend_methods = []
+            for topology_name, method in topologies:
+                if topology_name not in legend_topos:
+                    legend_topos.append(topology_name)
+                if method not in legend_methods:
+                    legend_methods.append(method)
+
+                values = pd.DataFrame(columns = ["epsilon", params["metric"], params["metric"] +"-err"])
+                for target_eps in epsilons:
+                    name = f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}"
+                    df = misc.compute_avg_err_op(name, seeds, result_directory, "eval", (params["metric"], "max"))[0]
+                    new_row = {"epsilon": target_eps,
+                                params["metric"]: df.iloc[-1][params["metric"]],
+                                params["metric"] +"-err" : df.iloc[-1][params["metric"] +"-err"]}
+                    values = pd.concat([values, pd.DataFrame([new_row])], ignore_index=True)
+                    
+
+                plot.include(values, params["metric"], errs="-err", xticks = epsilons, linestyle = topo_to_style[topology_name], 
+                                    mark = method_to_marker[method], color = method_to_color[method], lalp=0.8, xlogscale= True)
+            # Making the legend
+            legend = []
+            legend.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None' ))
+            for method in legend_methods:
+                legend.append(plt.Line2D([], [], label=method.upper(), color = method_to_color[method], marker = method_to_marker[method]))
+            legend.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
+            for topo in legend_topos:
+                legend.append(plt.Line2D([], [], label= topo.capitalize(), linestyle = topo_to_style[topo], color = 'k'))
+
+            #JS: plot every time graph in terms of the maximum number of steps
+            plot_name = f"Accuracy_vs_epsilon_{dataset}_model={model}_momentum={params['momentum']}_alpha={alpha}"
+            plot.finalize(None, "User-level privacy", "Test Accuracy", legend = legend)
+            plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=2.)
+

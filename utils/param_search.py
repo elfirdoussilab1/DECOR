@@ -33,8 +33,8 @@ def find_sigma_cor_eps(eps_target, sigma, sigma_cor_grid, clip, degree_matrix, a
         return find_sigma_cor_eps(eps_target, sigma,  sigma_cor_grid[:n // 2], clip, degree_matrix, adjacency_matrix, num_iter, delta, subsample, batch_size)
 
 def binary_search_eps(eps, num_iter, delta, num_nodes, clip, topology_name, degree_matrix, adjacency_matrix, subsample, batch_size, multiple = True):
-    sigma_grid = np.linspace(5*clip /1000, clip/100 , 10)
-    sigma_cor_grid = np.linspace(clip /1000, clip/100, 500)
+    sigma_grid = np.linspace(5*clip /1000, clip/10 , 50)
+    sigma_cor_grid = np.linspace(clip /1000, clip/10, 500)
     
     # Initialize dataframe
     result = pd.DataFrame(columns = ["clip", "sigma", "sigma-cor", "eps-iter", "eps", "sigma-cdp", "sigma-ldp"])
