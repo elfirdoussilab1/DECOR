@@ -50,9 +50,9 @@ if __name__ == "__main__":
     adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
     degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
 
-    clip = 0.01
+    clip = 1
     delta = 1e-5
-    num_iter = 5000
+    num_iter = 1000
     subsample = 64/3750
     batch_size = 64
 
@@ -63,8 +63,8 @@ if __name__ == "__main__":
 
     # Plotting rdp_compose with (sigma, sigma_cor)
 
-    sigma = clip / 100
-    sigma_cor_grid = np.linspace(clip / 1000, clip/100, 100)
+    sigma = 5*clip /1000
+    sigma_cor_grid = np.linspace(clip / 1000, clip/10, 100)
 
     eps = np.zeros_like(sigma_cor_grid)
     for i in range(len(eps)):
