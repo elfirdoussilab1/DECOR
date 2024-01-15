@@ -3,7 +3,7 @@
 ## Instructions
 
 * Download library requirements using `pip install -r requirements.txt`
-* Run file XXX or command `XXX`
+* Run file 'quadratics.py' or command `python3 quadratics.py` to get Quadratics experiment.
 * Fetch results in folder XXX
 
 ## Code Structure
