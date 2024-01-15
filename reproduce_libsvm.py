@@ -77,12 +77,12 @@ topologies = [("centralized", "cdp"), ("centralized", "ldp") ,("grid", "ldp"), (
 alphas = [10.]
 epsilons = [3, 5, 7, 10, 15, 20, 25, 30, 40]
 # Hyperparameters for each algorithm: the true values are those of 3 and 20, the tohers I just replaced them with the closest value (3 or 20) to them
-hyperparam_dict = {("centralized", "cdp", 1) : (0.05, 0.01), ("centralized", "cdp", 3): (0.05, 0.01), ("centralized", "cdp", 5): (0.05, 0.01), ("centralized", "cdp", 7):(0.05, 0.01), ("centralized", "cdp", 10):(0.05, 0.01), ("centralized", "cdp", 15): (0.01, 0.1), ("centralized", "cdp", 20): (0.01, 0.1), ("centralized", "cdp", 25):(0.1, 0.01), ("centralized", "cdp", 30): (0.01, 0.1), ("centralized", "cdp", 40): (0.01, 0.1),
-                   ("centralized", "ldp", 1) : (0.005, 0.01), ("centralized", "ldp", 3): (0.005, 0.01), ("centralized", "ldp", 5): (0.005, 0.01), ("centralized", "ldp", 7): (0.005, 0.01), ("centralized", "ldp", 10): (0.005, 0.01), ("centralized", "ldp", 15): (0.05, 0.01), ("centralized", "ldp", 20): (0.05, 0.01), ("centralized", "ldp", 25): (0.05, 0.01), ("centralized", "ldp", 30): (0.05, 0.01), ("centralized", "ldp", 40): (0.05, 0.01),
-                   ("grid", "ldp", 1) : (0.005, 0.01), ("grid", "ldp", 3): (0.005, 0.01), ("grid", "ldp", 5): (0.005, 0.01), ("grid", "ldp", 7): (0.005, 0.01), ("grid", "ldp", 10): (0.005, 0.01), ("grid", "ldp", 15): (0.05, 0.01), ("grid", "ldp", 20): (0.05, 0.01), ("grid", "ldp", 25): (0.05, 0.01), ("grid", "ldp", 30): (0.05, 0.01), ("grid", "ldp", 40): (0.05, 0.01),
-                   ("ring", "ldp", 1) : (0.005, 0.01), ("ring", "ldp", 3): (0.005, 0.01), ("ring", "ldp", 5): (0.005, 0.01), ("ring", "ldp", 7): (0.005, 0.01), ("ring", "ldp", 10): (0.005, 0.01), ("ring", "ldp", 15): (0.05, 0.01), ("ring", "ldp", 20): (0.05, 0.01), ("ring", "ldp", 25): (0.05, 0.01), ("ring", "ldp", 30): (0.05, 0.01), ("ring", "ldp", 40): (0.05, 0.01),
-                   ("grid", "corr", 1) : (0.005, 0.1), ("grid", "corr", 3): (0.005, 0.1), ("grid", "corr", 5): (0.005, 0.1), ("grid", "corr", 7): (0.005, 0.1), ("grid", "corr", 10): (0.005, 0.1), ("grid", "corr", 15): (0.005, 0.1), ("grid", "corr", 20): (0.005, 0.1), ("grid", "corr", 25): (0.005, 0.1), ("grid", "corr", 30): (0.005, 0.1), ("grid", "corr", 40): (0.005, 0.1),
-                   ("ring", "corr", 1) : (0.005, 0.1), ("ring", "corr", 3): (0.005, 0.1), ("ring", "corr", 5): (0.005, 0.1), ("ring", "corr", 7): (0.005, 0.1), ("ring", "corr", 10): (0.005, 0.1), ("ring", "corr", 15): (0.005, 0.1), ("ring", "corr", 20): (0.005, 0.1), ("ring", "corr", 25): (0.005, 0.1), ("ring", "corr", 30): (0.005, 0.1), ("ring", "corr", 40): (0.005, 0.1)
+hyperparam_dict = {("centralized", "cdp", 1) : (0.05, 0.01), ("centralized", "cdp", 3): (0.05, 0.01), ("centralized", "cdp", 5): (0.05, 0.01), ("centralized", "cdp", 7):(0.05, 0.01), ("centralized", "cdp", 10):(0.01, 0.1), ("centralized", "cdp", 15): (0.01, 0.1), ("centralized", "cdp", 20): (0.01, 0.1), ("centralized", "cdp", 25):(0.01, 0.1), ("centralized", "cdp", 30): (0.01, 0.1), ("centralized", "cdp", 40): (0.01, 0.1),
+                   ("centralized", "ldp", 1) : (0.005, 0.01), ("centralized", "ldp", 3): (0.005, 0.01), ("centralized", "ldp", 5): (0.005, 0.01), ("centralized", "ldp", 7): (0.01, 0.01), ("centralized", "ldp", 10): (0.01, 0.01), ("centralized", "ldp", 15): (0.05, 0.01), ("centralized", "ldp", 20): (0.05, 0.01), ("centralized", "ldp", 25): (0.05, 0.01), ("centralized", "ldp", 30): (0.05, 0.01), ("centralized", "ldp", 40): (0.05, 0.01),
+                   ("grid", "ldp", 1) : (0.005, 0.01), ("grid", "ldp", 3): (0.005, 0.01), ("grid", "ldp", 5): (0.005, 0.01), ("grid", "ldp", 7): (0.01, 0.01), ("grid", "ldp", 10): (0.01, 0.01), ("grid", "ldp", 15): (0.05, 0.01), ("grid", "ldp", 20): (0.05, 0.01), ("grid", "ldp", 25): (0.05, 0.01), ("grid", "ldp", 30): (0.05, 0.01), ("grid", "ldp", 40): (0.05, 0.01),
+                   ("ring", "ldp", 1) : (0.005, 0.01), ("ring", "ldp", 3): (0.005, 0.01), ("ring", "ldp", 5): (0.005, 0.01), ("ring", "ldp", 7): (0.01, 0.01), ("ring", "ldp", 10): (0.01, 0.01), ("ring", "ldp", 15): (0.05, 0.01), ("ring", "ldp", 20): (0.05, 0.01), ("ring", "ldp", 25): (0.05, 0.01), ("ring", "ldp", 30): (0.05, 0.01), ("ring", "ldp", 40): (0.05, 0.01),
+                   ("grid", "corr", 1) : (0.005, 0.1), ("grid", "corr", 3): (0.005, 0.1), ("grid", "corr", 5): (0.005, 0.1), ("grid", "corr", 7): (0.005, 0.1), ("grid", "corr", 10): (0.005, 0.1), ("grid", "corr", 15): (0.01, 0.1), ("grid", "corr", 20): (0.01, 0.1), ("grid", "corr", 25): (0.01, 0.1), ("grid", "corr", 30): (0.01, 0.1), ("grid", "corr", 40): (0.01, 0.1),
+                   ("ring", "corr", 1) : (0.005, 0.1), ("ring", "corr", 3): (0.005, 0.1), ("ring", "corr", 5): (0.005, 0.1), ("ring", "corr", 7): (0.005, 0.1), ("ring", "corr", 10): (0.005, 0.1), ("ring", "corr", 15): (0.01, 0.1), ("ring", "corr", 20): (0.01, 0.1), ("ring", "corr", 25): (0.01, 0.1), ("ring", "corr", 30): (0.01, 0.1), ("ring", "corr", 40): (0.01, 0.1)
 }
 
 # Command maker helper
@@ -209,7 +209,7 @@ with tools.Context("libsvm", "info"):
                         
                     #JS: plot every time graph in terms of the maximum number of steps
                     plot_name = f"{dataset}_model= {model}_momentum={params['momentum']}_alpha={alpha}_eps={target_eps}"
-                    plot.finalize(None, "Step number", "$ \mathcal{L} - \mathcal{L}^*$", xmin=0, xmax=params['num-iter'], legend=legend)
+                    plot.finalize(title = 'Evolution of the Loss', xlabel = "Step number", ylabel="$ \mathcal{L} - \mathcal{L}^*$", xmin=0, xmax=params['num-iter'], legend=legend)
                     plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
 
 # Plot Loss VS Epsilon
@@ -250,5 +250,5 @@ with tools.Context("libsvm", "info"):
 
             #JS: plot every time graph in terms of the maximum number of steps
             plot_name = f"Loss_vs_epsilon_{dataset}_model={model}_momentum={params['momentum']}_alpha={alpha}"
-            plot.finalize(None, "Step number", "Test Loss", legend = legend)
-            plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
+            plot.finalize(title = 'Loss with User-level $ \epsilon $ ', xlabel = 'User-level privacy $ \epsilon $ ', ylabel= "Training Loss", legend = legend)
+            plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=2.5, ysize=1.5)
