@@ -118,7 +118,7 @@ for alpha in alphas:
                     sigma_ldp = params["gradient-clip"] * np.sqrt(2 / eps_iter)
                     sigma_cdp = sigma_ldp / np.sqrt(params["num-nodes"])
 
-                    if "corr" in method: # CD-SGD
+                    if "corr" in method: # DECOR
                         # Determining the couples (sigma, sigma_cor) that can be considered
                         df = pd.DataFrame(columns = ["topology", "sigma", "sigma-cor", "epsilon", "sigma-cdp", "sigma-ldp"])
                         sigma_grid = np.linspace(sigma_cdp, sigma_ldp, 50)

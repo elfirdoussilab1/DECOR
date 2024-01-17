@@ -281,7 +281,7 @@ class LinePlot:
 	""" Line plot management class.
 	"""
 	# Plot style
-	plt.style.use('ggplot')
+	plt.style.use('fast')
 	
 	# Known line styles
 	linestyles = ("-", "--", ":", "-.")
@@ -495,13 +495,14 @@ class LinePlot:
 		# Style
 		#plt.style.use('ggplot')
 		# Legend
-		self._ax.legend(handles = legend, loc = 'upper left', bbox_to_anchor = (1, 1))
+		self._ax.legend(handles = legend, loc = 'upper left', bbox_to_anchor = (1, 1), fontsize = 10)
 		# Plot the grid and labels
-		self._ax.grid(True)
-		self._ax.set_xlabel(xlabel, fontsize=20)
-		self._ax.set_ylabel(ylabel, fontsize=20)
-		self._ax.set_title(title, fontsize=20)
-		self._ax.tick_params(axis='both', which='major', labelsize=20)
+		self._ax.grid(which = 'both', axis = 'both')
+		self._ax.set_xlabel(xlabel, fontsize=12)
+		self._ax.set_ylabel(ylabel, fontsize=12)
+		self._ax.set_title(title, fontsize=12)
+		self._ax.tick_params(axis='y', which = 'both', labelsize=10)
+		self._ax.tick_params(axis='x', which='major', labelsize=10)
 		if zlabel is not None:
 			if self._tax is None:
 				tools.warning(f"No secondary y-axis found, but its label {zlabel!r} was provided")
@@ -535,7 +536,7 @@ class LinePlot:
 		# Return self for chaining
 		return self
 
-	def save(self, path, dpi=200, xsize=3, ysize=2):
+	def save(self, path, dpi=300, xsize=3, ysize=2):
 		""" Save the figure, which must have been finalized.
 		Args:
 			path	Path of the file to write
