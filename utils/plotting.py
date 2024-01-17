@@ -225,10 +225,12 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
         ax.fill_between(epsilon_grid, np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0), np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0), alpha = 0.3, color = 'tab:orange')
     
 
-    ax.set_xlabel('User-level Privacy $\epsilon$')
-    ax.set_ylabel('error')
-    ax.set_title(f"Evolution of the L2 Loss with User-level Privacy ")
+    ax.set_xlabel('User-level Privacy $\epsilon$', fontsize=12)
+    ax.set_ylabel('Loss', fontsize=12)
+    ax.set_title(f"L2 Loss with User-level Privacy", fontsize=12)
     ax.grid(True)
+    ax.tick_params(axis='y', which = 'both', labelsize=10)
+    ax.tick_params(axis='x', which = 'both', labelsize=10)
 
     # Legend
     legend_hanles = []
@@ -240,7 +242,7 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
     legend_hanles.append(plt.Line2D([], [], label='Centralized', linestyle = topo_to_style['centralized'], color = 'k'))
     legend_hanles.append(plt.Line2D([], [], label='Grid', linestyle = topo_to_style['grid'], color = 'k'))
     legend_hanles.append(plt.Line2D([], [], label='Ring', linestyle = topo_to_style['ring'], color = 'k'))
-    plt.legend(handles = legend_hanles, loc='upper left', bbox_to_anchor=(1, 1))
+    plt.legend(handles = legend_hanles, loc='upper left', bbox_to_anchor=(1, 1), fontsize = 10)
     
     folder_path = './loss_epsilon'
     if not os.path.exists(folder_path):
