@@ -225,12 +225,12 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
         ax.fill_between(epsilon_grid, np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0), np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0), alpha = 0.3, color = 'tab:orange')
     
 
-    ax.set_xlabel('User-level Privacy $\epsilon$', fontsize=12)
+    ax.set_xlabel('User-level Privacy $\epsilon$', fontsize=15)
     ax.set_ylabel('Loss', fontsize=12)
-    ax.set_title(f"L2 Loss with User-level Privacy", fontsize=12)
+    ax.set_title(f"L2 Loss with User-level Privacy", fontsize=15)
     ax.grid(True)
-    ax.tick_params(axis='y', which = 'both', labelsize=10)
-    ax.tick_params(axis='x', which = 'both', labelsize=10)
+    ax.tick_params(axis='y', which = 'both', labelsize=15)
+    ax.tick_params(axis='x', which = 'both', labelsize=15)
 
     # Legend
     legend_hanles = []

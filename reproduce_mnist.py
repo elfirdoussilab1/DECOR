@@ -61,7 +61,7 @@ params = {
     "weight-decay": 1e-5,
     "evaluation-delta": 5,
     "gradient-clip": 1.,
-    "num-iter": 3000,
+    "num-iter": 1000,
     "num-nodes": 16,
     "momentum": 0.,
     "num-labels": 10,
@@ -233,6 +233,6 @@ with tools.Context("libsvm", "info"):
 
             #JS: plot every time graph in terms of the maximum number of steps
             plot_name = f"Accuracy_vs_epsilon_{dataset}_model={model}_momentum={params['momentum']}_alpha={alpha}"
-            plot.finalize(None, "User-level privacy", "Test Accuracy", legend = legend)
+            plot.finalize(None, "Example-level $\epsilon$", "Test Accuracy", legend = legend)
             plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=2.)
 
