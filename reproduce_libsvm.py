@@ -176,6 +176,7 @@ tools.success("Plotting results...")
 topo_to_style = {"ring": (0, (1, 1)), "grid": (0, (5, 5)), "centralized": 'solid'}
 method_to_color = {"ldp": "tab:orange", "cdp": "tab:purple", "corr": "tab:green"}
 method_to_marker = {"ldp": "^", "cdp": "D", "corr": "o"}
+method_to_legend = {"ldp": "LDP", "corr": "DECOR", "cdp": "CDP"}
 
 # Plot Loss VS iterations
 with tools.Context("libsvm", "info"):
@@ -202,7 +203,7 @@ with tools.Context("libsvm", "info"):
                     legend = []
                     legend.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None'))
                     for method in legend_methods:
-                        legend.append(plt.Line2D([], [], label=method.upper(), color = method_to_color[method]))
+                        legend.append(plt.Line2D([], [], label=method_to_legend[method], color = method_to_color[method]))
                     legend.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
                     for topo in legend_topos:
                         legend.append(plt.Line2D([], [], label= topo.capitalize(), linestyle = topo_to_style[topo], color = 'k'))
@@ -243,12 +244,12 @@ with tools.Context("libsvm", "info"):
             legend = []
             legend.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None' ))
             for method in legend_methods:
-                legend.append(plt.Line2D([], [], label=method.upper(), color = method_to_color[method], marker = method_to_marker[method]))
+                legend.append(plt.Line2D([], [], label=method_to_legend[method], color = method_to_color[method], marker = method_to_marker[method]))
             legend.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
             for topo in legend_topos:
                 legend.append(plt.Line2D([], [], label= topo.capitalize(), linestyle = topo_to_style[topo], color = 'k'))
 
             #JS: plot every time graph in terms of the maximum number of steps
             plot_name = f"Loss_vs_epsilon_{dataset}_model={model}_momentum={params['momentum']}_alpha={alpha}"
-            plot.finalize(title = 'Loss with User-level $ \epsilon $ ', xlabel = 'User-level privacy $ \epsilon $ ', ylabel= "Training Loss", legend = legend)
+            plot.finalize(title = 'Loss with User-level Privacy ', xlabel = 'User-level privacy $ \epsilon $ ', ylabel= "Training Loss", legend = legend)
             plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=2.5, ysize=1.5)

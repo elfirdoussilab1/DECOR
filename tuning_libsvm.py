@@ -22,19 +22,19 @@ num_labels = 2
 alpha = 10.
 delta = 1e-5
 #epsilons = [3, 5, 7, 10, 15, 20, 25, 30, 40]
-epsilons = [25, 30, 40]
+epsilons = [7, 10, 15]
 min_loss = 0.3236 # found in train_libsvm_bce.ipynb
 criterion = "libsvm_topk"
 
 # Hyper-parameters
-lr_grid = [1e-3, 0.005, 0.01, 0.05, 0.1]
+lr_grid = [0.005, 0.01, 0.05, 0.1]
 #gradient_clip_grid = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-gradient_clip_grid = np.logspace(-4, -1, 4)
+gradient_clip_grid = np.logspace(-3, -1, 3)
 T_grid = [5000]
 batch_size = 64
 momentum = 0.
 weight_decay = 1e-5
-topologies = [("grid", "corr"), ("ring", "corr"), ("grid", "ldp"), ("ring", "ldp")]
+topologies = [("centralized", "cdp"), ("centralized", "ldp"), ("ring", "ldp")]
 
 # Fix seed
 misc.fix_seed(1)

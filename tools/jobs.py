@@ -157,8 +157,8 @@ class Jobs:
           self._cvready.wait()
       # Run the picked experiment
       self._run(self._res_dir, name, seed, device, command)
-
-  def __init__(self, res_dir, devices=["cpu"], devmult=1, seeds=tuple(range(1, 4))):
+  # seeds=tuple(range(1, 4))
+  def __init__(self, res_dir, devices=["cpu"], devmult=1, seeds=[1, 123, 404, 10]):
     """ Initialize the instance, launch the worker pool.
     Args:
       res_dir Path to the directory containing the result sub-directories

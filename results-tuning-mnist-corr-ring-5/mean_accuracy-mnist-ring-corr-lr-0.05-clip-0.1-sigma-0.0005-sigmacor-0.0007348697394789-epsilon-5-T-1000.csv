@@ -1,0 +1,3 @@
+Step,topology,method,lr,clip,sigma,sigma-cor,epsilon,accuracy
+0,ring,corr,0.05,0.1,0.0005,0.0007348697394789,5,0.1076
+5,ring,corr,0.05,0.1,0.0005,0.0007348697394789,5,0.1277

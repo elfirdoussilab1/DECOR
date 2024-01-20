@@ -50,7 +50,7 @@ if __name__ == "__main__":
     adjacency_matrix = adjacency_matrix - np.diag(np.diag(adjacency_matrix))
     degree_matrix = np.diag(adjacency_matrix @ np.ones_like(adjacency_matrix[0]))
 
-    clip = 0.01
+    clip = 1
     delta = 1e-5
     num_iter = 5000
     subsample = 64/3750

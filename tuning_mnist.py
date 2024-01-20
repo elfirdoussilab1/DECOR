@@ -21,20 +21,20 @@ num_nodes = 16
 num_labels = 10 
 alpha = 1000 # to have that each worker has approximatly 3750 samples
 delta = 1e-5
-#epsilons = np.arange(1, 10) / 10 
-epsilons = [0.1]
+#epsilons = np.arange(5, 11) / 10 
+epsilons = [15]
 criterion = "topk"
 num_evaluations = 100
 
 # Hyper-parameters
-lr_grid = [0.005, 0.01, 0.05, 0.1, 0.5, 1]
-gradient_clip_grid = [0.01, 0.1, 1., 2., 4.]
-num_iter = 5000
+lr_grid = [0.05, 0.1, 0.5, 1, 5]
+gradient_clip_grid = [0.1, 1., 10]
+num_iter = 1000
 batch_size = 64
 subsample = 64/3750
 momentum = 0.
 weight_decay = 1e-5
-topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
+topologies = [("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
 
 # Fix seed
 misc.fix_seed(1)
@@ -116,10 +116,10 @@ def train_decentralized(topology_name, method, result_directory, sigma, sigma_co
 
         current_step += 1
     fig, ax = plt.subplots()
-    ax.semilogy(result["accuracy"], label = topology_name + method)
+    ax.plot(result["accuracy"], label = topology_name + method)
     ax.legend()
     fig.savefig(plot_filename)
-    return np.mean(result.iloc[-40:-1]["accuracy"])
+    return result.iloc[-1]["accuracy"]
 
 
 for target_eps in epsilons:
@@ -179,7 +179,6 @@ for target_eps in epsilons:
                     summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
 
                 else: # corr
-                    # TODO: modify the selection of sigma and sigma-cor
                     # Store result of looking for sigmas
                     filename= f"result_gridsearch_example-level_{topology_name}_epsilon_{target_eps}.csv"
                     df = pd.read_csv(filename)
@@ -188,74 +187,9 @@ for target_eps in epsilons:
                     n = df.shape[0]
                     if n <= 0:
                         continue
-                    elif n == 1:
+                    else:
                         sigma = df.iloc[0]["sigma"]
                         sigma_cor = df.iloc[0]["sigma-cor"]
-                        final_accuracy = train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, num_iter)
-                        row = {"topology": topology_name,
-                            "lr": lr,
-                            "clip": gradient_clip,
-                            "sigma": sigma,
-                            "sigma-cor": sigma_cor,
-                            "T": num_iter,
-                            "accuracy": final_accuracy}
-                        summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
-                    elif n == 2:
-                        # first couple
-                        sigma = df.iloc[0]["sigma"]
-                        sigma_cor = df.iloc[0]["sigma-cor"]
-                        final_accuracy = train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, num_iter)
-                        row = {"topology": topology_name,
-                            "lr": lr,
-                            "clip": gradient_clip,
-                            "sigma": sigma,
-                            "sigma-cor": sigma_cor,
-                            "T": num_iter,
-                            "accuracy": final_accuracy}
-                        summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
-
-                        # second couple
-                        sigma = df.iloc[1]["sigma"]
-                        sigma_cor = df.iloc[1]["sigma-cor"]
-                        final_accuracy = train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, num_iter)
-                        row = {"topology": topology_name,
-                            "lr": lr,
-                            "clip": gradient_clip,
-                            "sigma": sigma,
-                            "sigma-cor": sigma_cor,
-                            "T": num_iter,
-                            "accuracy": final_accuracy}
-                        summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
-                    else: # n > 3
-                        # first couple
-                        sigma = df.iloc[0]["sigma"]
-                        sigma_cor = df.iloc[0]["sigma-cor"]
-                        final_accuracy = train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, num_iter)
-                        row = {"topology": topology_name,
-                            "lr": lr,
-                            "clip": gradient_clip,
-                            "sigma": sigma,
-                            "sigma-cor": sigma_cor,
-                            "T": num_iter,
-                            "accuracy": final_accuracy}
-                        summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
-
-                        # second couple
-                        sigma = df.iloc[n//2]["sigma"]
-                        sigma_cor = df.iloc[n//2]["sigma-cor"]
-                        final_accuracy = train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, num_iter)
-                        row = {"topology": topology_name,
-                            "lr": lr,
-                            "clip": gradient_clip,
-                            "sigma": sigma,
-                            "sigma-cor": sigma_cor,
-                            "T": num_iter,
-                            "accuracy": final_accuracy}
-                        summary = pd.concat([summary, pd.DataFrame([row])], ignore_index=True)
-
-                        # last couple
-                        sigma = df.iloc[-1]["sigma"]
-                        sigma_cor = df.iloc[-1]["sigma-cor"]
                         final_accuracy = train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, num_iter)
                         row = {"topology": topology_name,
                             "lr": lr,
