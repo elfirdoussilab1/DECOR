@@ -172,7 +172,7 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
     W_centr = topology.FixedMixingMatrix("centralized", num_nodes)
 
     # Init figure
-    plt.style.use('ggplot')
+    plt.style.use('fast')
     fig, ax = plt.subplots()
     fig.set_size_inches(3 * 2.54, 2 * 2.54)
 
@@ -193,7 +193,7 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
     # Plotting CDP
     ax.semilogy(epsilon_grid, np.mean(errors_centr, axis = 0), color='tab:purple', 
                 linestyle = 'solid', marker = "D")
-    ax.fill_between(epsilon_grid, np.mean(errors_centr, axis = 0) - np.std(errors_centr, axis = 0), np.mean(errors_centr, axis = 0) + np.std(errors_centr, axis = 0), alpha = 0.3)
+    ax.fill_between(epsilon_grid, np.mean(errors_centr, axis = 0) - np.std(errors_centr, axis = 0), np.mean(errors_centr, axis = 0) + np.std(errors_centr, axis = 0), alpha = 0.3, color='tab:purple')
 
     # Corr and LDP
     for i, topology_name in enumerate(topology_names):
@@ -218,29 +218,31 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
         # Plotting the corresponding result
         ax.semilogy(epsilon_grid, np.mean(errors_cor, axis = 0), color = 'tab:green', 
                     linestyle = topo_to_style[topology_name], marker = "o")
-        ax.fill_between(epsilon_grid, np.mean(errors_cor, axis = 0) - np.std(errors_cor, axis = 0), np.mean(errors_cor, axis = 0) + np.std(errors_cor, axis = 0), alpha = 0.3)
+        ax.fill_between(epsilon_grid, np.mean(errors_cor, axis = 0) - np.std(errors_cor, axis = 0), np.mean(errors_cor, axis = 0) + np.std(errors_cor, axis = 0), alpha = 0.3, color = 'tab:green')
 
         ax.semilogy(epsilon_grid, np.mean(errors_ldp, axis = 0), color = 'tab:orange', 
                     linestyle = topo_to_style[topology_name], marker = "^")
-        ax.fill_between(epsilon_grid, np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0), np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0), alpha = 0.3)
+        ax.fill_between(epsilon_grid, np.mean(errors_ldp, axis = 0) - np.std(errors_ldp, axis = 0), np.mean(errors_ldp, axis = 0) + np.std(errors_ldp, axis = 0), alpha = 0.3, color = 'tab:orange')
     
 
-    ax.set_xlabel('User-level Privacy $\epsilon$')
-    ax.set_ylabel('error')
-    ax.set_title(f"Evolution of the L2 Loss with User-level Privacy ")
+    ax.set_xlabel('User-level Privacy $\epsilon$', fontsize=15)
+    ax.set_ylabel('Loss', fontsize=12)
+    ax.set_title(f"L2 Loss with User-level Privacy", fontsize=15)
     ax.grid(True)
+    ax.tick_params(axis='y', which = 'both', labelsize=15)
+    ax.tick_params(axis='x', which = 'both', labelsize=15)
 
     # Legend
     legend_hanles = []
     legend_hanles.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None'))
     legend_hanles.append(plt.Line2D([], [], label='CDP', marker = 'D', color = 'tab:purple'))
-    legend_hanles.append(plt.Line2D([], [], label='Correlated-DSGD', marker = 'o', color = 'tab:green'))
+    legend_hanles.append(plt.Line2D([], [], label='DECOR', marker = 'o', color = 'tab:green'))
     legend_hanles.append(plt.Line2D([], [], label='LDP', marker = '^', color = 'tab:orange'))
     legend_hanles.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
     legend_hanles.append(plt.Line2D([], [], label='Centralized', linestyle = topo_to_style['centralized'], color = 'k'))
     legend_hanles.append(plt.Line2D([], [], label='Grid', linestyle = topo_to_style['grid'], color = 'k'))
     legend_hanles.append(plt.Line2D([], [], label='Ring', linestyle = topo_to_style['ring'], color = 'k'))
-    plt.legend(handles = legend_hanles, loc='upper left', bbox_to_anchor=(1, 1))
+    plt.legend(handles = legend_hanles, loc='upper left', bbox_to_anchor=(1, 1), fontsize = 10)
     
     folder_path = './loss_epsilon'
     if not os.path.exists(folder_path):

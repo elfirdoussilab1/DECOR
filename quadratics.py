@@ -19,7 +19,7 @@ if __name__ == "__main__":
         "delta": 1e-5
     }
 
-    
+    folder = "./quadratics_for_n_16/numerical_results_for_n_16_and_clip_1/"
     A, B = generate_functions(params["num_nodes"], params["num_dim"], zeta = 1)
     epsilon_grid = np.array([1, 3, 5, 7, 10, 15, 20, 25, 30, 40]) # there is also 1 (but not intersting)
     # Storing sigmas and sigmas_cor for loss in function of epsilon
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     sigmas_cor = np.zeros((len(params['topology_names']), len(epsilon_grid))) 
     for j, target_eps in enumerate(epsilon_grid):
         for i, topology_name in enumerate(params['topology_names']):
-            filename= f"result_gridsearch_{params['topology_names'][i]}_Corr_epsilon_{target_eps}.csv"
+            filename= folder + f"result_gridsearch_{params['topology_names'][i]}_Corr_epsilon_{target_eps}.csv"
             df = pd.read_csv(filename)
             sigmas[i, j] = df.iloc[-1]["sigma"]
             sigmas_cor[i, j] = df.iloc[-1]["sigma_cor"]
