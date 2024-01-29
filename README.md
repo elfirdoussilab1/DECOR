@@ -1,4 +1,4 @@
-# DECOR: Matching Centralized Rates in Decentralized Learning under Local Differential Privacy via Correlated Noise
+# The Privacy Power of Correlated Noise in Decentralized Learning
 
 ## Instructions
 
@@ -7,8 +7,5 @@
 * Run file 'reproduce_libsvm.py' or command `python3 reproduce_libsvm.py` to get the experiements on the LibSVM dataset a9a.
 * Run file 'reproduce_mnist.py' or command `python3 reproduce_mnist.py` to get the experiements on the MNIST dataset (available on torchvision library in PyTorch).
 * Fetch results in folder XXX
-
-## Code Structure
-Overview of main entry points
 
 ## References
