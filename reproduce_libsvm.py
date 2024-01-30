@@ -193,7 +193,6 @@ with tools.Context("libsvm", "info"):
                         values[topology_name, method] = misc.compute_avg_err_op(name, seeds, result_directory, "eval", (params["metric"], "max"))
                         plot.include(values[topology_name, method][0], params["metric"], errs="-err", linestyle = topo_to_style[topology_name], 
                         color = method_to_color[method], lalp=0.8, logscale = True)
-                        #legend.append(f"{topology_name} + {method}")
                         if topology_name not in legend_topos:
                             legend_topos.append(topology_name)
                         if method not in legend_methods:
@@ -220,13 +219,13 @@ with tools.Context("libsvm", "info"):
     for alpha in alphas:
         for model in models:
             plot = study.LinePlot()
-            legend_topos = []
-            legend_methods = []
+            #legend_topos = []
+            #legend_methods = []
             for topology_name, method in topologies:
-                if topology_name not in legend_topos:
-                    legend_topos.append(topology_name)
-                if method not in legend_methods:
-                    legend_methods.append(method)
+            #    if topology_name not in legend_topos:
+            #        legend_topos.append(topology_name)
+            #    if method not in legend_methods:
+            #        legend_methods.append(method)
 
                 values = pd.DataFrame(columns = ["epsilon", params["metric"], params["metric"] +"-err"])
                 for target_eps in epsilons:
@@ -241,15 +240,15 @@ with tools.Context("libsvm", "info"):
                 plot.include(values, params["metric"], errs="-err", xticks = epsilons, linestyle = topo_to_style[topology_name], 
                                     mark = method_to_marker[method], color = method_to_color[method], lalp=0.8, logscale = True)
             # Making the legend
-            legend = []
-            legend.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None' ))
-            for method in legend_methods:
-                legend.append(plt.Line2D([], [], label=method_to_legend[method], color = method_to_color[method], marker = method_to_marker[method]))
-            legend.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
-            for topo in legend_topos:
-                legend.append(plt.Line2D([], [], label= topo.capitalize(), linestyle = topo_to_style[topo], color = 'k'))
+            #legend = []
+            #legend.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None' ))
+            #for method in legend_methods:
+            #    legend.append(plt.Line2D([], [], label=method_to_legend[method], color = method_to_color[method], marker = method_to_marker[method]))
+            #legend.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
+            #for topo in legend_topos:
+            #    legend.append(plt.Line2D([], [], label= topo.capitalize(), linestyle = topo_to_style[topo], color = 'k'))
 
             #JS: plot every time graph in terms of the maximum number of steps
             plot_name = f"Loss_vs_epsilon_{dataset}_model={model}_momentum={params['momentum']}_alpha={alpha}"
-            plot.finalize(title = 'Loss with User-level Privacy ', xlabel = 'User-level privacy $ \epsilon $ ', ylabel= "Training Loss", legend = legend)
-            plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=2.5, ysize=1.5)
+            plot.finalize(title = None, xlabel = 'User-level $ \epsilon $ ', ylabel= "Optimality gap")#, legend = legend)
+            plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=2, ysize=1.5)

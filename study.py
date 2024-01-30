@@ -495,7 +495,8 @@ class LinePlot:
 		# Style
 		#plt.style.use('ggplot')
 		# Legend
-		self._ax.legend(handles = legend, loc = 'upper left', bbox_to_anchor = (1, 1), fontsize = 10)
+		if legend is not None:
+			self._ax.legend(handles = legend, loc = 'upper left', bbox_to_anchor = (1, 1), fontsize = 10)
 		# Plot the grid and labels
 		self._ax.grid(which = 'both', axis = 'both')
 		self._ax.set_xlabel(xlabel, fontsize=12)

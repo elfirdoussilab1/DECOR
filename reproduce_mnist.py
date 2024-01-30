@@ -75,10 +75,28 @@ params = {
 # Hyperparameters to test
 models = ["simple_mnist_model"]
 topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
-alphas = [1000.]
-epsilons = [1e-4, 1e-3, 1e-2, 1e-1]
+alphas = [10]
+epsilons = [0.1, 1, 3, 5]
 
-
+hyperparam_dict = {("centralized", "cdp", 0.1) : (5, 1), ("centralized", "cdp", 1) : (5, 1), ("centralized", "cdp", 3): (5, 1), ("centralized", "cdp", 5): (5, 1),
+                   ("centralized", "ldp", 0.1) : (5, 1), ("centralized", "ldp", 1) : (1, 1), ("centralized", "ldp", 3): (1, 1), ("centralized", "ldp", 5): (1, 1),
+                   ("grid", "ldp", 0.1) : (5, 1), ("grid", "ldp", 1) : (0.5, 1), ("grid", "ldp", 3): (1, 1), ("grid", "ldp", 5): (1, 1),
+                   ("ring", "ldp", 0.1) : (5, 1), ("ring", "ldp", 1) : (1, 1), ("ring", "ldp", 3): (1, 1), ("ring", "ldp", 5): (1, 1),
+                   ("grid", "corr", 0.1) : (1, 1), ("grid", "corr", 1) : (1, 1), ("grid", "corr", 3): (0.1, 10), ("grid", "corr", 5): (5, 1),
+                   #("ring", "corr", 0.1) : (1, 1), ("ring", "corr", 1) : (1.5, 1), ("ring", "corr", 3): (1.5, 1), ("ring", "corr", 5): (1.5, 1)
+                   ("ring", "corr", 0.1) : (0.1, 10), ("ring", "corr", 1) : (1, 1), ("ring", "corr", 3): (0.1, 10), ("ring", "corr", 5): (0.1, 10)
+}
+"""
+# Hyperparameters for each algorithm: the true values are those of 3 and 20, the tohers I just replaced them with the closest value (3 or 20) to them
+hyperparam_dict = {("centralized", "cdp", 0.1) : (5, 1), ("centralized", "cdp", 1) : (5, 1), ("centralized", "cdp", 3): (5, 1), ("centralized", "cdp", 5): (5, 1), ("centralized", "cdp", 10):(5, 1), ("centralized", "cdp", 15): (5, 1),
+                   ("centralized", "ldp", 0.1) : (5, 1), ("centralized", "ldp", 1) : (1, 1), ("centralized", "ldp", 3): (1, 1), ("centralized", "ldp", 5): (1, 1), ("centralized", "ldp", 10): (1, 1), ("centralized", "ldp", 15): (1, 1),
+                   ("grid", "ldp", 0.1) : (5, 1), ("grid", "ldp", 1) : (0.5, 1), ("grid", "ldp", 3): (1, 1), ("grid", "ldp", 5): (1, 1), ("grid", "ldp", 10): (1, 1), ("grid", "ldp", 15): (1, 1),
+                   ("ring", "ldp", 0.1) : (5, 1), ("ring", "ldp", 1) : (1, 1), ("ring", "ldp", 3): (1, 1), ("ring", "ldp", 5): (1, 1), ("ring", "ldp", 10): (1, 1), ("ring", "ldp", 15): (1, 1),
+                   ("grid", "corr", 0.1) : (1, 1), ("grid", "corr", 1) : (1, 1), ("grid", "corr", 3): (0.1, 10), ("grid", "corr", 5): (5, 1), ("grid", "corr", 10): (5, 1), ("grid", "corr", 15): (5, 1),
+                   ("ring", "corr", 0.1) : (1, 1), ("ring", "corr", 1) : (5, 1), ("ring", "corr", 3): (5, 1), ("ring", "corr", 5): (5, 1), ("ring", "corr", 10): (5, 1), ("ring", "corr", 15): (5, 1)
+                   #("ring", "corr", 0.1) : (0.1, 10), ("ring", "corr", 1) : (1, 1), ("ring", "corr", 3): (0.1, 10), ("ring", "corr", 5): (0.1, 10), ("ring", "corr", 10): (0.1, 10), ("ring", "corr", 15): (5, 1)
+}
+"""
 # Command maker helper
 def make_command(params):
     cmd = ["python3", "-OO", "train.py"]
@@ -91,19 +109,20 @@ seeds = jobs.get_seeds()
 
 # Dataset to total number of samples
 dataset_samples = {"mnist": 60000}
-
+"""
 # Submit all experiments
 for alpha in alphas:
     for model in models:
         for target_eps in epsilons:
             for topology_name, method in topologies:
                 params["model"] = model
-                params["learning-rate"] = 1
                 params["dirichlet-alpha"] = alpha
                 params["topology-name"] = topology_name
                 params["method"] = method
                 params["epsilon"] = target_eps
 
+                # hyperparams
+                params["learning-rate"], params["gradient-clip"] = hyperparam_dict[topology_name, method, target_eps]
                 # Training model without noise
                 #jobs.submit(f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}", make_command(params))
 
@@ -142,7 +161,7 @@ for alpha in alphas:
                     params["sigma"] = sigma_cdp
                     #tools.success("Submitting CDP")
                     jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
-
+"""
 # Wait for the jobs to finish and close the pool
 jobs.wait(exit_is_requested)
 jobs.close()
@@ -203,13 +222,13 @@ with tools.Context("libsvm", "info"):
     for alpha in alphas:
         for model in models:
             plot = study.LinePlot()
-            legend_topos = []
-            legend_methods = []
+            #legend_topos = []
+            #legend_methods = []
             for topology_name, method in topologies:
-                if topology_name not in legend_topos:
-                    legend_topos.append(topology_name)
-                if method not in legend_methods:
-                    legend_methods.append(method)
+                #if topology_name not in legend_topos:
+                #    legend_topos.append(topology_name)
+                #if method not in legend_methods:
+                #    legend_methods.append(method)
 
                 values = pd.DataFrame(columns = ["epsilon", params["metric"], params["metric"] +"-err"])
                 for target_eps in epsilons:
@@ -222,18 +241,18 @@ with tools.Context("libsvm", "info"):
                     
 
                 plot.include(values, params["metric"], errs="-err", xticks = epsilons, linestyle = topo_to_style[topology_name], 
-                                    mark = method_to_marker[method], color = method_to_color[method], lalp=0.8, xlogscale= True)
+                                    mark = method_to_marker[method], color = method_to_color[method], lalp=0.8)
             # Making the legend
-            legend = []
-            legend.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None' ))
-            for method in legend_methods:
-                legend.append(plt.Line2D([], [], label=method_to_legend[method], color = method_to_color[method], marker = method_to_marker[method]))
-            legend.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
-            for topo in legend_topos:
-                legend.append(plt.Line2D([], [], label= topo.capitalize(), linestyle = topo_to_style[topo], color = 'k'))
+            #legend = []
+            #legend.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None' ))
+            #for method in legend_methods:
+            #    legend.append(plt.Line2D([], [], label=method_to_legend[method], color = method_to_color[method], marker = method_to_marker[method]))
+            #legend.append(plt.Line2D([], [], label='Topology', linestyle = 'None'))
+            #for topo in legend_topos:
+            #    legend.append(plt.Line2D([], [], label= topo.capitalize(), linestyle = topo_to_style[topo], color = 'k'))
 
             #JS: plot every time graph in terms of the maximum number of steps
             plot_name = f"Accuracy_vs_epsilon_{dataset}_model={model}_momentum={params['momentum']}_alpha={alpha}"
-            plot.finalize(None, "Example-level $\epsilon$", "Test Accuracy", legend = legend)
-            plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=2.)
+            plot.finalize(None, "Example-level $\epsilon$", "Accuracy")#, legend = legend)
+            plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=2, ysize=1.5)
 

@@ -19,22 +19,22 @@ batch_size_test = 100
 loss = "CrossEntropyLoss"
 num_nodes = 16
 num_labels = 10 
-alpha = 1000 # to have that each worker has approximatly 3750 samples
+alpha = 10 # to have that each worker has approximatly 3750 samples
 delta = 1e-5
 #epsilons = np.arange(1, 10) / 10 | [0.1, 1, 3, 5, 10, 15]
-epsilons = [0.1, 1, 3]
+epsilons = [0.1, 0.5, 1, 3]
 criterion = "topk"
 num_evaluations = 100
 
 # Hyper-parameters
-lr_grid = [0.05, 0.1, 0.5, 1, 5]
-gradient_clip_grid = [0.1, 1., 10]
-num_iter = 1000
+lr_grid = [0.5, 1, 5]
+gradient_clip_grid = [0.5, 1., 5]
+num_iter = 500
 batch_size = 64
 subsample = 64/3750
 momentum = 0.
 weight_decay = 1e-5
-topologies = [("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
+topologies = [("grid", "corr"), ("ring", "corr")]
 
 # Fix seed
 misc.fix_seed(1)
