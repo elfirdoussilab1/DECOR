@@ -77,7 +77,7 @@ models = ["simple_mnist_model"]
 #topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
 topologies = [("ring", "corr")]
 alphas = [10]
-epsilons = [0.1, 0.5, 1, 3]
+epsilons = [1e-4, 1e-3, 1e-2, 0.1, 0.5, 1, 3]
 
 hyperparam_dict = {("centralized", "cdp", 0.1) : (5, 1), ("centralized", "cdp", 0.5): (5, 1), ("centralized", "cdp", 1) : (5, 1), ("centralized", "cdp", 3): (5, 1),
                    ("centralized", "ldp", 0.1) : (5, 1), ("centralized", "ldp", 0.5): (5, 1), ("centralized", "ldp", 1) : (1, 1), ("centralized", "ldp", 3): (1, 1), 
@@ -122,7 +122,10 @@ for alpha in alphas:
                 params["epsilon"] = target_eps
 
                 # hyperparams
-                params["learning-rate"], params["gradient-clip"] = hyperparam_dict[topology_name, method, target_eps]
+                if target_eps < 0.1:
+                    params["learning-rate"], params["gradient-clip"] = (1, 1)
+                else:
+                    params["learning-rate"], params["gradient-clip"] = hyperparam_dict[topology_name, method, target_eps]
                 # Training model without noise
                 #jobs.submit(f"{dataset}-average-n_{params['num-nodes']}-model_{model}-lr_{lr}-momentum_{params['momentum']}-alpha_{alpha}", make_command(params))
 
