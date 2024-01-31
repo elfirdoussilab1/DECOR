@@ -22,7 +22,7 @@ num_labels = 10
 alpha = 10 # to have that each worker has approximatly 3750 samples
 delta = 1e-5
 #epsilons = np.arange(1, 10) / 10 | [0.1, 1, 3, 5, 10, 15]
-epsilons = [0.1, 0.5, 1, 3]
+epsilons = [0.5]
 criterion = "topk"
 num_evaluations = 100
 
