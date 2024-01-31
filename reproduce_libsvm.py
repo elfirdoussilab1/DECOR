@@ -73,7 +73,7 @@ params = {
 
 # Hyperparameters to test
 models = ["libsvm_model"]
-topologies = [("centralized", "cdp"), ("centralized", "ldp") ,("grid", "ldp"), ("ring", "ldp"), ("grid", "corr"), ("ring", "corr")]
+topologies = [("centralized", "cdp"), ("centralized", "ldp") ,("grid", "ldp"), ("ring", "ldp"), ("centralized", "corr"), ("grid", "corr"), ("ring", "corr")]
 alphas = [10.]
 epsilons = [3, 5, 7, 10, 15, 20, 25, 30, 40]
 # Hyperparameters for each algorithm: the true values are those of 3 and 20, the tohers I just replaced them with the closest value (3 or 20) to them

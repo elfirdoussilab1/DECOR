@@ -55,24 +55,27 @@ if __name__ == "__main__":
     num_iter = 1000
     subsample = 64/3750
     batch_size = 64
-
+    """
     # User-level
     eps = 5
     eps_iter = dp_account.reverse_eps(eps, num_iter, delta, num_nodes, clip, topology_name, degree_matrix, adjacency_matrix, subsample = 1, batch_size= 1, multiple = False)
-    sigma = clip * np.sqrt(2 / (num_nodes * eps_iter))
+    sigma = (clip * np.sqrt(2 / (num_nodes * eps_iter)) + clip * np.sqrt(2 / eps_iter))/2
     sigma_cor_grid = np.linspace(1, 10**3, 100)
     values = np.zeros_like(sigma_cor_grid)
-    for i in range(len(eps)):
+    for i in range(len(values)):
         values[i] = dp_account.rdp_compose_convert(num_iter, delta, sigma, sigma_cor_grid[i],
-                                                clip, degree_matrix, adjacency_matrix, subsample, batch_size)
-    
-    plt.semilogy(sigma_cor_grid, values)
-    plt.xlabel('$\sigma_{\mathrm{cor}}$')
-    plt.ylabel('$\epsilon$')
+                                                clip, degree_matrix, adjacency_matrix, subsample=1, batch_size=1)
+    plt.style.use('fast')
+    fig, ax = plt.subplots()
+    ax.plot(sigma_cor_grid, values)
+    ax.set_xlabel('$\sigma_{\mathrm{cor}}$')
+    ax.set_ylabel('User-level $\epsilon$')
+    ax.grid(True)
+    fig.set_dpi(300)
     folder_path = './results-search-sigma'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    plt.savefig(folder_path + f'/epsilon_vs_sigma-cor_user_topology={topology_name}_sigma={sigma}_clip={clip}_T={num_iter}.png', bbox_inches='tight')
+    fig.savefig(folder_path + f'/epsilon_vs_sigma-cor_user_topology={topology_name}_sigma={sigma}_clip={clip}_T={num_iter}.pdf', bbox_inches='tight')
 
     """
     # example-level
@@ -86,19 +89,23 @@ if __name__ == "__main__":
     sigma = 5*clip /1000
     sigma_cor_grid = np.linspace(clip / 1000, clip/10, 100)
 
-    eps = np.zeros_like(sigma_cor_grid)
-    for i in range(len(eps)):
-        eps[i] = dp_account.rdp_compose_convert(num_iter, delta, sigma, sigma_cor_grid[i],
+    values = np.zeros_like(sigma_cor_grid)
+    for i in range(len(values)):
+        values[i] = dp_account.rdp_compose_convert(num_iter, delta, sigma, sigma_cor_grid[i],
                                                 clip, degree_matrix, adjacency_matrix, subsample, batch_size)
     
-    plt.semilogy(sigma_cor_grid, eps)
-    plt.xlabel('$\sigma_{\mathrm{cor}}$')
-    plt.ylabel('$\epsilon$')
+    plt.style.use('fast')
+    fig, ax = plt.subplots()
+    ax.semilogy(sigma_cor_grid, values)
+    ax.set_xlabel('$\sigma_{\mathrm{cor}}$')
+    ax.set_ylabel('Example-level $\epsilon$')
+    ax.grid(True)
+    fig.set_dpi(300)
     folder_path = './results-search-sigma'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    plt.savefig(folder_path + f'/epsilon_vs_sigma-cor_topology={topology_name}_sigma={sigma}_clip={clip}_T={num_iter}.png', bbox_inches='tight')
-    """
+    fig.savefig(folder_path + f'/epsilon_vs_sigma-cor_example_topology={topology_name}_sigma={sigma}_clip={clip}_T={num_iter}.pdf', bbox_inches='tight')
+    
 """
     # Create a 3D plot
     sigma_mesh, sigma_cor_mesh = np.meshgrid(sigma_grid, sigma_cor_grid)
