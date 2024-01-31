@@ -28,7 +28,7 @@ num_evaluations = 100
 
 # Hyper-parameters
 lr_grid = [0.5, 1, 2, 5]
-gradient_clip_grid = [0.5, 1., 1.5, 2, 5]
+gradient_clip_grid = [0.5, 1., 1.5, 3, 5]
 num_iter = 500
 batch_size = 64
 subsample = 64/3750
@@ -130,7 +130,8 @@ for target_eps in epsilons:
         
         # Creating a dictionary that will contain the values of loss for all couples considered, and will be sorted
         summary = pd.DataFrame(columns = ["topology", "lr", "clip", "sigma", "sigma-cor", "T", "accuracy"])
-
+        if os.path.exists(result_directory + f"/summary-tuning-mnist-{topology_name}-{method}-epsilon-{target_eps}.csv"):
+            summary = pd.read_csv(result_directory + f"/summary-tuning-mnist-{topology_name}-{method}-epsilon-{target_eps}.csv")
         # Tuning: looping over the hyperparameters
         for lr in lr_grid:
             for gradient_clip in gradient_clip_grid:
