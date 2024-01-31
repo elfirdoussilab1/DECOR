@@ -61,7 +61,7 @@ params = {
     "weight-decay": 1e-5,
     "evaluation-delta": 5,
     "gradient-clip": 1.,
-    "num-iter": 1000,
+    "num-iter": 2000,
     "num-nodes": 16,
     "momentum": 0.,
     "num-labels": 10,
@@ -74,7 +74,8 @@ params = {
 
 # Hyperparameters to test
 models = ["simple_mnist_model"]
-topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
+#topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
+topologies = [("ring", "corr")]
 alphas = [10]
 epsilons = [0.1, 0.5, 1, 3]
 
@@ -82,8 +83,7 @@ hyperparam_dict = {("centralized", "cdp", 0.1) : (5, 1), ("centralized", "cdp", 
                    ("centralized", "ldp", 0.1) : (5, 1), ("centralized", "ldp", 0.5): (5, 1), ("centralized", "ldp", 1) : (1, 1), ("centralized", "ldp", 3): (1, 1), 
                    ("grid", "ldp", 0.1) : (5, 1), ("grid", "ldp", 0.5): (5, 1), ("grid", "ldp", 1) : (0.5, 1), ("grid", "ldp", 3): (1, 1), 
                    ("ring", "ldp", 0.1) : (5, 1), ("ring", "ldp", 0.5): (5, 1), ("ring", "ldp", 1) : (1, 1), ("ring", "ldp", 3): (1, 1), 
-                   ("grid", "corr", 0.1) : (5, 1), ("grid", "corr", 0.5): (5, 1), ("grid", "corr", 1) : (5, 1), ("grid", "corr", 3): (1, 5), 
-                   #("ring", "corr", 0.1) : (1, 1), ("ring", "corr", 1) : (1.5, 1), ("ring", "corr", 3): (1.5, 1), ("ring", "corr", 5): (1.5, 1)
+                   ("grid", "corr", 0.1) : (5, 1), ("grid", "corr", 0.5): (5, 1), ("grid", "corr", 1) : (1, 5), ("grid", "corr", 3): (1, 5), 
                    ("ring", "corr", 0.1) : (5, 0.5), ("ring", "corr", 0.5): (1, 1), ("ring", "corr", 1) : (1, 1), ("ring", "corr", 3): (1, 1)
 }
 """
@@ -212,7 +212,7 @@ with tools.Context("mnist", "info"):
                     
                 #JS: plot every time graph in terms of the maximum number of steps
                 plot_name = f"{dataset}_model= {model}_momentum={params['momentum']}_alpha={alpha}_eps={target_eps}"
-                plot.finalize(None, "Step number", "Test Accuracy", xmin=0, xmax=params['num-iter'], ymin = 0, ymax= 1, legend=legend)
+                plot.finalize(None, "Step number", "Test Accuracy", xmin=0, xmax=params['num-iter'], ymin = 0.8, ymax= 1, legend=legend)
                 plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=3, ysize=1.5)
 
 # Plot Loss VS Epsilon

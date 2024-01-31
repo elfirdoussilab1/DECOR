@@ -27,14 +27,14 @@ criterion = "topk"
 num_evaluations = 100
 
 # Hyper-parameters
-lr_grid = [0.5, 1, 5]
-gradient_clip_grid = [0.5, 1., 5]
+lr_grid = [0.5, 1, 2, 5]
+gradient_clip_grid = [0.5, 1., 1.5, 2, 5]
 num_iter = 500
 batch_size = 64
 subsample = 64/3750
 momentum = 0.
 weight_decay = 1e-5
-topologies = [("centralized", "corr")]
+topologies = [("ring", "corr")]
 
 # Fix seed
 misc.fix_seed(1)
@@ -127,7 +127,7 @@ for target_eps in epsilons:
         result_directory = "./results-tuning-" + dataset_name + "-" + method  + "-" + topology_name + "-" + str(target_eps)
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
-            
+        
         # Creating a dictionary that will contain the values of loss for all couples considered, and will be sorted
         summary = pd.DataFrame(columns = ["topology", "lr", "clip", "sigma", "sigma-cor", "T", "accuracy"])
 
@@ -156,6 +156,10 @@ for target_eps in epsilons:
 
                 if "cdp" in method:
                     sigma = sigma_cdp
+                    # check if already exist
+                    file_path = result_directory + f"/mean_accuracy-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-sigma-{sigma}-sigmacor-{sigma_cor}-epsilon-{target_eps}-T-{num_iter}.csv"
+                    if os.path.exists(file_path):
+                        continue
                     final_accuracy = train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, num_iter)
                     row = {"topology": topology_name,
                             "lr": lr,
@@ -168,6 +172,10 @@ for target_eps in epsilons:
 
                 elif "ldp" in method:
                     sigma = sigma_ldp
+                    # check if already exist
+                    file_path = result_directory + f"/mean_accuracy-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-sigma-{sigma}-sigmacor-{sigma_cor}-epsilon-{target_eps}-T-{num_iter}.csv"
+                    if os.path.exists(file_path):
+                        continue
                     final_accuracy = train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, num_iter)
                     row = {"topology": topology_name,
                             "lr": lr,
@@ -190,6 +198,10 @@ for target_eps in epsilons:
                     else:
                         sigma = df.iloc[0]["sigma"]
                         sigma_cor = df.iloc[0]["sigma-cor"]
+                        # check if already exist
+                        file_path = result_directory + f"/mean_accuracy-{dataset_name}-{topology_name}-{method}-lr-{lr}-clip-{gradient_clip}-sigma-{sigma}-sigmacor-{sigma_cor}-epsilon-{target_eps}-T-{num_iter}.csv"
+                        if os.path.exists(file_path):
+                            continue
                         final_accuracy = train_decentralized(topology_name, method, result_directory, sigma, sigma_cor, lr, gradient_clip, target_eps, num_iter)
                         row = {"topology": topology_name,
                             "lr": lr,
