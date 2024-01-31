@@ -76,7 +76,7 @@ params = {
 models = ["simple_mnist_model"]
 topologies = [("centralized", "cdp"), ("centralized", "corr"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
 alphas = [10]
-epsilons = [1e-4, 1e-3, 1e-2, 0.1]#, 0.5, 1, 3]
+epsilons = [1e-3, 1e-2, 0.1, 1]#, 0.5, 1, 3]
 
 hyperparam_dict = {("centralized", "cdp", 0.1) : (5, 1), ("centralized", "cdp", 0.5): (5, 1), ("centralized", "cdp", 1) : (5, 1), ("centralized", "cdp", 3): (5, 1),
                    ("centralized", "ldp", 0.1) : (5, 1), ("centralized", "ldp", 0.5): (5, 1), ("centralized", "ldp", 1) : (1, 1), ("centralized", "ldp", 3): (1, 1), 
