@@ -76,15 +76,15 @@ params = {
 models = ["simple_mnist_model"]
 topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
 alphas = [10]
-epsilons = [0.1, 1, 3, 5]
+epsilons = [0.1, 0.5, 1, 3]
 
-hyperparam_dict = {("centralized", "cdp", 0.1) : (5, 1), ("centralized", "cdp", 1) : (5, 1), ("centralized", "cdp", 3): (5, 1), ("centralized", "cdp", 5): (5, 1),
-                   ("centralized", "ldp", 0.1) : (5, 1), ("centralized", "ldp", 1) : (1, 1), ("centralized", "ldp", 3): (1, 1), ("centralized", "ldp", 5): (1, 1),
-                   ("grid", "ldp", 0.1) : (5, 1), ("grid", "ldp", 1) : (0.5, 1), ("grid", "ldp", 3): (1, 1), ("grid", "ldp", 5): (1, 1),
-                   ("ring", "ldp", 0.1) : (5, 1), ("ring", "ldp", 1) : (1, 1), ("ring", "ldp", 3): (1, 1), ("ring", "ldp", 5): (1, 1),
-                   ("grid", "corr", 0.1) : (1, 1), ("grid", "corr", 1) : (1, 1), ("grid", "corr", 3): (0.1, 10), ("grid", "corr", 5): (5, 1),
+hyperparam_dict = {("centralized", "cdp", 0.1) : (5, 1), ("centralized", "cdp", 0.5): (5, 1), ("centralized", "cdp", 1) : (5, 1), ("centralized", "cdp", 3): (5, 1),
+                   ("centralized", "ldp", 0.1) : (5, 1), ("centralized", "ldp", 0.5): (5, 1), ("centralized", "ldp", 1) : (1, 1), ("centralized", "ldp", 3): (1, 1), 
+                   ("grid", "ldp", 0.1) : (5, 1), ("grid", "ldp", 0.5): (5, 1), ("grid", "ldp", 1) : (0.5, 1), ("grid", "ldp", 3): (1, 1), 
+                   ("ring", "ldp", 0.1) : (5, 1), ("ring", "ldp", 0.5): (5, 1), ("ring", "ldp", 1) : (1, 1), ("ring", "ldp", 3): (1, 1), 
+                   ("grid", "corr", 0.1) : (5, 1), ("grid", "corr", 0.5): (5, 1), ("grid", "corr", 1) : (5, 1), ("grid", "corr", 3): (1, 5), 
                    #("ring", "corr", 0.1) : (1, 1), ("ring", "corr", 1) : (1.5, 1), ("ring", "corr", 3): (1.5, 1), ("ring", "corr", 5): (1.5, 1)
-                   ("ring", "corr", 0.1) : (0.1, 10), ("ring", "corr", 1) : (1, 1), ("ring", "corr", 3): (0.1, 10), ("ring", "corr", 5): (0.1, 10)
+                   ("ring", "corr", 0.1) : (5, 0.5), ("ring", "corr", 0.5): (1, 1), ("ring", "corr", 1) : (1, 1), ("ring", "corr", 3): (1, 1)
 }
 """
 # Hyperparameters for each algorithm: the true values are those of 3 and 20, the tohers I just replaced them with the closest value (3 or 20) to them
@@ -109,7 +109,7 @@ seeds = jobs.get_seeds()
 
 # Dataset to total number of samples
 dataset_samples = {"mnist": 60000}
-"""
+
 # Submit all experiments
 for alpha in alphas:
     for model in models:
@@ -161,7 +161,7 @@ for alpha in alphas:
                     params["sigma"] = sigma_cdp
                     #tools.success("Submitting CDP")
                     jobs.submit(f"{dataset}-{topology_name}-{method}-n_{params['num-nodes']}-model_{model}-alpha_{alpha}-eps_{target_eps}", make_command(params))
-"""
+
 # Wait for the jobs to finish and close the pool
 jobs.wait(exit_is_requested)
 jobs.close()
