@@ -56,6 +56,26 @@ if __name__ == "__main__":
     subsample = 64/3750
     batch_size = 64
 
+    # User-level
+    eps = 5
+    eps_iter = dp_account.reverse_eps(eps, num_iter, delta, num_nodes, clip, topology_name, degree_matrix, adjacency_matrix, subsample = 1, batch_size= 1, multiple = False)
+    sigma = clip * np.sqrt(2 / (num_nodes * eps_iter))
+    sigma_cor_grid = np.linspace(1, 10**3, 100)
+    values = np.zeros_like(sigma_cor_grid)
+    for i in range(len(eps)):
+        values[i] = dp_account.rdp_compose_convert(num_iter, delta, sigma, sigma_cor_grid[i],
+                                                clip, degree_matrix, adjacency_matrix, subsample, batch_size)
+    
+    plt.semilogy(sigma_cor_grid, values)
+    plt.xlabel('$\sigma_{\mathrm{cor}}$')
+    plt.ylabel('$\epsilon$')
+    folder_path = './results-search-sigma'
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    plt.savefig(folder_path + f'/epsilon_vs_sigma-cor_user_topology={topology_name}_sigma={sigma}_clip={clip}_T={num_iter}.png', bbox_inches='tight')
+
+    """
+    # example-level
     eps = 0.1
     #eps_iter = dp_account.reverse_eps(eps, num_iter, delta, num_nodes, clip, topology_name, degree_matrix, adjacency_matrix, subsample, batch_size, multiple = False)
     #print(eps_iter)
@@ -78,7 +98,7 @@ if __name__ == "__main__":
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
     plt.savefig(folder_path + f'/epsilon_vs_sigma-cor_topology={topology_name}_sigma={sigma}_clip={clip}_T={num_iter}.png', bbox_inches='tight')
-
+    """
 """
     # Create a 3D plot
     sigma_mesh, sigma_cor_mesh = np.meshgrid(sigma_grid, sigma_cor_grid)
