@@ -61,7 +61,7 @@ params = {
     "weight-decay": 1e-5,
     "evaluation-delta": 5,
     "gradient-clip": 1.,
-    "num-iter": 2000,
+    "num-iter": 1000,
     "num-nodes": 16,
     "momentum": 0.,
     "num-labels": 10,
@@ -74,15 +74,15 @@ params = {
 
 # Hyperparameters to test
 models = ["simple_mnist_model"]
-#topologies = [("centralized", "cdp"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
-topologies = [("ring", "corr")]
+topologies = [("centralized", "cdp"), ("centralized", "corr"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
 alphas = [10]
-epsilons = [1e-4, 1e-3, 1e-2, 0.1, 0.5, 1, 3]
+epsilons = [1e-4, 1e-3, 1e-2, 0.1]#, 0.5, 1, 3]
 
 hyperparam_dict = {("centralized", "cdp", 0.1) : (5, 1), ("centralized", "cdp", 0.5): (5, 1), ("centralized", "cdp", 1) : (5, 1), ("centralized", "cdp", 3): (5, 1),
                    ("centralized", "ldp", 0.1) : (5, 1), ("centralized", "ldp", 0.5): (5, 1), ("centralized", "ldp", 1) : (1, 1), ("centralized", "ldp", 3): (1, 1), 
                    ("grid", "ldp", 0.1) : (5, 1), ("grid", "ldp", 0.5): (5, 1), ("grid", "ldp", 1) : (0.5, 1), ("grid", "ldp", 3): (1, 1), 
                    ("ring", "ldp", 0.1) : (5, 1), ("ring", "ldp", 0.5): (5, 1), ("ring", "ldp", 1) : (1, 1), ("ring", "ldp", 3): (1, 1), 
+                   ("centralized", "corr", 0.1) : (5, 1), ("centralized", "corr", 0.5): (5, 1), ("centralized", "corr", 1) : (5, 1), ("centralized", "corr", 3): (5, 1),
                    ("grid", "corr", 0.1) : (5, 1), ("grid", "corr", 0.5): (5, 1), ("grid", "corr", 1) : (1, 5), ("grid", "corr", 3): (1, 5), 
                    ("ring", "corr", 0.1) : (5, 0.5), ("ring", "corr", 0.5): (1, 1), ("ring", "corr", 1) : (1, 1), ("ring", "corr", 3): (1, 1)
 }
