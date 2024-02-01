@@ -55,8 +55,6 @@ params = {
     "dataset":  dataset,
     "batch-size": 64,
     "loss": "BCELoss",
-    "learning-rate-decay-delta": 5000,
-    "learning-rate-decay": 5000,
     "weight-decay": 1e-5,
     "evaluation-delta": 5,
     "num-iter": 5000,
