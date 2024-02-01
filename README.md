@@ -6,7 +6,7 @@
 
 ## Paper figures:
 
-* The results of experiments on Synthetic data can be found in the folder: [loss_epsilon](loss_epsilon/)
+* The results of experiments on Synthetic data can be found in the folder: [loss_epsilon](quadratics_for_n_16/loss_epsilon/)
 * The plot on LibSVM can be found in:  [results-plot-libsvm](results-plot-libsvm/)
 * The plot on MNIST can be found in:  [results-plot-mnist](results-plot-mnist/)
   
