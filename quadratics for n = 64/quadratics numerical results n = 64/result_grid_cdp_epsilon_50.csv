@@ -1,3 +1,0 @@
-,topology,method,gamma,c_clip,eps_iter,eps,sigma,sigma_cor,loss
-0,centralized,CDP,0.0046,1.0,0.005657723421714141,50,-1.0,-1,10.0
-1,centralized,CDP,0.0046,1.0,0.005657723421714141,50,2.3501963869897793,0,0.00010531230687340555

@@ -52,15 +52,10 @@ tools.success("Running experiments...")
 # Base parameters for the MNIST experiments
 params = {
     "dataset": "mnist",
-    #"batch-size": 25,
     "batch-size": 64,
-    #"loss": "NLLLoss",
     "loss": "CrossEntropyLoss",
-    "learning-rate-decay-delta": 3000,
-    "learning-rate-decay": 3000,
     "weight-decay": 1e-5,
     "evaluation-delta": 5,
-    "gradient-clip": 1.,
     "num-iter": 1000,
     "num-nodes": 16,
     "momentum": 0.,
@@ -76,27 +71,18 @@ params = {
 models = ["simple_mnist_model"]
 topologies = [("centralized", "cdp"), ("centralized", "corr"), ("grid", "corr"), ("ring", "corr"), ("centralized", "ldp") , ("grid", "ldp"), ("ring", "ldp")]
 alphas = [10]
-epsilons = [1e-3, 1e-2, 0.1, 1]#, 0.5, 1, 3]
+epsilons = [1e-3, 1e-2, 0.1, 1]
+tick_labels = ['$10^{-3}$', '$10^{-2}$', '$10^{-1}$', 1 ]
 
 hyperparam_dict = {("centralized", "cdp", 0.1) : (5, 1), ("centralized", "cdp", 0.5): (5, 1), ("centralized", "cdp", 1) : (5, 1), ("centralized", "cdp", 3): (5, 1),
-                   ("centralized", "ldp", 0.1) : (5, 1), ("centralized", "ldp", 0.5): (5, 1), ("centralized", "ldp", 1) : (1, 1), ("centralized", "ldp", 3): (1, 1), 
-                   ("grid", "ldp", 0.1) : (5, 1), ("grid", "ldp", 0.5): (5, 1), ("grid", "ldp", 1) : (0.5, 1), ("grid", "ldp", 3): (1, 1), 
-                   ("ring", "ldp", 0.1) : (5, 1), ("ring", "ldp", 0.5): (5, 1), ("ring", "ldp", 1) : (1, 1), ("ring", "ldp", 3): (1, 1), 
+                   ("centralized", "ldp", 0.1) : (1, 1), ("centralized", "ldp", 0.5): (5, 1), ("centralized", "ldp", 1) : (1, 1), ("centralized", "ldp", 3): (1, 1), 
+                   ("grid", "ldp", 0.1) : (1, 1), ("grid", "ldp", 0.5): (5, 1), ("grid", "ldp", 1) : (0.5, 1), ("grid", "ldp", 3): (1, 1), 
+                   ("ring", "ldp", 0.1) : (1, 1), ("ring", "ldp", 0.5): (5, 1), ("ring", "ldp", 1) : (1, 1), ("ring", "ldp", 3): (1, 1), 
                    ("centralized", "corr", 0.1) : (5, 1), ("centralized", "corr", 0.5): (5, 1), ("centralized", "corr", 1) : (5, 1), ("centralized", "corr", 3): (5, 1),
                    ("grid", "corr", 0.1) : (5, 1), ("grid", "corr", 0.5): (5, 1), ("grid", "corr", 1) : (1, 5), ("grid", "corr", 3): (1, 5), 
-                   ("ring", "corr", 0.1) : (5, 0.5), ("ring", "corr", 0.5): (1, 1), ("ring", "corr", 1) : (1, 1), ("ring", "corr", 3): (1, 1)
+                   ("ring", "corr", 0.1) : (2, 1), ("ring", "corr", 0.5): (1, 1.5), ("ring", "corr", 1) : (1, 1.5), ("ring", "corr", 3): (1, 1.5)
 }
-"""
-# Hyperparameters for each algorithm: the true values are those of 3 and 20, the tohers I just replaced them with the closest value (3 or 20) to them
-hyperparam_dict = {("centralized", "cdp", 0.1) : (5, 1), ("centralized", "cdp", 1) : (5, 1), ("centralized", "cdp", 3): (5, 1), ("centralized", "cdp", 5): (5, 1), ("centralized", "cdp", 10):(5, 1), ("centralized", "cdp", 15): (5, 1),
-                   ("centralized", "ldp", 0.1) : (5, 1), ("centralized", "ldp", 1) : (1, 1), ("centralized", "ldp", 3): (1, 1), ("centralized", "ldp", 5): (1, 1), ("centralized", "ldp", 10): (1, 1), ("centralized", "ldp", 15): (1, 1),
-                   ("grid", "ldp", 0.1) : (5, 1), ("grid", "ldp", 1) : (0.5, 1), ("grid", "ldp", 3): (1, 1), ("grid", "ldp", 5): (1, 1), ("grid", "ldp", 10): (1, 1), ("grid", "ldp", 15): (1, 1),
-                   ("ring", "ldp", 0.1) : (5, 1), ("ring", "ldp", 1) : (1, 1), ("ring", "ldp", 3): (1, 1), ("ring", "ldp", 5): (1, 1), ("ring", "ldp", 10): (1, 1), ("ring", "ldp", 15): (1, 1),
-                   ("grid", "corr", 0.1) : (1, 1), ("grid", "corr", 1) : (1, 1), ("grid", "corr", 3): (0.1, 10), ("grid", "corr", 5): (5, 1), ("grid", "corr", 10): (5, 1), ("grid", "corr", 15): (5, 1),
-                   ("ring", "corr", 0.1) : (1, 1), ("ring", "corr", 1) : (5, 1), ("ring", "corr", 3): (5, 1), ("ring", "corr", 5): (5, 1), ("ring", "corr", 10): (5, 1), ("ring", "corr", 15): (5, 1)
-                   #("ring", "corr", 0.1) : (0.1, 10), ("ring", "corr", 1) : (1, 1), ("ring", "corr", 3): (0.1, 10), ("ring", "corr", 5): (0.1, 10), ("ring", "corr", 10): (0.1, 10), ("ring", "corr", 15): (5, 1)
-}
-"""
+
 # Command maker helper
 def make_command(params):
     cmd = ["python3", "-OO", "train.py"]
@@ -256,6 +242,6 @@ with tools.Context("libsvm", "info"):
 
             #JS: plot every time graph in terms of the maximum number of steps
             plot_name = f"Accuracy_vs_epsilon_{dataset}_model={model}_momentum={params['momentum']}_alpha={alpha}"
-            plot.finalize(None, "Example-level $\epsilon$", "Accuracy")#, legend = legend)
+            plot.finalize(title = None, xlabel="Example-level $\epsilon$", ylabel="Accuracy", tick_labels= tick_labels, xticks= epsilons)#, legend = legend)
             plot.save(plot_directory + "/" + plot_name + ".pdf", xsize=2, ysize=1.5)
 
