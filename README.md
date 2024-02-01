@@ -19,16 +19,3 @@
 
 * Run file [tuning_libsvm.py](tuning_libsvm.py) to tune hyperparameters for LibSVM experiments, and [tuning_mnist.py](tuning_mnist.py) for MNIST. Use the lists: `lr_grid` and `gradient_clip_grid` to set the values of learning rate and clipping to use in the grid search.
  
-
-
-## Citation
-If you use this code, please cite the following paper
-
-```
-@inproceedings{Allouah2024decor,
-  title={The Privacy Power of Correlated Noise in Decentralized Learning},
-  author={Youssef Allouah, Anastasia Koloskova, Aymane El Firdoussi, Rachid Guerraoui and Martin Jaggi},
-  booktitle={The Forty-first International Conference on Machine Learning},
-  year={2024}
-}
-```
