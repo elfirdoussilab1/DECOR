@@ -244,7 +244,7 @@ with tools.Context("libsvm", "info"):
                     
 
                 plot.include(values, params["metric"], errs="-err", xticks = epsilons, linestyle = topo_to_style[topology_name], 
-                                    mark = method_to_marker[method], color = method_to_color[method], lalp=0.8)
+                                    mark = method_to_marker[method], color = method_to_color[method], lalp=0.8, xlogscale= True)
             # Making the legend
             #legend = []
             #legend.append(plt.Line2D([], [], label='Algorithm', linestyle = 'None' ))

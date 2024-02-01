@@ -498,7 +498,7 @@ class LinePlot:
 		if legend is not None:
 			self._ax.legend(handles = legend, loc = 'upper left', bbox_to_anchor = (1, 1), fontsize = 10)
 		# Plot the grid and labels
-		self._ax.grid(which = 'both', axis = 'both')
+		self._ax.grid(which = 'major', axis = 'both')
 		self._ax.set_xlabel(xlabel, fontsize=12)
 		self._ax.set_ylabel(ylabel, fontsize=12)
 		self._ax.set_title(title, fontsize=12)
