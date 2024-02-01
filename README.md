@@ -3,6 +3,11 @@
 ## Requirements
 
 * Download library requirements using `pip install -r requirements.txt`
+
+## Paper figures:
+
+* The result of 
+  
 ## Reproducing the paper's experiments:
 
 * Run file [quadratics.py](quadratics.py) or command `python3 quadratics.py` to get our experiments on Synthetic data (Linear Regression).
@@ -17,7 +22,7 @@
 If you use this code, please cite the following paper
 
 ```
-@inproceedings{vogels2021relaysum,
+@inproceedings{Allouah2024decor,
   title={The Privacy Power of Correlated Noise in Decentralized Learning},
   author={Youssef Allouah, Anastasia Koloskova, Aymane El Firdoussi, Rachid Guerraoui and Martin Jaggi},
   booktitle={The Forty-first International Conference on Machine Learning},
