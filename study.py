@@ -459,7 +459,7 @@ class LinePlot:
 		# Return self for chaining
 		return self
 
-	def finalize(self, title, xlabel, ylabel, zlabel=None, xticks = None, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zmax=None, legend=None):
+	def finalize(self, title, xlabel, ylabel, zlabel=None, xticks = None, tick_labels = None, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zmax=None, legend=None):
 		""" Finalize the plot, can be done only once and would prevent further inclusion.
 		Args:
 			title	Plot title
@@ -516,6 +516,8 @@ class LinePlot:
 			self._ax.set_xticks(xticks)
 		else:
 			self._ax.set_xlim(left=xmin, right=xmax)
+		if tick_labels is not None:
+			self._ax.set_xticklabels(tick_labels)
 		self._ax.set_ylim(bottom=ymin, top=ymax)
 		if self._tax is not None:
 			self._tax.set_ylim(bottom=zmin, top=zmax)

@@ -226,7 +226,7 @@ def loss_epsilon(topology_names, epsilon_grid, A, B, num_nodes, num_dim, gamma, 
     
 
     ax.set_xlabel('User-level $\epsilon$', fontsize=12)
-    ax.set_ylabel('Loss', fontsize=12)
+    ax.set_ylabel('Optimality gap', fontsize=12)
     #ax.set_title(f"L2 Loss with User-level Privacy", fontsize=15)
     ax.grid(True)
     ax.tick_params(axis='y', which = 'both', labelsize=10)
