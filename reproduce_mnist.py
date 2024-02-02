@@ -1,7 +1,6 @@
 # coding: utf-8
 ###
  # @file   reproduce_mnist.py
- # @author Aymane El Firdoussi <aymane.elfirdoussi@epfl.ch>
  #
  # Running Correlated Decentralized learning experiments on MNIST.
 ###
